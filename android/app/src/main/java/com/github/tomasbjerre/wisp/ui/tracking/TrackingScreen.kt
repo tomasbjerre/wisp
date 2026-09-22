@@ -131,7 +131,7 @@ private fun MissingPermission(onGrant: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                "Wisp Tracking needs location access to record your route.",
+                "Wisp Tracker needs location access to record your route.",
                 style = MaterialTheme.typography.bodyLarge,
             )
             Button(onClick = onGrant, modifier = Modifier.padding(top = 16.dp)) {

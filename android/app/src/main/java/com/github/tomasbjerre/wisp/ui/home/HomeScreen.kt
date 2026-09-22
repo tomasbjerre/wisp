@@ -114,7 +114,7 @@ private fun HomeTopBar(
     val coroutineScope = rememberCoroutineScope()
 
     TopAppBar(
-        title = { Text("Wisp Tracking") },
+        title = { Text("Wisp Tracker") },
         actions = {
             // See specs/export.md#trigger and #history-as-csv.
             IconButton(

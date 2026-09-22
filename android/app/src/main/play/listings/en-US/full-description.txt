@@ -1,7 +1,7 @@
-Wisp Tracking is a very simple GPS tracker for any activity — running, cycling, walking, or anything else. It doesn't care what you're doing, only where you went.
+Wisp Tracker is a very simple GPS tracker for any activity — running, cycling, walking, or anything else. It doesn't care what you're doing, only where you went.
 
 WHAT IT DOES
-- Tap Start and Wisp Tracking records your route, distance, and speed.
+- Tap Start and Wisp Tracker records your route, distance, and speed.
 - See your current speed, distance, and elapsed time live while you move, with your position clearly marked on the map.
 - Pause and resume a recording without breaking the route.
 - Every activity is saved to a local history on your phone — no account needed.
@@ -9,9 +9,9 @@ WHAT IT DOES
 - Export your whole history as a CSV file for a spreadsheet, or export a single activity as an image to share.
 
 WHAT IT DOESN'T DO
-Wisp Tracking is deliberately simple. There's no activity-type picker, no cadence or heart-rate tracking, no social feed, no accounts, and no cloud sync. Your data stays on your device.
+Wisp Tracker is deliberately simple. There's no activity-type picker, no cadence or heart-rate tracking, no social feed, no accounts, and no cloud sync. Your data stays on your device.
 
 PERMISSIONS
-Wisp Tracking asks for location access only when you start recording, and explains why before the system prompt appears. Background location is optional — without it, recording may stop if you leave the app while tracking.
+Wisp Tracker asks for location access only when you start recording, and explains why before the system prompt appears. Background location is optional — without it, recording may stop if you leave the app while tracking.
 
-Wisp Tracking is open source. Feedback, bug reports, and feature requests are welcome at the project's GitHub issues page.
+Wisp Tracker is open source. Feedback, bug reports, and feature requests are welcome at the project's GitHub issues page.
