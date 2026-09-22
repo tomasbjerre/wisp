@@ -57,7 +57,7 @@ fun TrackingScreen(onStopped: (sessionId: Long) -> Unit) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        RouteMap(route = state.route, modifier = Modifier.fillMaxSize().weight(1f))
+        RouteMap(route = state.route, isLive = true, modifier = Modifier.fillMaxSize().weight(1f))
 
         Surface(tonalElevation = 4.dp) {
             // navigationBarsPadding: MainActivity draws edge-to-edge, so without this

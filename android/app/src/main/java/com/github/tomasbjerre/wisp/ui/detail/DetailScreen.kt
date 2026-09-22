@@ -1,6 +1,8 @@
 package com.github.tomasbjerre.wisp.ui.detail
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,14 +21,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.github.tomasbjerre.wisp.data.Session
 import com.github.tomasbjerre.wisp.data.SessionRepository
+import com.github.tomasbjerre.wisp.export.ActivityImageExporter
+import com.github.tomasbjerre.wisp.export.ImageShareIntent
 import com.github.tomasbjerre.wisp.ui.Formatting
 import com.github.tomasbjerre.wisp.ui.common.RouteMap
+import org.osmdroid.views.MapView
 
 /** See specs/ui-flows.md#3-detail-a-past-or-just-finished-session. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,6 +49,8 @@ fun DetailScreen(
     val session by viewModel.session.collectAsStateWithLifecycle()
     val route by viewModel.route.collectAsStateWithLifecycle()
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var mapView by remember { mutableStateOf<MapView?>(null) }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -52,27 +61,22 @@ fun DetailScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            RouteMap(route = route, modifier = Modifier.fillMaxSize().weight(1f))
+            RouteMap(
+                route = route,
+                modifier = Modifier.fillMaxSize().weight(1f),
+                onMapViewReady = { mapView = it },
+            )
 
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                val s = session
-                if (s != null) {
-                    Text(
-                        "${Formatting.distance(s.distanceMeters)} · ${Formatting.duration(s.durationSeconds)}",
-                        style = MaterialTheme.typography.titleLarge,
-                    )
-                    Text(
-                        "Avg ${Formatting.speedKmh(s.averageSpeedMps)} · Max ${Formatting.speedKmh(s.maxSpeedMps)}",
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
-                OutlinedButton(
-                    onClick = { showDeleteConfirm = true },
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                ) {
-                    Text("Delete")
-                }
-            }
+            SessionSummaryPanel(
+                session = session,
+                onExportImage = {
+                    val map = mapView ?: return@SessionSummaryPanel
+                    val current = session ?: return@SessionSummaryPanel
+                    val image = ActivityImageExporter.compose(map, current)
+                    context.startActivity(ImageShareIntent.build(context, image))
+                },
+                onDeleteClick = { showDeleteConfirm = true },
+            )
         }
     }
 
@@ -88,5 +92,37 @@ fun DetailScreen(
                 TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
             },
         )
+    }
+}
+
+@Composable
+private fun SessionSummaryPanel(
+    session: Session?,
+    onExportImage: () -> Unit,
+    onDeleteClick: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+        if (session != null) {
+            Text(
+                "${Formatting.distance(session.distanceMeters)} · ${Formatting.duration(session.durationSeconds)}",
+                style = MaterialTheme.typography.titleLarge,
+            )
+            Text(
+                "Avg ${Formatting.speedKmh(session.averageSpeedMps)} · Max ${Formatting.speedKmh(session.maxSpeedMps)}",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            // See specs/export.md#single-activity-as-an-image.
+            OutlinedButton(onClick = onExportImage, enabled = session != null, modifier = Modifier.weight(1f)) {
+                Text("Export Image")
+            }
+            OutlinedButton(onClick = onDeleteClick, modifier = Modifier.weight(1f)) {
+                Text("Delete")
+            }
+        }
     }
 }

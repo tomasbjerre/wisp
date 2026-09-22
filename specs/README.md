@@ -26,4 +26,5 @@ source of truth for behavior.
 - [UI Flows](ui-flows.md) — the screens and interactions a user goes through
 - [Permissions & Privacy](permissions-and-privacy.md) — what access is
   needed and how data is handled
-- [Export](export.md) — exporting history as CSV
+- [Export](export.md) — exporting history as CSV, and a single activity as an image
+- [Accessibility](accessibility.md) — map clarity and text contrast, everywhere

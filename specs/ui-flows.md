@@ -25,8 +25,11 @@ Entered by tapping Start on Home. Stays active in the background/locked
 screen while recording.
 
 - A map filling most of the screen, centered on the current location,
-  drawing the route as it's recorded.
-- Live stats overlay: current speed, elapsed distance, elapsed time.
+  drawing the route as it's recorded, with a marker for the current
+  position (see [Accessibility](accessibility.md#map-markers-and-route)).
+- A live stats panel below the map (not laid over it — see
+  [Accessibility](accessibility.md#text-contrast)): current speed,
+  elapsed distance, elapsed time.
 - **Pause/Resume** control and a **Stop** control.
 - Stopping navigates to that session's Detail screen (the session is now
   finished).
@@ -36,8 +39,12 @@ screen while recording.
 
 ## 3. Detail (a past or just-finished session)
 
-- A map showing the full recorded route.
-- Summary stats: date/time, distance, duration, average speed, max speed.
+- A map showing the full recorded route, with start and end markers (see
+  [Accessibility](accessibility.md#map-markers-and-route)).
+- Summary stats below the map, in their own panel (see
+  [Accessibility](accessibility.md#text-contrast)): date/time, distance,
+  duration, average speed, max speed.
+- An **Export Image** action (see [Export](export.md#single-activity-as-an-image)).
 - A **Delete** action, with a confirmation step before it actually
   deletes.
 
