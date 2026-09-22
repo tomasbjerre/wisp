@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,6 +34,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.tomasbjerre.wisp.data.Session
 import com.github.tomasbjerre.wisp.data.SessionRepository
+import com.github.tomasbjerre.wisp.export.CsvExporter
+import com.github.tomasbjerre.wisp.export.CsvShareIntent
 import com.github.tomasbjerre.wisp.ui.Formatting
 
 private const val FEEDBACK_URL = "https://github.com/tomasbjerre/wisp/issues"
@@ -48,12 +52,23 @@ fun HomeScreen(
         viewModel(factory = viewModelFactory { initializer { HomeViewModel(repository) } })
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Wisp") },
                 actions = {
+                    // See specs/export.md#trigger.
+                    IconButton(
+                        onClick = {
+                            val csv = CsvExporter.toCsv(sessions)
+                            context.startActivity(CsvShareIntent.build(context, csv))
+                        },
+                        enabled = sessions.isNotEmpty(),
+                    ) {
+                        Icon(Icons.Filled.Share, contentDescription = "Export history as CSV")
+                    }
                     // See specs/ui-flows.md#feedback-and-support.
                     IconButton(onClick = { uriHandler.openUri(FEEDBACK_URL) }) {
                         Icon(Icons.Filled.Info, contentDescription = "Feedback, problems, or feature requests")

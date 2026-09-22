@@ -19,6 +19,8 @@ start, go.
 - Browse a list of past sessions and open one to see its route, distance,
   duration, and average/max speed.
 - Delete a past session.
+- Export the full history as a CSV file (see
+  [Export](export.md)), so it can be opened in a spreadsheet.
 
 ## Explicitly out of scope (for now)
 

@@ -13,6 +13,8 @@ The app's entry point.
 - Tapping a row opens that session's **Detail** screen.
 - An empty state ("No activities yet — tap Start to record your first
   route.") when there is no history.
+- An **Export CSV** action (see [Export](export.md)), disabled or hidden
+  when there's no history yet.
 - If there's an interrupted session recovered on launch (see
   [Tracking](tracking.md)), it simply appears in the list like any other
   finished session — no special dialog or interruption.
