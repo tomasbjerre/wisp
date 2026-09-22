@@ -34,14 +34,12 @@ screen while recording.
 - A live stats panel below the map (not laid over it — see
   [Accessibility](accessibility.md#text-contrast)): current speed,
   elapsed distance, elapsed time.
-- **Pause/Resume** control and a **Stop** control.
-- Tapping Stop doesn't finalize immediately — it swaps that control row
-  for a confirmation step (**Back**/**Continue**): Back cancels and
-  returns to the normal Pause/Resume + Stop row (still recording),
-  Continue finalizes the session. This avoids ending a recording on an
-  accidental tap.
-- Confirming Stop navigates to that session's Detail screen (the session
-  is now finished).
+- A **Pause**/**Continue** control (labeled Continue while paused) and a
+  **Stop** control, both visible together at all times — recording or
+  paused, it's always exactly these two controls, no intermediate
+  confirmation step.
+- Tapping Stop finalizes the session immediately and navigates to that
+  session's Detail screen.
 - If location permission is missing or denied, this screen must explain
   what's needed and offer a way to grant it, rather than silently
   recording nothing (see [Permissions & Privacy](permissions-and-privacy.md)).

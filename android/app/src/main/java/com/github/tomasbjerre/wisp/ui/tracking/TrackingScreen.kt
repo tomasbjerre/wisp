@@ -106,40 +106,22 @@ fun TrackingScreen(onStopped: (sessionId: Long) -> Unit) {
 @Composable
 private fun TrackingControls(isPaused: Boolean) {
     val context = LocalContext.current
-    // Tapping Stop swaps this row for a Back/Continue confirmation instead of
-    // finalizing immediately — see specs/ui-flows.md#2-tracking-active-recording.
-    var confirmingStop by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (confirmingStop) {
-            OutlinedButton(
-                onClick = { confirmingStop = false },
-                modifier = Modifier.weight(1f),
-            ) {
-                Text("Back")
-            }
-            Button(
-                onClick = { TrackingService.stop(context) },
-                modifier = Modifier.weight(1f),
-            ) {
-                Text("Continue")
-            }
-        } else {
-            OutlinedButton(
-                onClick = { if (isPaused) TrackingService.resume(context) else TrackingService.pause(context) },
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(if (isPaused) "Resume" else "Pause")
-            }
-            Button(
-                onClick = { confirmingStop = true },
-                modifier = Modifier.weight(1f),
-            ) {
-                Text("Stop")
-            }
+        OutlinedButton(
+            onClick = { if (isPaused) TrackingService.resume(context) else TrackingService.pause(context) },
+            modifier = Modifier.weight(1f),
+        ) {
+            Text(if (isPaused) "Continue" else "Pause")
+        }
+        Button(
+            onClick = { TrackingService.stop(context) },
+            modifier = Modifier.weight(1f),
+        ) {
+            Text("Stop")
         }
     }
 }
