@@ -38,12 +38,12 @@ fun gitCommitCount(): Int {
 
 android {
     namespace = "com.github.tomasbjerre.wisp"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.github.tomasbjerre.wisp"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = gitCommitCount()
         // `version` in gradle.properties for local builds; CI overrides it with
         // -Pversion=<latest tag> — see .github/workflows/release_android.yml.
