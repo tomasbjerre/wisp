@@ -1,5 +1,8 @@
+import com.github.triplet.gradle.androidpublisher.ResolutionStrategy
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
+import java.io.File
+import java.util.Base64
 
 plugins {
     // com.android.application must be applied before update-versions, since
@@ -11,6 +14,26 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
     id("org.jlleitschuh.gradle.ktlint")
     id("se.bjurr.gradle.update-versions") version "3.0.1"
+    // 3.x, not the latest 4.x, which requires AGP 9 / Gradle 9.1+ — see
+    // https://github.com/Triple-T/gradle-play-publisher/releases/tag/4.0.0
+    id("com.github.triplet.play") version "3.13.0"
+}
+
+fun runGit(vararg args: String): String {
+    val builder = ProcessBuilder("git", *args)
+    builder.directory(rootDir)
+    builder.redirectErrorStream(true)
+    val process = builder.start()
+    val reader = process.inputStream.bufferedReader()
+    val output = reader.readText()
+    process.waitFor()
+    return output.trim()
+}
+
+/** Monotonically increasing, so it never needs manual bumping. */
+fun gitCommitCount(): Int {
+    val count = runGit("rev-list", "--count", "HEAD")
+    return count.toIntOrNull() ?: 1
 }
 
 android {
@@ -21,8 +44,30 @@ android {
         applicationId = "com.github.tomasbjerre.wisp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = gitCommitCount()
+        // `version` in gradle.properties, driven by Conventional Commits via
+        // se.bjurr.gitchangelog.git-changelog-gradle-plugin — see android/build.gradle.kts.
+        versionName = project.version.toString()
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        // Only present in CI (or a local build with the same env vars set) — see
+        // android/README.md#release-signing. A local `assembleRelease` without them
+        // just produces an unsigned build rather than failing.
+        val keystoreBase64 = System.getenv("ANDROID_KEYSTORE_BASE64")
+        if (keystoreBase64 != null) {
+            create("release") {
+                val decodedKeystore = File.createTempFile("wisp-upload-keystore", ".jks")
+                decodedKeystore.deleteOnExit()
+                decodedKeystore.writeBytes(Base64.getDecoder().decode(keystoreBase64))
+
+                storeFile = decodedKeystore
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -32,6 +77,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
     }
 
@@ -92,6 +138,15 @@ dependencies {
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:6.1.3")
     testImplementation("org.robolectric:robolectric:4.17")
     testImplementation("androidx.test:core:1.7.0")
+
+    // Instrumented: drives the real app on a device/emulator to capture screenshots
+    // for the Play Store listing and README — see android/README.md#screenshots.
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.4.0")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.12.01"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
 
 detekt {
@@ -110,4 +165,16 @@ ktlint {
         reporter(ReporterType.CHECKSTYLE)
         reporter(ReporterType.PLAIN)
     }
+}
+
+// Publishes to Play via the Play Developer API — see android/README.md#play-store-release.
+// Auth comes from the ANDROID_PUBLISHER_CREDENTIALS env var (a service account JSON), not
+// committed here — see https://github.com/Triple-T/gradle-play-publisher#authenticating.
+play {
+    track.set("internal")
+    defaultToAppBundles.set(true)
+    // AUTO would need live Play credentials just to run `bundleRelease` (it resolves the
+    // version code against the API as part of the build task itself). versionCode is
+    // already monotonic from git history, so a real conflict shouldn't happen in practice.
+    resolutionStrategy.set(ResolutionStrategy.IGNORE)
 }

@@ -1,3 +1,5 @@
+import se.bjurr.gitchangelog.plugin.gradle.GitChangelogSemanticVersionTask
+import se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask
 import se.bjurr.violations.gradle.plugin.ViolationsTask
 import se.bjurr.violations.lib.model.SEVERITY
 import se.bjurr.violations.lib.reports.Parser
@@ -21,6 +23,39 @@ plugins {
     id("com.diffplug.spotless") version "8.10.2"
     id("se.bjurr.violations.violations-gradle-plugin") version "4.4.0"
     id("se.bjurr.gradle.update-versions") version "3.0.1"
+    id("se.bjurr.gitchangelog.git-changelog-gradle-plugin") version "3.4.0"
+}
+
+// Version and CHANGELOG.md are driven by Conventional Commits — see AGENTS.md and
+// https://github.com/tomasbjerre/git-changelog-gradle-plugin. `version` in
+// android/gradle.properties is the source of truth; bump it and refresh the changelog with:
+//   ./gradlew -PsetVersionConventional=true gitChangelogSemanticVersion gitChangelog
+// (the release workflow does this automatically — see .github/workflows/release.yml)
+tasks.named<GitChangelogSemanticVersionTask>("gitChangelogSemanticVersion") {
+    majorVersionPattern.set("^\\w+(\\([^)]+\\))?!:|BREAKING CHANGE")
+    minorVersionPattern.set("^feat")
+    patchVersionPattern.set("^fix")
+}
+
+tasks.named<GitChangelogTask>("gitChangelog") {
+    file.set(File(rootDir.parentFile, "CHANGELOG.md"))
+    fromRepo.set(rootDir.parentFile.path)
+    templateContent.set(
+        """
+        # Changelog
+
+        {{#tags}}
+        {{#ifReleaseTag .}}
+        ## {{name}} ({{tagDate . "YYYY-MM-dd"}})
+
+        {{#commits}}
+         - {{{messageTitle}}} ([{{hash}}](https://github.com/tomasbjerre/wisp/commit/{{hash}}))
+        {{/commits}}
+
+        {{/ifReleaseTag}}
+        {{/tags}}
+        """.trimIndent(),
+    )
 }
 
 // Kotlin/.kts formatting and linting is owned by org.jlleitschuh.gradle.ktlint (app

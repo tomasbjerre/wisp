@@ -92,3 +92,64 @@ Run them with `./gradlew testDebugUnitTest`.
 
 When you add a requirement to `specs/`, add a test for it here — see
 [`../AGENTS.md`](../AGENTS.md).
+
+### Screenshots
+
+`ScreenshotTest` (`app/src/androidTest`) is not a correctness test — it
+drives the real app against seeded data (not live GPS) to capture the
+screenshots used in the root README and the Play Store listing. Run it
+against a connected device/emulator with:
+
+```bash
+./gradlew connectedDebugAndroidTest
+adb pull /sdcard/wisp-screenshots .
+```
+
+The release workflow runs this automatically on every release (see below)
+and commits the result to `docs/screenshots/` and
+`app/src/main/play/listings/en-US/graphics/phone-screenshots/`.
+
+## Play Store release
+
+Releasing is one manual click (`workflow_dispatch` on
+[`.github/workflows/release.yml`](../.github/workflows/release.yml)) —
+everything after that is automated:
+
+1. Bumps `version` in `gradle.properties` from
+   [Conventional Commits](../AGENTS.md) since the last tag
+   ([git-changelog-gradle-plugin](https://github.com/tomasbjerre/git-changelog-gradle-plugin)).
+2. Captures fresh screenshots on an emulator and commits them.
+3. Commits the version bump, tags it (`vX.Y.Z`), and updates
+   `../CHANGELOG.md`.
+4. Builds a signed App Bundle and uploads it to the Play Console's
+   **internal** track
+   ([Gradle Play Publisher](https://github.com/Triple-T/gradle-play-publisher)).
+5. Publishes a GitHub Release with notes generated from the same commits
+   ([git-changelog-github-release](https://github.com/tomasbjerre/git-changelog-github-release)),
+   with the App Bundle attached.
+
+Promoting a release from internal → production is a manual step in the
+[Play Console](https://play.google.com/console) — intentionally not
+automated, so a real person always looks at a release before it reaches
+real users.
+
+### One-time setup (not automatable — Google account actions)
+
+1. Create a [Play Console](https://play.google.com/console) developer
+   account (one-time $25 fee, identity verification).
+2. Create the app in the Console (package name `com.github.tomasbjerre.wisp`,
+   permanent once chosen) and complete its first store listing, content
+   rating, and data safety form — Google requires this once per app before
+   the API can publish to it.
+3. Create a Google Cloud project, enable the Android Publisher API, create
+   a service account with a JSON key, and grant it publishing access to
+   this app in Play Console → Users and permissions. Full steps:
+   [GPP's Service Account guide](https://github.com/Triple-T/gradle-play-publisher#service-account).
+4. Add these repo secrets (`Settings → Secrets and variables → Actions`):
+   - `PLAY_SERVICE_ACCOUNT_JSON` — the full JSON key from step 3.
+   - `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+     `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` — the app signing
+     (upload) key. Already set for this repo; back up
+     `~/.keystores/wisp/upload-keystore.jks` somewhere durable — it's
+     the only copy and losing it means losing the ability to publish
+     updates under this app's identity.

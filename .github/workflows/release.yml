@@ -1,0 +1,146 @@
+name: Release
+
+# Manual trigger: cutting a release is a deliberate decision, not automatic on every
+# merge. Everything after that click is automated — see android/README.md#play-store-release.
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: android
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run instrumented screenshot test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          working-directory: ./android
+          script: |
+            ./gradlew connectedDebugAndroidTest
+            adb pull /sdcard/wisp-screenshots screenshots-raw
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: android/screenshots-raw
+          retention-days: 1
+
+  release:
+    needs: screenshots
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version from Conventional Commits
+        run: |
+          ./gradlew -PsetVersionConventional=true -PsuffixSnapshotIfNotTagged=false help
+          echo "NEW_VERSION=$(grep '^version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_ENV"
+
+      - name: Download screenshots
+        uses: actions/download-artifact@v4
+        with:
+          name: screenshots
+          path: android/app/src/main/play/listings/en-US/graphics/phone-screenshots-raw
+
+      - name: Install screenshots into the Play listing and README
+        run: |
+          mkdir -p app/src/main/play/listings/en-US/graphics/phone-screenshots
+          cp app/src/main/play/listings/en-US/graphics/phone-screenshots-raw/*.png \
+            app/src/main/play/listings/en-US/graphics/phone-screenshots/
+          rm -rf app/src/main/play/listings/en-US/graphics/phone-screenshots-raw
+          mkdir -p ../docs/screenshots
+          cp app/src/main/play/listings/en-US/graphics/phone-screenshots/*.png ../docs/screenshots/
+
+      - name: Write this release's notes (Play + commit)
+        run: |
+          echo "Wisp $NEW_VERSION" > app/src/main/play/release-notes/en-US/default.txt
+          git log "$(git describe --tags --abbrev=0 HEAD 2>/dev/null || echo '')..HEAD" \
+            --pretty=format:'- %s' | head -c 450 >> app/src/main/play/release-notes/en-US/default.txt || true
+
+      - name: Commit version bump and screenshots
+        run: |
+          git add gradle.properties app/src/main/play
+          git commit -m "chore(release): v${NEW_VERSION}"
+          git tag "v${NEW_VERSION}"
+
+      - name: Update CHANGELOG.md
+        run: ./gradlew gitChangelog
+
+      - name: Commit changelog
+        run: |
+          git add ../CHANGELOG.md
+          git commit -m "chore(changelog): v${NEW_VERSION}"
+          git push origin HEAD
+          git push origin "v${NEW_VERSION}"
+
+      - name: Build signed release bundle
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease
+
+      - name: Publish to Play Console (internal track)
+        env:
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: ./gradlew publishReleaseBundle publishListing
+
+      - name: Create GitHub Release
+        uses: tomasbjerre/git-changelog-github-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: false
+
+      - name: Attach the release bundle
+        run: gh release upload "v${NEW_VERSION}" app/build/outputs/bundle/release/app-release.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,6 +38,7 @@ import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.export.CsvExporter
 import com.github.tomasbjerre.wisp.export.CsvShareIntent
 import com.github.tomasbjerre.wisp.ui.Formatting
+import com.github.tomasbjerre.wisp.ui.TestTags
 
 private const val FEEDBACK_URL = "https://github.com/tomasbjerre/wisp/issues"
 
@@ -110,7 +112,7 @@ private fun SessionRow(
     session: Session,
     onClick: () -> Unit,
 ) {
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth().testTag(TestTags.HISTORY_ROW)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(Formatting.dateTime(session.startedAt), style = MaterialTheme.typography.titleMedium)
             Text(
