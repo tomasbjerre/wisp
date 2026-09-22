@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Wisp</string>
+    <string name="app_name">Wisp Tracking</string>
     <string name="notification_channel_tracking">Recording</string>
-    <string name="notification_tracking_title">Wisp is recording</string>
+    <string name="notification_tracking_title">Wisp Tracking is recording</string>
 </resources>

@@ -22,7 +22,6 @@ sport-specific settings.
   it; if behavior needs to change, change the spec, not just the code.
 - [`android/`](android/README.md) — the native Android (Kotlin + Jetpack
   Compose) implementation.
-- `ios/` — not started yet.
 
 ## Android quick start
 
