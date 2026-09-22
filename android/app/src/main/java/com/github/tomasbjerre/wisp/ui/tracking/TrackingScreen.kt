@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -59,7 +60,9 @@ fun TrackingScreen(onStopped: (sessionId: Long) -> Unit) {
         RouteMap(route = state.route, modifier = Modifier.fillMaxSize().weight(1f))
 
         Surface(tonalElevation = 4.dp) {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            // navigationBarsPadding: MainActivity draws edge-to-edge, so without this
+            // Pause/Stop end up underneath the system nav bar (3-button or gesture).
+            Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp)) {
                 if (!permissions.hasBackground) {
                     Text(
                         "Recording may stop if you leave the app — background location isn't granted.",
