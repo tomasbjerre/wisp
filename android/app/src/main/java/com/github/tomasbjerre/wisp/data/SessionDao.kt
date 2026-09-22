@@ -1,0 +1,33 @@
+package com.github.tomasbjerre.wisp.data
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface SessionDao {
+    @Insert
+    suspend fun insert(session: Session): Long
+
+    @Update
+    suspend fun update(session: Session)
+
+    @Delete
+    suspend fun delete(session: Session)
+
+    @Query("SELECT * FROM sessions ORDER BY startedAt DESC")
+    fun observeAll(): Flow<List<Session>>
+
+    @Query("SELECT * FROM sessions WHERE id = :id")
+    suspend fun getById(id: Long): Session?
+
+    @Query("SELECT * FROM sessions WHERE id = :id")
+    fun observeById(id: Long): Flow<Session?>
+
+    /** Recovery path from specs/tracking.md — a session never finalized on last run. */
+    @Query("SELECT * FROM sessions WHERE endedAt IS NULL ORDER BY startedAt DESC LIMIT 1")
+    suspend fun findUnfinished(): Session?
+}
