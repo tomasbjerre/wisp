@@ -1,11 +1,22 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
+  // Off to match the rest of tomasbjerre/* — config:recommended turns this on by default.
+  "dependencyDashboard": false,
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
       "automerge": true,
       "platformAutomerge": true
+    },
+    {
+      // AGP has a minimum required Gradle version (e.g. AGP 8.13 needs Gradle
+      // 8.13+) that climbs independently of AGP's own version number. Grouped
+      // with the wrapper so a bump never lands AGP ahead of a Gradle it needs —
+      // confirmed broken in https://github.com/tomasbjerre/wisp/pull/2.
+      "matchPackageNames": ["com.android.application", "gradle"],
+      "groupName": "Android Gradle Plugin + Gradle wrapper",
+      "automerge": false
     },
     {
       // Kotlin, its Compose compiler plugin, and KSP must move together — KSP's
