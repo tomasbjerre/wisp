@@ -1,3 +1,10 @@
+## v0.2.0 (2026-09-22)
+
+ - fix(android): stop the map flashing open ocean before a route loads ([d13b0ded7b84363](https://github.com/tomasbjerre/wisp/commit/d13b0ded7b84363))
+ - fix(android): simplify tracking controls back to Pause/Continue + Stop ([967dc99ece0d523](https://github.com/tomasbjerre/wisp/commit/967dc99ece0d523))
+ - fix(android): improve nearest-city precision by checking more candidates ([728e705c40b9cc6](https://github.com/tomasbjerre/wisp/commit/728e705c40b9cc6))
+ - ci(android): fix unsigned-bundle rejection on Play publish ([359027459f9b35a](https://github.com/tomasbjerre/wisp/commit/359027459f9b35a))
+ - feat(android): rename app to "Wisp Tracker" ([013cdfca94ac0ac](https://github.com/tomasbjerre/wisp/commit/013cdfca94ac0ac))
 ## v0.1.0 (2026-09-22)
 
  - feat(android): nearest city per activity, full CSV export, per-row delete ([3ad1aac0bfec34c](https://github.com/tomasbjerre/wisp/commit/3ad1aac0bfec34c))
