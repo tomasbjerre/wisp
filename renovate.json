@@ -8,10 +8,6 @@
       "platformAutomerge": true
     },
     {
-      "matchUpdateTypes": ["major"],
-      "automerge": false
-    },
-    {
       // Kotlin, its Compose compiler plugin, and KSP must move together — KSP's
       // version is only valid for one specific Kotlin version (e.g.
       // "2.0.21-1.0.28"), and the Compose compiler plugin must match the Kotlin
