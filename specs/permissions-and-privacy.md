@@ -15,6 +15,13 @@
   be able to tap that notification to return to the Tracking screen.
 - Notification permission, on platforms that require it to show that
   in-progress-recording indicator.
+- An exemption from the platform's battery optimization for the app, since
+  aggressive battery management is a common real-world cause of
+  background recording being paused or killed even with the above in
+  place (e.g. phone in a pocket, screen off). Offer this from the
+  Tracking screen when it isn't already granted (see
+  [UI Flows](ui-flows.md#2-tracking-active-recording)); this is advisory,
+  not a permission — recording still works if the user declines.
 
 ## Denied or restricted permission
 
@@ -32,6 +39,12 @@
 - All data (sessions, points) stays on-device. Nothing is uploaded anywhere
   by default — there is no backend in scope for Wisp (see
   [Overview](overview.md)).
+- One exception: looking up the nearest city name for a finished session
+  (see [Data Model](data-model.md#session)) sends that session's start
+  coordinates to the platform's geocoding service, which on most devices
+  means a Google server. This is best-effort — if it fails (no network, no
+  geocoding backend on the device) the session simply has no city name,
+  nothing else about it is affected.
 - No analytics or crash reporting that transmits location data.
 - Deleting a session (see [UI Flows](ui-flows.md)) must remove its points
   too — no orphaned data left behind.

@@ -9,8 +9,12 @@ The app's entry point.
 
 - A prominent **Start** button/action, always available when idle.
 - Below it, a list of past sessions (most recent first), each row showing:
-  date/time, distance, duration, average speed.
+  date/time, nearest city if known (see
+  [Data Model](data-model.md#session)), distance, duration, average speed.
 - Tapping a row opens that session's **Detail** screen.
+- Each row also has a **Delete** action of its own (e.g. a trash icon),
+  with the same confirmation step as Detail's Delete, so a session can be
+  removed without opening it first.
 - An empty state ("No activities yet — tap Start to record your first
   route.") when there is no history.
 - An **Export CSV** action (see [Export](export.md)), disabled or hidden
@@ -31,22 +35,33 @@ screen while recording.
   [Accessibility](accessibility.md#text-contrast)): current speed,
   elapsed distance, elapsed time.
 - **Pause/Resume** control and a **Stop** control.
-- Stopping navigates to that session's Detail screen (the session is now
-  finished).
+- Tapping Stop doesn't finalize immediately — it swaps that control row
+  for a confirmation step (**Back**/**Continue**): Back cancels and
+  returns to the normal Pause/Resume + Stop row (still recording),
+  Continue finalizes the session. This avoids ending a recording on an
+  accidental tap.
+- Confirming Stop navigates to that session's Detail screen (the session
+  is now finished).
 - If location permission is missing or denied, this screen must explain
   what's needed and offer a way to grant it, rather than silently
   recording nothing (see [Permissions & Privacy](permissions-and-privacy.md)).
+- If Wisp isn't exempt from battery optimization, this screen says so and
+  offers a way to fix it (see
+  [Permissions & Privacy](permissions-and-privacy.md#required-access)) —
+  advisory, not blocking: recording still works either way.
 
 ## 3. Detail (a past or just-finished session)
 
 - A map showing the full recorded route, with start and end markers (see
   [Accessibility](accessibility.md#map-markers-and-route)).
 - Summary stats below the map, in their own panel (see
-  [Accessibility](accessibility.md#text-contrast)): date/time, distance,
+  [Accessibility](accessibility.md#text-contrast)): date/time, nearest
+  city if known (see [Data Model](data-model.md#session)), distance,
   duration, average speed, max speed.
-- An **Export Image** action (see [Export](export.md#single-activity-as-an-image)).
-- A **Delete** action, with a confirmation step before it actually
-  deletes.
+- **Back**, **Export Image** (see
+  [Export](export.md#single-activity-as-an-image)), and **Delete**
+  controls, in that order, below the map.
+- Delete has a confirmation step before it actually deletes.
 
 ## Feedback and support
 

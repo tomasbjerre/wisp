@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,9 +47,19 @@ fun TrackingScreen(onStopped: (sessionId: Long) -> Unit) {
         }
     }
 
+    // TrackingService.start() is async, so right after entering this screen, `state` can
+    // still briefly be the previous session's leftover "stopped" state (isRecording =
+    // false, sessionId = the OLD session) — react to a stop only once this screen has
+    // actually observed its own session start, or a second-in-a-row recording bounces
+    // straight back to the previous session's Detail screen instead of starting.
+    var hasStartedRecording by remember { mutableStateOf(false) }
+    LaunchedEffect(state.isRecording) {
+        if (state.isRecording) hasStartedRecording = true
+    }
+
     LaunchedEffect(state.isRecording, state.sessionId) {
         val id = state.sessionId
-        if (hasRequestedStart && !state.isRecording && id != null) onStopped(id)
+        if (hasStartedRecording && !state.isRecording && id != null) onStopped(id)
     }
 
     if (!permissions.hasForeground) {
@@ -69,6 +80,18 @@ fun TrackingScreen(onStopped: (sessionId: Long) -> Unit) {
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
+                if (!permissions.hasBatteryExemption) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "Battery optimization may pause recording in the background.",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = permissions::requestBatteryExemption) {
+                            Text("Fix")
+                        }
+                    }
+                }
                 Text(Formatting.speedKmh(state.currentSpeedMps), style = MaterialTheme.typography.displaySmall)
                 Text(
                     "${Formatting.distance(state.distanceMeters)} · ${Formatting.duration(state.elapsedSeconds)}",
@@ -83,21 +106,40 @@ fun TrackingScreen(onStopped: (sessionId: Long) -> Unit) {
 @Composable
 private fun TrackingControls(isPaused: Boolean) {
     val context = LocalContext.current
+    // Tapping Stop swaps this row for a Back/Continue confirmation instead of
+    // finalizing immediately — see specs/ui-flows.md#2-tracking-active-recording.
+    var confirmingStop by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        OutlinedButton(
-            onClick = { if (isPaused) TrackingService.resume(context) else TrackingService.pause(context) },
-            modifier = Modifier.weight(1f),
-        ) {
-            Text(if (isPaused) "Resume" else "Pause")
-        }
-        Button(
-            onClick = { TrackingService.stop(context) },
-            modifier = Modifier.weight(1f),
-        ) {
-            Text("Stop")
+        if (confirmingStop) {
+            OutlinedButton(
+                onClick = { confirmingStop = false },
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("Back")
+            }
+            Button(
+                onClick = { TrackingService.stop(context) },
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("Continue")
+            }
+        } else {
+            OutlinedButton(
+                onClick = { if (isPaused) TrackingService.resume(context) else TrackingService.pause(context) },
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(if (isPaused) "Resume" else "Pause")
+            }
+            Button(
+                onClick = { confirmingStop = true },
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("Stop")
+            }
         }
     }
 }
@@ -107,7 +149,7 @@ private fun MissingPermission(onGrant: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                "Wisp needs location access to record your route.",
+                "Wisp Tracking needs location access to record your route.",
                 style = MaterialTheme.typography.bodyLarge,
             )
             Button(onClick = onGrant, modifier = Modifier.padding(top = 16.dp)) {
