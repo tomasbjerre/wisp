@@ -45,8 +45,8 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = gitCommitCount()
-        // `version` in gradle.properties, driven by Conventional Commits via
-        // se.bjurr.gitchangelog.git-changelog-gradle-plugin — see android/build.gradle.kts.
+        // `version` in gradle.properties for local builds; CI overrides it with
+        // -Pversion=<latest tag> — see .github/workflows/release_android.yml.
         versionName = project.version.toString()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

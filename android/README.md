@@ -44,7 +44,7 @@ export ANDROID_HOME=/path/to/android/sdk   # needs platform-tools, platforms;and
 
 ## Code quality
 
-These all run in CI (`.github/workflows/ci.yml`) and locally:
+These all run in CI (`.github/workflows/ci_android.yml`) and locally:
 
 ```bash
 ./gradlew ktlintCheck   # Kotlin style (ktlintFormat to auto-fix)
@@ -105,28 +105,34 @@ against a connected device/emulator with:
 adb pull /sdcard/wisp-screenshots .
 ```
 
-The release workflow runs this automatically on every release (see below)
-and commits the result to `docs/screenshots/` and
+The `release_android` workflow runs this automatically on every release (see
+below) and commits the result to `docs/screenshots/` and
 `app/src/main/play/listings/en-US/graphics/phone-screenshots/`.
 
 ## Play Store release
 
-Releasing is one manual click (`workflow_dispatch` on
-[`.github/workflows/release.yml`](../.github/workflows/release.yml)) —
-everything after that is automated:
+Releasing is two manual clicks, in order:
 
-1. Bumps `version` in `gradle.properties` from
-   [Conventional Commits](../AGENTS.md) since the last tag
-   ([git-changelog-gradle-plugin](https://github.com/tomasbjerre/git-changelog-gradle-plugin)).
-2. Captures fresh screenshots on an emulator and commits them.
-3. Commits the version bump, tags it (`vX.Y.Z`), and updates
-   `../CHANGELOG.md`.
-4. Builds a signed App Bundle and uploads it to the Play Console's
-   **internal** track
-   ([Gradle Play Publisher](https://github.com/Triple-T/gradle-play-publisher)).
-5. Publishes a GitHub Release with notes generated from the same commits
-   ([git-changelog-github-release](https://github.com/tomasbjerre/git-changelog-github-release)),
-   with the App Bundle attached.
+1. [`.github/workflows/release.yml`](../.github/workflows/release.yml)
+   (`workflow_dispatch`) — implementation-agnostic, and lives at the repo
+   root rather than here because it isn't Android-specific:
+   - Determines the next version from [Conventional
+     Commits](../AGENTS.md) since the last tag
+     ([git-changelog-command-line](https://github.com/tomasbjerre/git-changelog-command-line)).
+   - Prepends a section to `../CHANGELOG.md`, commits it, and tags the
+     release (`vX.Y.Z`).
+   - Publishes a GitHub Release with notes generated from the same commits
+     ([git-changelog-github-release](https://github.com/tomasbjerre/git-changelog-github-release)).
+2. [`.github/workflows/release_android.yml`](../.github/workflows/release_android.yml)
+   (`workflow_dispatch`) — builds and ships the Android app for whatever
+   tag `release.yml` just created (it doesn't create a tag or touch the
+   changelog itself):
+   - Uses the latest tag in the repo as the version.
+   - Captures fresh screenshots on an emulator and commits them.
+   - Builds a signed App Bundle and APK, uploads the bundle to the Play
+     Console's **internal** track
+     ([Gradle Play Publisher](https://github.com/Triple-T/gradle-play-publisher)),
+     and attaches both to the GitHub Release for that tag.
 
 Promoting a release from internal → production is a manual step in the
 [Play Console](https://play.google.com/console) — intentionally not

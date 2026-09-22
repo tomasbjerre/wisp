@@ -1,0 +1,153 @@
+name: Release Android
+
+# Manual trigger, run after "Release" has tagged a version (see release.yml). Builds
+# and publishes the Android app for the latest tag in the repo — it doesn't create a
+# tag or touch CHANGELOG.md itself.
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: android
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run instrumented screenshot test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          working-directory: ./android
+          script: |
+            ./gradlew connectedDebugAndroidTest
+            adb pull /sdcard/wisp-screenshots screenshots-raw
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: android/screenshots-raw
+          retention-days: 1
+
+  release:
+    needs: screenshots
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Use the latest tag as the version
+        run: |
+          RELEASE_TAG=$(git describe --tags --abbrev=0)
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${RELEASE_TAG}^" 2>/dev/null || true)
+          echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
+          echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> "$GITHUB_ENV"
+          echo "VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+
+      - name: Download screenshots
+        uses: actions/download-artifact@v4
+        with:
+          name: screenshots
+          path: android/app/src/main/play/listings/en-US/graphics/phone-screenshots-raw
+
+      - name: Install screenshots into the Play listing and README
+        run: |
+          mkdir -p app/src/main/play/listings/en-US/graphics/phone-screenshots
+          cp app/src/main/play/listings/en-US/graphics/phone-screenshots-raw/*.png \
+            app/src/main/play/listings/en-US/graphics/phone-screenshots/
+          rm -rf app/src/main/play/listings/en-US/graphics/phone-screenshots-raw
+          mkdir -p ../docs/screenshots
+          cp app/src/main/play/listings/en-US/graphics/phone-screenshots/*.png ../docs/screenshots/
+
+      - name: Write this release's notes (Play)
+        run: |
+          echo "Wisp $VERSION" > app/src/main/play/release-notes/en-US/default.txt
+          git log "${PREVIOUS_TAG}..${RELEASE_TAG}" \
+            --pretty=format:'- %s' | head -c 450 >> app/src/main/play/release-notes/en-US/default.txt || true
+
+      - name: Commit screenshots and release notes (local only — not pushed yet)
+        run: |
+          git add app/src/main/play ../docs/screenshots
+          if git diff --staged --quiet; then
+            echo "No screenshot changes to commit."
+            echo "SCREENSHOTS_COMMITTED=false" >> "$GITHUB_ENV"
+          else
+            git commit -m "chore(android): update screenshots and play listing"
+            echo "SCREENSHOTS_COMMITTED=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build signed release bundle and APK
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew -Pversion="$VERSION" assembleRelease bundleRelease
+
+      - name: Publish to Play Console (internal track)
+        env:
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: ./gradlew -Pversion="$VERSION" publishReleaseBundle publishListing
+
+      # Nothing above this point touched the remote — if Play publish (or anything
+      # before it) fails, the workflow just stops and re-running starts clean. Only
+      # push once we know the release actually succeeded.
+      - name: Push screenshots and release notes
+        if: env.SCREENSHOTS_COMMITTED == 'true'
+        run: git push origin HEAD
+
+      - name: Attach the release build to the GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" \
+              app/build/outputs/apk/release/app-release.apk \
+              app/build/outputs/bundle/release/app-release.aab \
+              --clobber
+          else
+            echo "::warning::No GitHub release found for ${RELEASE_TAG} (run the 'Release' workflow first) — skipping upload."
+          fi
