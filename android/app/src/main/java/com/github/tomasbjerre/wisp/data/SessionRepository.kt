@@ -63,6 +63,18 @@ class SessionRepository(
 
     suspend fun deleteSession(session: Session) = sessionDao.delete(session)
 
+    /**
+     * Best-effort enrichment, set after the session is already finished — see
+     * com.github.tomasbjerre.wisp.location.GeocodingService.
+     */
+    suspend fun updateNearestCity(
+        sessionId: Long,
+        city: String,
+    ) {
+        val session = sessionDao.getById(sessionId) ?: return
+        sessionDao.update(session.copy(nearestCity = city))
+    }
+
     /** See specs/tracking.md#what-must-survive-interruption. */
     suspend fun recoverUnfinishedSession(): Session? {
         val unfinished = sessionDao.findUnfinished() ?: return null

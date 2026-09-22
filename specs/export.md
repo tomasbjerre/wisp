@@ -7,16 +7,18 @@ the file goes.
 
 ## History as CSV
 
-A user can export their full history as a single CSV file, so it can be
-opened in a spreadsheet (Excel, Google Sheets, etc.).
+A user can export their full history — including every recorded GPS
+point — as CSV files, so it can be opened in a spreadsheet (Excel, Google
+Sheets, etc.) or fed into other tools.
 
 ### Scope
 
-- Exports the session **summaries** in history — one row per session — not
-  the raw per-point GPS track. A spreadsheet is for scanning/sorting a list
-  of activities, not for route geometry; someone who wants the full track
-  data for one session already has it via that session's map (see
-  [UI Flows](ui-flows.md#3-detail-a-past-or-just-finished-session)).
+- Exports **two files together**: session summaries (one row per session)
+  and track points (one row per recorded GPS point, across every
+  session). Someone who only wants to browse activities uses the
+  summaries file; someone who wants route geometry — for a GIS tool, a
+  custom analysis, etc. — has it too, without opening each session's map
+  individually.
 - Exports everything — there is no date-range or per-session picker. The
   history list is already the way to work with a subset (open one session
   at a time). If a real need for partial export shows up later, it should
@@ -29,12 +31,19 @@ opened in a spreadsheet (Excel, Google Sheets, etc.).
 An "Export CSV" action reachable from Home (see
 [UI Flows](ui-flows.md#1-home)), near — but visually distinct from — the
 feedback link, so it doesn't compete with the primary Start action.
-Disabled or hidden when there is no history yet (nothing to export).
+Disabled or hidden when there is no history yet (nothing to export). Both
+files are handed to the platform's share sheet together, in one action.
 
 ### Format
 
-One CSV file, UTF-8, comma-separated, with a header row. One data row per
-session, most recent first (same order as the history list).
+Both files are UTF-8, comma-separated, with a header row. Times are in
+UTC (not the device's local time zone) so the files are unambiguous
+regardless of where they're opened. Field names are the header rows
+exactly as listed below — stable, so a spreadsheet formula or script
+built against one export keeps working against a later one.
+
+**Session summaries** — one data row per session, most recent first (same
+order as the history list):
 
 | Column | Source | Format |
 |---|---|---|
@@ -44,10 +53,16 @@ session, most recent first (same order as the history list).
 | `average_speed_kmh` | `Session.averageSpeedMps` | number, ×3.6, 1 decimal |
 | `max_speed_kmh` | `Session.maxSpeedMps` | number, ×3.6, 1 decimal |
 
-Times are in UTC (not the device's local time zone) so the file is
-unambiguous regardless of where it's opened. Field names are the header
-row exactly as listed — stable, so a spreadsheet formula or script built
-against one export keeps working against a later one.
+**Track points** — one data row per point, grouped by session (most
+recent session first) and in recorded order within each session:
+
+| Column | Source | Format |
+|---|---|---|
+| `session_started_at` | `Session.startedAt` | ISO 8601 — matches that point's session in the summaries file |
+| `timestamp` | `TrackPoint.timestamp` | ISO 8601 |
+| `latitude` | `TrackPoint.latitude` | number, degrees, 6 decimals |
+| `longitude` | `TrackPoint.longitude` | number, degrees, 6 decimals |
+| `speed_kmh` | `TrackPoint.speedMps` | number, ×3.6, 1 decimal; blank if the platform didn't report a speed for that point |
 
 ## Single activity as an image
 

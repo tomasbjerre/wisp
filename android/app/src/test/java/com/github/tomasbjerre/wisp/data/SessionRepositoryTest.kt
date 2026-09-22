@@ -103,6 +103,18 @@ class SessionRepositoryTest {
         }
 
     @Test
+    fun `the nearest city can be recorded for a finished session`() =
+        runTest {
+            val sessionId = repository.startSession(startedAt = 0)
+            repository.finishSession(sessionId, endedAt = 1_000)
+
+            repository.updateNearestCity(sessionId, "Stockholm")
+
+            val session = repository.observeSession(sessionId).first()!!
+            assertThat(session.nearestCity).isEqualTo("Stockholm")
+        }
+
+    @Test
     fun `an unfinished session is recovered and finalized at its last point`() =
         runTest {
             // Simulates the app being killed mid-recording (specs/tracking.md#what-must-survive-interruption).

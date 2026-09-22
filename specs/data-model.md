@@ -17,10 +17,13 @@ One recorded activity.
 | `durationSeconds` | number | total recording time, excluding paused time |
 | `averageSpeedMps` | number | `distanceMeters / durationSeconds` |
 | `maxSpeedMps` | number | highest recorded current-speed sample |
+| `nearestCity` | text, nullable | name of the city/place nearest the session's start point; null until resolved, or if it couldn't be resolved (see [Permissions & Privacy](permissions-and-privacy.md#data-handling)) |
 
 `distanceMeters`, `durationSeconds`, `averageSpeedMps`, and `maxSpeedMps`
 are derived from the session's points but should be stored (not
 recomputed on every read) so history lists stay cheap to render.
+`nearestCity` is resolved after the session finishes and stored once
+known — it never blocks finishing a session or navigating away from it.
 
 ## TrackPoint
 
