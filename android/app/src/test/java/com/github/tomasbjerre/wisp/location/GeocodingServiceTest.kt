@@ -23,7 +23,7 @@ class GeocodingServiceTest {
                 adminArea = "Stockholm"
             }
 
-        assertThat(pickCityName(address)).isEqualTo("Stockholm")
+        assertThat(pickCityName(listOf(address))).isEqualTo("Stockholm")
     }
 
     @Test
@@ -34,14 +34,14 @@ class GeocodingServiceTest {
                 adminArea = "Some Region"
             }
 
-        assertThat(pickCityName(address)).isEqualTo("Some County")
+        assertThat(pickCityName(listOf(address))).isEqualTo("Some County")
     }
 
     @Test
     fun `adminArea is the last resort`() {
         val address = Address(Locale.getDefault()).apply { adminArea = "Some Region" }
 
-        assertThat(pickCityName(address)).isEqualTo("Some Region")
+        assertThat(pickCityName(listOf(address))).isEqualTo("Some Region")
     }
 
     @Test
@@ -52,11 +52,23 @@ class GeocodingServiceTest {
                 adminArea = "Some Region"
             }
 
-        assertThat(pickCityName(address)).isEqualTo("Some Region")
+        assertThat(pickCityName(listOf(address))).isEqualTo("Some Region")
     }
 
     @Test
-    fun `no address at all yields no city name`() {
-        assertThat(pickCityName(null)).isNull()
+    fun `no candidates at all yields no city name`() {
+        assertThat(pickCityName(emptyList())).isNull()
+    }
+
+    @Test
+    fun `a locality on a later candidate beats a broader field on the closest match`() {
+        val closest = Address(Locale.getDefault()).apply { adminArea = "Blekinge län" }
+        val nearby =
+            Address(Locale.getDefault()).apply {
+                locality = "Karlskrona"
+                adminArea = "Blekinge län"
+            }
+
+        assertThat(pickCityName(listOf(closest, nearby))).isEqualTo("Karlskrona")
     }
 }

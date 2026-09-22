@@ -22,10 +22,13 @@ class GeocodingService(
     ): String? {
         if (!Geocoder.isPresent()) return null
         val geocoder = Geocoder(context, Locale.getDefault())
-        val addresses = runCatching { lookup(geocoder, latitude, longitude) }.getOrNull()
-        return pickCityName(addresses?.firstOrNull())
+        val addresses = runCatching { lookup(geocoder, latitude, longitude) }.getOrNull() ?: emptyList()
+        return pickCityName(addresses)
     }
 
+    // More than one candidate: the closest match isn't always the one with a proper
+    // locality filled in (e.g. a point right at a municipality boundary), but a nearby
+    // candidate returned for the same coordinate often is — see [pickCityName].
     private suspend fun lookup(
         geocoder: Geocoder,
         latitude: Double,
@@ -33,16 +36,26 @@ class GeocodingService(
     ): List<Address>? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             suspendCancellableCoroutine { continuation ->
-                geocoder.getFromLocation(latitude, longitude, 1) { continuation.resumeWith(Result.success(it)) }
+                geocoder.getFromLocation(latitude, longitude, MAX_RESULTS) {
+                    continuation.resumeWith(Result.success(it))
+                }
             }
         } else {
             @Suppress("DEPRECATION")
-            geocoder.getFromLocation(latitude, longitude, 1)
+            geocoder.getFromLocation(latitude, longitude, MAX_RESULTS)
         }
+
+    private companion object {
+        const val MAX_RESULTS = 5
+    }
 }
 
-/** Picks the best available place name from a geocoded address, or null if none is usable. */
-fun pickCityName(address: Address?): String? =
-    address?.locality?.takeIf { it.isNotBlank() }
-        ?: address?.subAdminArea?.takeIf { it.isNotBlank() }
-        ?: address?.adminArea?.takeIf { it.isNotBlank() }
+/**
+ * Picks the best available place name across every geocoded candidate, preferring the
+ * most specific field (locality) available on ANY candidate over a broader one
+ * (subAdminArea, then adminArea) on the top match — see [GeocodingService.lookup].
+ */
+fun pickCityName(addresses: List<Address>): String? =
+    addresses.firstNotNullOfOrNull { it.locality?.takeIf { name -> name.isNotBlank() } }
+        ?: addresses.firstNotNullOfOrNull { it.subAdminArea?.takeIf { name -> name.isNotBlank() } }
+        ?: addresses.firstNotNullOfOrNull { it.adminArea?.takeIf { name -> name.isNotBlank() } }
