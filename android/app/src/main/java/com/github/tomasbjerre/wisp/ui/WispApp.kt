@@ -1,5 +1,7 @@
 package com.github.tomasbjerre.wisp.ui
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,7 +23,19 @@ private const val ARG_SESSION_ID = "sessionId"
 fun WispApp(repository: SessionRepository) {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = ROUTE_HOME) {
+    // Every screen's map/panel boundary sits at a different height (see
+    // specs/ui-flows.md), so the library's default crossfade briefly composes both
+    // screens on top of each other and that boundary visibly jumps between the two
+    // positions. Cutting the transition avoids that flicker; nothing in the spec
+    // asks for an animated transition anyway.
+    NavHost(
+        navController = navController,
+        startDestination = ROUTE_HOME,
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None },
+    ) {
         composable(ROUTE_HOME) {
             HomeScreen(
                 repository = repository,

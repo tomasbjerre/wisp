@@ -55,8 +55,13 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(session?.let { Formatting.dateTime(it.startedAt) } ?: "") },
-                navigationIcon = { TextButton(onClick = onBack) { Text("Back") } },
+                title = {
+                    Text(
+                        session?.let {
+                            Formatting.dateTime(it.startedAt) + (it.nearestCity?.let { city -> " · $city" } ?: "")
+                        } ?: "",
+                    )
+                },
             )
         },
     ) { padding ->
@@ -69,6 +74,7 @@ fun DetailScreen(
 
             SessionSummaryPanel(
                 session = session,
+                onBack = onBack,
                 onExportImage = {
                     val map = mapView ?: return@SessionSummaryPanel
                     val current = session ?: return@SessionSummaryPanel
@@ -98,24 +104,23 @@ fun DetailScreen(
 @Composable
 private fun SessionSummaryPanel(
     session: Session?,
+    onBack: () -> Unit,
     onExportImage: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-        if (session != null) {
-            Text(
-                "${Formatting.distance(session.distanceMeters)} · ${Formatting.duration(session.durationSeconds)}",
-                style = MaterialTheme.typography.titleLarge,
-            )
-            Text(
-                "Avg ${Formatting.speedKmh(session.averageSpeedMps)} · Max ${Formatting.speedKmh(session.maxSpeedMps)}",
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
+        // Both lines always render, even before `session` loads (it's null for a frame or
+        // two while its Flow's first value is still in flight) — otherwise the button row
+        // below visibly jumps down once the text pops in. See specs/ui-flows.md#3-detail.
+        Text(distanceAndDurationLine(session), style = MaterialTheme.typography.titleLarge)
+        Text(speedsLine(session), style = MaterialTheme.typography.bodyLarge)
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            OutlinedButton(onClick = onBack, modifier = Modifier.weight(1f)) {
+                Text("Back")
+            }
             // See specs/export.md#single-activity-as-an-image.
             OutlinedButton(onClick = onExportImage, enabled = session != null, modifier = Modifier.weight(1f)) {
                 Text("Export Image")
@@ -126,3 +131,9 @@ private fun SessionSummaryPanel(
         }
     }
 }
+
+private fun distanceAndDurationLine(session: Session?): String =
+    session?.let { "${Formatting.distance(it.distanceMeters)} · ${Formatting.duration(it.durationSeconds)}" } ?: ""
+
+private fun speedsLine(session: Session?): String =
+    session?.let { "Avg ${Formatting.speedKmh(it.averageSpeedMps)} · Max ${Formatting.speedKmh(it.maxSpeedMps)}" } ?: ""
