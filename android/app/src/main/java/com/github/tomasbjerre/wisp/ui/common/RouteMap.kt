@@ -16,6 +16,13 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 
 private const val DEFAULT_ZOOM = 17.0
+
+// Before the route loads (a real gap: e.g. Detail's points load asynchronously after
+// this screen first composes), there's nothing to center on yet. (0, 0) is open ocean,
+// so zooming to street level there — as if it were a real position — flashed a
+// full-bleed solid-color "ocean tile" for a frame or two. Zoomed all the way out, it
+// reads as an unremarkable blank world map instead.
+private const val FALLBACK_ZOOM = 2.0
 private val FALLBACK_CENTER = GeoPoint(0.0, 0.0)
 
 // See specs/accessibility.md#map-markers-and-route: a single line color isn't
@@ -46,6 +53,9 @@ fun RouteMap(
     onMapViewReady: ((MapView) -> Unit)? = null,
 ) {
     val mapViewRef = remember { arrayOfNulls<MapView>(1) }
+    // Not Compose state on purpose (mirrors mapViewRef above) — flips once, the first
+    // time real data arrives, and must never itself trigger a recomposition.
+    val hasZoomedToRoute = remember { booleanArrayOf(false) }
 
     AndroidView(
         modifier = modifier,
@@ -53,7 +63,8 @@ fun RouteMap(
             MapView(context).apply {
                 setTileSource(TileSourceFactory.MAPNIK)
                 setMultiTouchControls(true)
-                controller.setZoom(DEFAULT_ZOOM)
+                controller.setZoom(FALLBACK_ZOOM)
+                controller.setCenter(FALLBACK_CENTER)
                 mapViewRef[0] = this
                 onMapViewReady?.invoke(this)
             }
@@ -68,9 +79,18 @@ fun RouteMap(
                 mapView.overlays.add(dotMarker(mapView, points.first(), START_MARKER_COLOR, density))
                 val endColor = if (isLive) CURRENT_POSITION_COLOR else END_MARKER_COLOR
                 mapView.overlays.add(dotMarker(mapView, points.last(), endColor, density))
-                mapView.controller.animateTo(points.last())
-            } else {
-                mapView.controller.setCenter(FALLBACK_CENTER)
+                if (!hasZoomedToRoute[0]) {
+                    // The very first time: jump straight there instead of animating — an
+                    // animated pan from the fallback world view (still at street-level
+                    // zoom by the time it starts) would fly across whatever ocean sits
+                    // between (0, 0) and the real point, flashing ocean tiles the whole
+                    // way. Later points are already nearby, so animate those as normal.
+                    mapView.controller.setZoom(DEFAULT_ZOOM)
+                    mapView.controller.setCenter(points.last())
+                    hasZoomedToRoute[0] = true
+                } else {
+                    mapView.controller.animateTo(points.last())
+                }
             }
             mapView.invalidate()
         },
