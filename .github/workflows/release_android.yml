@@ -119,18 +119,21 @@ jobs:
             echo "SCREENSHOTS_COMMITTED=true" >> "$GITHUB_ENV"
           fi
 
-      - name: Build signed release bundle and APK
+      # Signing config is resolved from ANDROID_KEYSTORE_* env vars at Gradle
+      # *evaluation* time (see android/app/build.gradle.kts), not persisted across
+      # invocations. Building and publishing in one ./gradlew call, sharing one
+      # evaluation, keeps the bundle actually signed all the way to upload — a prior
+      # version split these into two invocations and the second one (with only
+      # ANDROID_PUBLISHER_CREDENTIALS set) silently re-signed the bundle as unsigned,
+      # which Play rejects with "All uploaded bundles must be signed."
+      - name: Build signed release bundle and APK, then publish to Play Console
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew -Pversion="$VERSION" assembleRelease bundleRelease
-
-      - name: Publish to Play Console (internal track)
-        env:
           ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-        run: ./gradlew -Pversion="$VERSION" publishReleaseBundle publishListing
+        run: ./gradlew -Pversion="$VERSION" assembleRelease bundleRelease publishReleaseBundle publishListing
 
       # Nothing above this point touched the remote — if Play publish (or anything
       # before it) fails, the workflow just stops and re-running starts clean. Only
