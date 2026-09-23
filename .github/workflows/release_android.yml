@@ -77,6 +77,9 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+          # See release.yml: the default GITHUB_TOKEN can't push to main under its
+          # ruleset (required "build" check) — RELEASE_PAT (an admin-owned PAT) can.
+          token: ${{ secrets.RELEASE_PAT }}
 
       - name: Set up JDK
         uses: actions/setup-java@v5

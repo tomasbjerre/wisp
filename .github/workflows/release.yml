@@ -28,6 +28,12 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+          # The default GITHUB_TOKEN pushes as github-actions[bot], which main's
+          # ruleset (required "build" status check) doesn't exempt — only a repo-admin
+          # role does. RELEASE_PAT is a fine-grained PAT scoped to this repo, owned by
+          # an actual admin account, so its push bypasses the rule the same way a
+          # manual admin push does.
+          token: ${{ secrets.RELEASE_PAT }}
 
       - name: Set up JDK
         # Needed by the git-changelog-github-release action below, not by this job's
