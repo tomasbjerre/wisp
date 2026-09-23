@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import com.github.tomasbjerre.wisp.ui.TestTags
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
@@ -51,8 +52,11 @@ class InstructionVideoTest {
         composeRule.waitForIdle()
         Thread.sleep(MAP_TILE_SETTLE_MILLIS)
 
-        // Back to Home, then start a new session.
-        composeRule.activity.onBackPressedDispatcher.onBackPressed()
+        // Back to Home, then start a new session. Via UiDevice (a system-level back
+        // gesture), not onBackPressedDispatcher directly — that must be called on the
+        // main thread and crashes ("setCurrentState must be called on the main thread")
+        // when invoked from the test thread like this.
+        UiDevice.getInstance(instrumentation).pressBack()
         composeRule.waitForIdle()
         Thread.sleep(PAUSE_MILLIS)
 
