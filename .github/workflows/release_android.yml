@@ -31,7 +31,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Run instrumented screenshot test
+      - name: Run instrumented screenshot and video test
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -39,7 +39,17 @@ jobs:
           arch: x86_64
           working-directory: ./android
           script: |
+            # Fix a location up front so Tracking has a real position to show instead of
+            # hanging on "Finding your location…" — see InstructionVideoTest.
+            adb emu geo fix 18.0686 59.3293
+            # Stopped with SIGINT (not left to hit --time-limit) so screenrecord finalizes
+            # the mp4 container properly instead of producing a truncated file.
+            adb shell screenrecord --time-limit 180 /sdcard/wisp-instruction-video.mp4 &
+            RECORD_PID=$!
             ./gradlew connectedDebugAndroidTest
+            kill -INT "$RECORD_PID" 2>/dev/null || true
+            sleep 2
+            adb pull /sdcard/wisp-instruction-video.mp4 instruction-video.mp4 || true
             adb pull /sdcard/wisp-screenshots screenshots-raw
 
       - name: Upload screenshots
@@ -48,6 +58,14 @@ jobs:
           name: screenshots
           path: android/screenshots-raw
           retention-days: 1
+
+      - name: Upload instruction video
+        uses: actions/upload-artifact@v4
+        with:
+          name: instruction-video
+          path: android/instruction-video.mp4
+          retention-days: 1
+          if-no-files-found: warn
 
   release:
     needs: screenshots
@@ -92,6 +110,15 @@ jobs:
         with:
           name: screenshots
           path: android/app/src/main/play/listings/en-US/graphics/phone-screenshots-raw
+
+      # If the video step upstream produced nothing, this artifact still exists (empty)
+      # because of that step's if-no-files-found: warn — the video is attached to the
+      # GitHub Release for human review, it's never required for publishing to Play.
+      - name: Download instruction video
+        uses: actions/download-artifact@v4
+        with:
+          name: instruction-video
+          path: android/video-raw
 
       - name: Install screenshots into the Play listing and README
         run: |
@@ -147,10 +174,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" \
-              app/build/outputs/apk/release/app-release.apk \
-              app/build/outputs/bundle/release/app-release.aab \
-              --clobber
+            UPLOAD_FILES=(
+              app/build/outputs/apk/release/app-release.apk
+              app/build/outputs/bundle/release/app-release.aab
+            )
+            if [ -s video-raw/instruction-video.mp4 ]; then
+              UPLOAD_FILES+=(video-raw/instruction-video.mp4)
+            fi
+            gh release upload "$RELEASE_TAG" "${UPLOAD_FILES[@]}" --clobber
           else
             echo "::warning::No GitHub release found for ${RELEASE_TAG} (run the 'Release' workflow first) — skipping upload."
           fi

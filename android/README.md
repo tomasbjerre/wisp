@@ -129,15 +129,33 @@ Releasing is two manual clicks, in order:
    changelog itself):
    - Uses the latest tag in the repo as the version.
    - Captures fresh screenshots on an emulator and commits them.
+   - Records a short screen capture of the same emulator run walking
+     through Home → a past session's Detail → starting and stopping a new
+     session ([`InstructionVideoTest`](app/src/androidTest/java/com/github/tomasbjerre/wisp/InstructionVideoTest.kt)),
+     and attaches it to the GitHub Release as `instruction-video.mp4`.
    - Builds a signed App Bundle and APK, uploads the bundle to the Play
      Console's **internal** track
      ([Gradle Play Publisher](https://github.com/Triple-T/gradle-play-publisher)),
-     and attaches both to the GitHub Release for that tag.
+     and attaches both (plus the video above) to the GitHub Release for
+     that tag.
 
 Promoting a release from internal → production is a manual step in the
 [Play Console](https://play.google.com/console) — intentionally not
 automated, so a real person always looks at a release before it reaches
 real users.
+
+### Store listing's instruction video
+
+Play Console's listing asks for a video ("Instruktionsvideo") that clearly
+shows the app in use — but that field only accepts a **YouTube link**,
+there's no direct file upload, so this can't be fully automated end to
+end. After a release:
+
+1. Download `instruction-video.mp4` from the GitHub Release.
+2. If it's worth updating the public listing (first release, or the UI
+   changed enough to matter — not necessarily every release), upload it
+   to a YouTube video you control and copy its URL.
+3. Paste that URL into the store listing's video field in Play Console.
 
 ### One-time setup (not automatable — Google account actions)
 
