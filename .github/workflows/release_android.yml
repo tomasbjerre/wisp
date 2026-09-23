@@ -185,7 +185,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+          # git-changelog-github-release (see release.yml) creates the GitHub Release
+          # itself tagged "$VERSION" (no "v"), even though the git tag it's cut from is
+          # "$RELEASE_TAG" ("v$VERSION") — gh release commands need the former.
+          if gh release view "$VERSION" >/dev/null 2>&1; then
             UPLOAD_FILES=()
             [ -f app/build/outputs/apk/release/app-release.apk ] &&
               UPLOAD_FILES+=(app/build/outputs/apk/release/app-release.apk)
@@ -199,10 +202,10 @@ jobs:
               [ -f "$f" ] && UPLOAD_FILES+=("$f")
             done
             if [ ${#UPLOAD_FILES[@]} -gt 0 ]; then
-              gh release upload "$RELEASE_TAG" "${UPLOAD_FILES[@]}" --clobber
+              gh release upload "$VERSION" "${UPLOAD_FILES[@]}" --clobber
             else
-              echo "::warning::Nothing to attach to ${RELEASE_TAG}."
+              echo "::warning::Nothing to attach to ${VERSION}."
             fi
           else
-            echo "::warning::No GitHub release found for ${RELEASE_TAG} (run the 'Release' workflow first) — skipping upload."
+            echo "::warning::No GitHub release found for ${VERSION} (run the 'Release' workflow first) — skipping upload."
           fi
