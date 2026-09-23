@@ -50,6 +50,12 @@ jobs:
             # time, so a `for ... do` spanning several lines breaks with a syntax error.
             for i in $(seq 1 15); do adb shell touch /sdcard/.wisp-ready 2>/dev/null && break; sleep 1; done
             adb shell rm -f /sdcard/.wisp-ready
+            # Assemble first, unrecorded — screenrecord is capped at 180s, and the build
+            # (a minute or more) was eating most or all of that before any app UI ever
+            # appeared, so the video showed nothing but the Android launcher. Recording
+            # now starts right before connectedDebugAndroidTest, which at this point only
+            # has to install the already-built APKs before the on-device flow begins.
+            ./gradlew assembleDebug assembleDebugAndroidTest
             adb shell screenrecord --time-limit 180 /sdcard/wisp-instruction-video.mp4 &
             RECORD_PID=$!
             ./gradlew connectedDebugAndroidTest
@@ -62,7 +68,16 @@ jobs:
             adb shell pkill -INT screenrecord 2>/dev/null || true
             wait "$RECORD_PID" 2>/dev/null || true
             sleep 2
-            adb pull /sdcard/wisp-instruction-video.mp4 instruction-video.mp4 || true
+            adb pull /sdcard/wisp-instruction-video.mp4 instruction-video-raw.mp4 || true
+            # screenrecord's raw output has known non-monotonic timestamps that ffmpeg and
+            # most players tolerate but VLC's decoder rejects outright ("Codec not
+            # supported"). Re-encoding (not just remuxing) normalizes that and the pixel
+            # format/profile into something every common player handles.
+            if [ -s instruction-video-raw.mp4 ]; then
+              ffmpeg -y -fflags +genpts -i instruction-video-raw.mp4 \
+                -c:v libx264 -pix_fmt yuv420p -movflags +faststart \
+                instruction-video.mp4 || cp instruction-video-raw.mp4 instruction-video.mp4
+            fi
             adb pull /sdcard/wisp-screenshots screenshots-raw
 
       - name: Upload screenshots
