@@ -31,6 +31,13 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # Used below to re-encode the recorded video for player compatibility — not on
+      # this runner's PATH inside the emulator-runner action's script: block (confirmed
+      # "ffmpeg: not found" there), even though it's normally preinstalled on
+      # ubuntu-latest, so install it explicitly rather than assume it's reachable.
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
       - name: Run instrumented screenshot and video test
         uses: reactivecircus/android-emulator-runner@v2
         with:
