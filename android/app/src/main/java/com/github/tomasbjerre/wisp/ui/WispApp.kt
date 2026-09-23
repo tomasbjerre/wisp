@@ -50,6 +50,7 @@ fun WispApp(repository: SessionRepository) {
                         popUpTo(ROUTE_HOME)
                     }
                 },
+                onCancelled = { navController.popBackStack() },
             )
         }
         composable(

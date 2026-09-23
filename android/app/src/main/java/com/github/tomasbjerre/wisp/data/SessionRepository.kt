@@ -63,6 +63,11 @@ class SessionRepository(
 
     suspend fun deleteSession(session: Session) = sessionDao.delete(session)
 
+    suspend fun deleteSessionById(sessionId: Long) {
+        val session = sessionDao.getById(sessionId) ?: return
+        sessionDao.delete(session)
+    }
+
     /**
      * Best-effort enrichment, set after the session is already finished — see
      * com.github.tomasbjerre.wisp.location.GeocodingService.
@@ -75,10 +80,20 @@ class SessionRepository(
         sessionDao.update(session.copy(nearestCity = city))
     }
 
-    /** See specs/tracking.md#what-must-survive-interruption. */
+    /**
+     * See specs/tracking.md#what-must-survive-interruption. A session killed before it
+     * ever recorded a point (still "locating" or "waiting for movement" — see
+     * specs/tracking.md#start-gating) has nothing to recover, and finishing it anyway
+     * would leave a broken zero-point entry in history — discard it instead, same as a
+     * live Stop during that window (see TrackingService.stop).
+     */
     suspend fun recoverUnfinishedSession(): Session? {
         val unfinished = sessionDao.findUnfinished() ?: return null
         val points = trackPointDao.getForSession(unfinished.id)
+        if (points.isEmpty()) {
+            sessionDao.delete(unfinished)
+            return null
+        }
         val endedAt = points.lastOrNull()?.timestamp ?: unfinished.startedAt
         finishSession(unfinished.id, endedAt)
         return sessionDao.getById(unfinished.id)

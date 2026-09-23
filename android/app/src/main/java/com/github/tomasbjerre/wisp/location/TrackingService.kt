@@ -37,6 +37,7 @@ class TrackingService : LifecycleService() {
     private val locationTracker by lazy { LocationTracker(this) }
     private val geocodingService by lazy { GeocodingService(this) }
     private var recorder = TrackRecorder()
+    private var movementGate = MovementGate()
 
     private var sessionId: Long? = null
     private var sequence = 0
@@ -68,15 +69,17 @@ class TrackingService : LifecycleService() {
         ensureNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification(_state.value))
         recorder = TrackRecorder()
+        movementGate = MovementGate()
         sequence = 0
-        recordingStartElapsedRealtime = SystemClock.elapsedRealtime()
         pausedAccumulatedMillis = 0L
         lifecycleScope.launch {
             val id = repository.startSession(System.currentTimeMillis())
             sessionId = id
-            _state.value = TrackingUiState(isRecording = true, sessionId = id)
+            _state.value =
+                TrackingUiState(isRecording = true, isLocating = true, isWaitingForMovement = true, sessionId = id)
             locationTracker.start(::onLocation)
-            startTicker()
+            // Ticker starts once movement is confirmed, not here — see onLocation and
+            // specs/tracking.md#start-gating.
         }
     }
 
@@ -120,15 +123,35 @@ class TrackingService : LifecycleService() {
         locationTracker.stop()
         stopTicker()
         val id = sessionId
+        // Never saw movement (see specs/tracking.md#start-gating) => no points were ever
+        // recorded, so there's nothing to show — discard rather than saving a session
+        // whose Detail screen would just be a permanent blank map.
+        val neverMoved = _state.value.isWaitingForMovement
         lifecycleScope.launch {
-            if (id != null) repository.finishSession(id, System.currentTimeMillis())
-            // Keep sessionId around so observers can navigate to the finished session;
-            // it's only cleared implicitly when the next start() replaces the whole state.
-            _state.update { it.copy(isRecording = false, isPaused = false) }
+            if (id != null) {
+                if (neverMoved) {
+                    repository.deleteSessionById(id)
+                } else {
+                    repository.finishSession(id, System.currentTimeMillis())
+                }
+            }
+            _state.update {
+                it.copy(
+                    isRecording = false,
+                    isPaused = false,
+                    isWaitingForMovement = false,
+                    wasDiscarded = neverMoved,
+                    // Cleared only when discarded: a deleted session must never be
+                    // navigated to. Otherwise kept around so observers can navigate to
+                    // the finished session — it's only cleared implicitly when the next
+                    // start() replaces the whole state.
+                    sessionId = if (neverMoved) null else it.sessionId,
+                )
+            }
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
         }
-        if (id != null) lookUpNearestCity(id)
+        if (id != null && !neverMoved) lookUpNearestCity(id)
     }
 
     /**
@@ -155,6 +178,22 @@ class TrackingService : LifecycleService() {
                 speedMps = if (location.hasSpeed()) location.speed else null,
                 timestampMillis = location.time,
             )
+
+        // See specs/tracking.md#start-gating: show the current position as soon as it's
+        // known, but hold off starting the timer/track until the user is actually moving.
+        if (_state.value.isWaitingForMovement) {
+            if (fix.accuracyMeters > TrackRecorder.MAX_ACCEPTABLE_ACCURACY_METERS) return
+            val startedMoving = movementGate.hasStartedMoving(fix)
+            _state.update { it.copy(isLocating = false, route = listOf(LatLon(fix.latitude, fix.longitude))) }
+            if (!startedMoving) {
+                updateNotification()
+                return
+            }
+            recordingStartElapsedRealtime = SystemClock.elapsedRealtime()
+            _state.update { it.copy(isWaitingForMovement = false) }
+            startTicker()
+        }
+
         val recorded = recorder.accept(fix) ?: return
 
         lifecycleScope.launch {
@@ -209,8 +248,13 @@ class TrackingService : LifecycleService() {
         val distanceKm = state.distanceMeters / 1000.0
         val minutes = state.elapsedSeconds / 60
         val seconds = state.elapsedSeconds % 60
-        val pausedSuffix = if (state.isPaused) " · paused" else ""
-        val text = "%.2f km · %d:%02d%s".format(distanceKm, minutes, seconds, pausedSuffix)
+        val suffix =
+            when {
+                state.isWaitingForMovement -> " · waiting to move"
+                state.isPaused -> " · paused"
+                else -> ""
+            }
+        val text = "%.2f km · %d:%02d%s".format(distanceKm, minutes, seconds, suffix)
         return NotificationCompat
             .Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.notification_tracking_title))

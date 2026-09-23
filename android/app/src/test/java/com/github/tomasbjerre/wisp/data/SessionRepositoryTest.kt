@@ -136,4 +136,27 @@ class SessionRepositoryTest {
 
             assertThat(repository.recoverUnfinishedSession()).isNull()
         }
+
+    @Test
+    fun `an unfinished session with no points is discarded, not recovered`() =
+        runTest {
+            // Simulates the app being killed while still "locating" or "waiting for
+            // movement" (specs/tracking.md#start-gating) — never recorded a point.
+            val sessionId = repository.startSession(startedAt = 0)
+
+            val recovered = repository.recoverUnfinishedSession()
+
+            assertThat(recovered).isNull()
+            assertThat(repository.observeSession(sessionId).first()).isNull()
+        }
+
+    @Test
+    fun `a session can be discarded by id`() =
+        runTest {
+            val sessionId = repository.startSession(startedAt = 0)
+
+            repository.deleteSessionById(sessionId)
+
+            assertThat(repository.observeSession(sessionId).first()).isNull()
+        }
 }

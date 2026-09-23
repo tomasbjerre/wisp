@@ -18,6 +18,40 @@ States: `idle → recording → (paused ⇄ recording) → stopped`.
 Recording must continue while the app is backgrounded or the screen is
 off — a person tracking a run will lock their phone or switch apps.
 
+## Start gating
+
+Tapping Start creates the session immediately (see above), but the timer,
+distance, and track don't start immediately with it — the tap goes through
+two gates first:
+
+1. **Locating**: until the first fix that passes the accuracy filter in
+   [Location sampling](#location-sampling) arrives, there's nothing real
+   to show yet, so show a loading state, not a map. This avoids showing a
+   meaningless default view (e.g. a map centered far from the user) while
+   GPS acquires a fix.
+2. **Waiting for movement**: once that fix arrives, show the current
+   position on the map, but keep the timer and distance at zero and tell
+   the user recording will begin once they're moving. A person who just
+   tapped Start is often still fumbling with their phone, walking to a
+   trailhead, or waiting at a crosswalk — starting the clock at that exact
+   tap would count that dead time as part of the activity.
+
+Recording (the timer and the track) actually starts the moment a
+subsequent fix implies movement at or above a walking pace (roughly
+0.8 m/s / ~3 km/h) relative to that first position — using the platform's
+reported instantaneous speed where available, otherwise distance ÷ time
+between fixes.
+
+This gating applies only to a session's initial Start — resuming after
+Pause does not re-require movement, since the user has already
+demonstrated they're active.
+
+If Stop is tapped before movement is ever confirmed, the session is
+discarded entirely rather than saved — nothing meaningful was recorded
+(no points, zero distance and duration), so saving it would only add a
+broken-looking blank entry to history. The user returns to Home, not to
+that session's Detail screen.
+
 ## Location sampling
 
 - Request the highest-accuracy location updates the platform offers for
@@ -60,4 +94,8 @@ off — a person tracking a run will lock their phone or switch apps.
   during recording, not only at stop.
 - If the device reboots or the app is force-closed mid-recording, on next
   launch the app should treat the last unstopped session as stopped at its
-  last recorded point, rather than silently discarding it.
+  last recorded point, rather than silently discarding it — unless it has
+  no recorded points at all (interrupted while still "locating" or
+  "waiting for movement", see [Start gating](#start-gating)), in which
+  case there's no point to stop at, and it's discarded like any other
+  never-moved session.

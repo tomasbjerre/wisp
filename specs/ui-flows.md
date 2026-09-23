@@ -28,18 +28,26 @@ The app's entry point.
 Entered by tapping Start on Home. Stays active in the background/locked
 screen while recording.
 
+- Entering this screen doesn't show the map and controls right away — see
+  [Tracking](tracking.md#start-gating) for the "locating" (a loading
+  state, no map yet) and "waiting for movement" states shown first, each
+  telling the user what it's waiting for.
 - A map filling most of the screen, centered on the current location,
   drawing the route as it's recorded, with a marker for the current
   position (see [Accessibility](accessibility.md#map-markers-and-route)).
 - A live stats panel below the map (not laid over it — see
   [Accessibility](accessibility.md#text-contrast)): current speed,
-  elapsed distance, elapsed time.
+  elapsed distance, elapsed time — all zero while waiting for movement.
 - A **Pause**/**Continue** control (labeled Continue while paused) and a
-  **Stop** control, both visible together at all times — recording or
-  paused, it's always exactly these two controls, no intermediate
-  confirmation step.
+  **Stop** control, both visible together at all times once recording has
+  actually started — recording or paused, it's always exactly these two
+  controls, no intermediate confirmation step. While waiting for
+  movement, only **Stop** is shown (there's nothing to pause yet).
 - Tapping Stop finalizes the session immediately and navigates to that
-  session's Detail screen.
+  session's Detail screen — unless movement was never confirmed (see
+  [Tracking](tracking.md#start-gating)), in which case the session is
+  discarded and Stop returns to Home instead, since there's no Detail
+  screen worth showing for it.
 - If location permission is missing or denied, this screen must explain
   what's needed and offer a way to grant it, rather than silently
   recording nothing (see [Permissions & Privacy](permissions-and-privacy.md)).

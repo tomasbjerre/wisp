@@ -9,6 +9,12 @@ data class LatLon(
 data class TrackingUiState(
     val isRecording: Boolean = false,
     val isPaused: Boolean = false,
+    // See specs/tracking.md#start-gating.
+    val isLocating: Boolean = false,
+    val isWaitingForMovement: Boolean = false,
+    // True right after Stop discarded a session that never saw movement — see
+    // specs/tracking.md#start-gating and TrackingService.stop.
+    val wasDiscarded: Boolean = false,
     val sessionId: Long? = null,
     val distanceMeters: Double = 0.0,
     val elapsedSeconds: Long = 0,
