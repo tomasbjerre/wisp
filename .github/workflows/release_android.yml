@@ -192,6 +192,12 @@ jobs:
             [ -f app/build/outputs/bundle/release/app-release.aab ] &&
               UPLOAD_FILES+=(app/build/outputs/bundle/release/app-release.aab)
             [ -s video-raw/instruction-video.mp4 ] && UPLOAD_FILES+=(video-raw/instruction-video.mp4)
+            # Screenshots are also committed to git (Play listing + docs/screenshots) —
+            # attaching them here too just makes them downloadable straight from the
+            # release, without needing to check out the repo.
+            for f in app/src/main/play/listings/en-US/graphics/phone-screenshots/*.png; do
+              [ -f "$f" ] && UPLOAD_FILES+=("$f")
+            done
             if [ ${#UPLOAD_FILES[@]} -gt 0 ]; then
               gh release upload "$RELEASE_TAG" "${UPLOAD_FILES[@]}" --clobber
             else
