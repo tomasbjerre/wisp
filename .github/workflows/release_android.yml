@@ -42,12 +42,17 @@ jobs:
             # Fix a location up front so Tracking has a real position to show instead of
             # hanging on "Finding your location…" — see InstructionVideoTest.
             adb emu geo fix 18.0686 59.3293
-            # Stopped with SIGINT (not left to hit --time-limit) so screenrecord finalizes
-            # the mp4 container properly instead of producing a truncated file.
             adb shell screenrecord --time-limit 180 /sdcard/wisp-instruction-video.mp4 &
             RECORD_PID=$!
             ./gradlew connectedDebugAndroidTest
-            kill -INT "$RECORD_PID" 2>/dev/null || true
+            # Stopped with SIGINT (not left to hit --time-limit) so screenrecord finalizes
+            # the mp4 container's trailing moov atom instead of producing a file every
+            # player rejects as corrupt. Must be sent to the *remote* screenrecord
+            # process via its own adb shell call — killing the local `adb shell &`
+            # client above (e.g. `kill -INT "$RECORD_PID"`) just drops the connection
+            # without ever reaching screenrecord's signal handler.
+            adb shell pkill -INT screenrecord 2>/dev/null || true
+            wait "$RECORD_PID" 2>/dev/null || true
             sleep 2
             adb pull /sdcard/wisp-instruction-video.mp4 instruction-video.mp4 || true
             adb pull /sdcard/wisp-screenshots screenshots-raw
