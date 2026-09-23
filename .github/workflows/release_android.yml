@@ -45,11 +45,10 @@ jobs:
             # /sdcard's emulated storage can lag a few seconds behind sys.boot_completed
             # (already waited for by this point) on a freshly booted emulator — without
             # this, screenrecord has occasionally failed outright with "Unable to open
-            # ... No such file or directory" and produced no video at all.
-            for i in $(seq 1 15); do
-              adb shell touch /sdcard/.wisp-ready 2>/dev/null && break
-              sleep 1
-            done
+            # ... No such file or directory" and produced no video at all. One line, not
+            # a multi-line for loop: this action appears to run script: one line at a
+            # time, so a `for ... do` spanning several lines breaks with a syntax error.
+            for i in $(seq 1 15); do adb shell touch /sdcard/.wisp-ready 2>/dev/null && break; sleep 1; done
             adb shell rm -f /sdcard/.wisp-ready
             adb shell screenrecord --time-limit 180 /sdcard/wisp-instruction-video.mp4 &
             RECORD_PID=$!
