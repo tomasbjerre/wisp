@@ -1,3 +1,14 @@
+## v0.3.0 (2026-09-23)
+
+ - ci: push release commits with an admin PAT, not the default token ([bd441349c0f9b23](https://github.com/tomasbjerre/wisp/commit/bd441349c0f9b23))
+ - feat(android): gate session start on GPS fix and movement ([f47a04ca0714aba](https://github.com/tomasbjerre/wisp/commit/f47a04ca0714aba))
+ - ci(android): record an instruction video walkthrough on each release ([f3d1ad55c2d6631](https://github.com/tomasbjerre/wisp/commit/f3d1ad55c2d6631))
+ - feat(android): replace dynamic color with a fixed brand palette ([af4a2a114aeb5af](https://github.com/tomasbjerre/wisp/commit/af4a2a114aeb5af))
+ - chore(deps): update plugin com.android.application to v8.13.2 (#13) ([14fa6e6f0f1e22f](https://github.com/tomasbjerre/wisp/commit/14fa6e6f0f1e22f))
+ - chore(deps): update dependency androidx.room:room-ktx to v2.8.5 (#12) ([20865b159cba83f](https://github.com/tomasbjerre/wisp/commit/20865b159cba83f))
+ - build(android): bump Gradle wrapper to 8.14.5, keep it ahead of AGP ([1f66db29c57c587](https://github.com/tomasbjerre/wisp/commit/1f66db29c57c587))
+ - docs: add privacy policy required for Play Store publishing ([d93ab31740c2d93](https://github.com/tomasbjerre/wisp/commit/d93ab31740c2d93))
+ - fix(android): target API 36, required by Play for new app submissions ([80dcae1f70a0dfd](https://github.com/tomasbjerre/wisp/commit/80dcae1f70a0dfd))
 ## v0.2.0 (2026-09-22)
 
  - fix(android): stop the map flashing open ocean before a route loads ([d13b0ded7b84363](https://github.com/tomasbjerre/wisp/commit/d13b0ded7b84363))
