@@ -57,7 +57,12 @@ class InstructionVideoTest {
         // main thread and crashes ("setCurrentState must be called on the main thread")
         // when invoked from the test thread like this.
         UiDevice.getInstance(instrumentation).pressBack()
-        composeRule.waitForIdle()
+        // A single waitForIdle() right after a system-level back press raced with the
+        // nav transition settling (flaky "no node with text 'Start'") — wait for the
+        // actual target node instead of assuming one idle pass is enough.
+        composeRule.waitUntil(timeoutMillis = LOCATE_TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Start").fetchSemanticsNodes().isNotEmpty()
+        }
         Thread.sleep(PAUSE_MILLIS)
 
         composeRule.onNodeWithText("Start").performClick()
