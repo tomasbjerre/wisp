@@ -149,6 +149,17 @@ jobs:
             echo "SCREENSHOTS_COMMITTED=true" >> "$GITHUB_ENV"
           fi
 
+      # Pushed here, before the Play publish attempt below, not after: the emulator run
+      # that produces these is the expensive part (several minutes), and Play publish
+      # can fail for reasons that have nothing to do with the build (e.g. a brand-new
+      # app whose store listing/content rating/data safety form isn't fully completed
+      # in the Play Console yet — publishing there is a required one-time manual step,
+      # see android/README.md#play-store-release). No need to redo the screenshots and
+      # video just to retry that.
+      - name: Push screenshots and release notes
+        if: env.SCREENSHOTS_COMMITTED == 'true'
+        run: git push origin HEAD
+
       # Signing config is resolved from ANDROID_KEYSTORE_* env vars at Gradle
       # *evaluation* time (see android/app/build.gradle.kts), not persisted across
       # invocations. Building and publishing in one ./gradlew call, sharing one
@@ -165,26 +176,27 @@ jobs:
           ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
         run: ./gradlew -Pversion="$VERSION" assembleRelease bundleRelease publishReleaseBundle publishListing
 
-      # Nothing above this point touched the remote — if Play publish (or anything
-      # before it) fails, the workflow just stops and re-running starts clean. Only
-      # push once we know the release actually succeeded.
-      - name: Push screenshots and release notes
-        if: env.SCREENSHOTS_COMMITTED == 'true'
-        run: git push origin HEAD
-
+      # if: always() so the video (and whatever of the APK/bundle actually got built)
+      # still lands on the GitHub Release even if the Play publish step above failed —
+      # each file is checked for existence first since a failure earlier in that step
+      # can mean the APK/bundle were never produced at all.
       - name: Attach the release build to the GitHub Release
+        if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            UPLOAD_FILES=(
-              app/build/outputs/apk/release/app-release.apk
-              app/build/outputs/bundle/release/app-release.aab
-            )
-            if [ -s video-raw/instruction-video.mp4 ]; then
-              UPLOAD_FILES+=(video-raw/instruction-video.mp4)
+            UPLOAD_FILES=()
+            [ -f app/build/outputs/apk/release/app-release.apk ] &&
+              UPLOAD_FILES+=(app/build/outputs/apk/release/app-release.apk)
+            [ -f app/build/outputs/bundle/release/app-release.aab ] &&
+              UPLOAD_FILES+=(app/build/outputs/bundle/release/app-release.aab)
+            [ -s video-raw/instruction-video.mp4 ] && UPLOAD_FILES+=(video-raw/instruction-video.mp4)
+            if [ ${#UPLOAD_FILES[@]} -gt 0 ]; then
+              gh release upload "$RELEASE_TAG" "${UPLOAD_FILES[@]}" --clobber
+            else
+              echo "::warning::Nothing to attach to ${RELEASE_TAG}."
             fi
-            gh release upload "$RELEASE_TAG" "${UPLOAD_FILES[@]}" --clobber
           else
             echo "::warning::No GitHub release found for ${RELEASE_TAG} (run the 'Release' workflow first) — skipping upload."
           fi
