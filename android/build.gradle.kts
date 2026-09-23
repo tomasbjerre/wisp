@@ -12,7 +12,7 @@ plugins {
     // Gives the root project "build"/"check" lifecycle tasks, which
     // se.bjurr.gradle.update-versions hooks into.
     id("base")
-    id("com.android.application") version "8.7.3" apply false
+    id("com.android.application") version "8.13.2" apply false
     id("org.jetbrains.kotlin.android") version "2.0.21" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" apply false
     id("com.google.devtools.ksp") version "2.0.21-1.0.28" apply false
