@@ -6,9 +6,21 @@
       // AGP has a minimum required Gradle version (e.g. AGP 8.13 needs Gradle
       // 8.13+) that climbs independently of AGP's own version number. Grouped
       // with the wrapper so a bump never lands AGP ahead of a Gradle it needs —
-      // confirmed broken in https://github.com/tomasbjerre/wisp/pull/2.
+      // confirmed broken in https://github.com/tomasbjerre/wisp/pull/2, and
+      // again in #13: grouping only combines updates that are due at the same
+      // time, it doesn't hold AGP back until Gradle catches up. The
+      // minimumReleaseAge override below is the actual fix for that.
       "matchPackageNames": ["com.android.application", "gradle"],
       "groupName": "Android Gradle Plugin + Gradle wrapper"
+    },
+    {
+      // Let the Gradle wrapper itself update immediately (skip the 5-day
+      // minimumReleaseAge below), so it's essentially always at Gradle's
+      // latest and never the thing an AGP bump is waiting on. Gradle
+      // releases are stable on arrival (unlike, say, a fast-moving UI
+      // library), so there's no real benefit to waiting here.
+      "matchPackageNames": ["gradle"],
+      "minimumReleaseAge": "0 days"
     },
     {
       // Kotlin, its Compose compiler plugin, and KSP must move together — KSP's
