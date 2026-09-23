@@ -146,7 +146,9 @@ real users.
 2. Create the app in the Console (package name `com.github.tomasbjerre.wisp`,
    permanent once chosen) and complete its first store listing, content
    rating, and data safety form — Google requires this once per app before
-   the API can publish to it.
+   the API can publish to it. For the store listing's privacy policy URL,
+   use the GitHub-rendered link to [`../PRIVACY.md`](../PRIVACY.md), e.g.
+   `https://github.com/tomasbjerre/wisp/blob/main/PRIVACY.md`.
 3. Create a Google Cloud project, enable the Android Publisher API, create
    a service account with a JSON key, and grant it publishing access to
    this app in Play Console → Users and permissions. Full steps:

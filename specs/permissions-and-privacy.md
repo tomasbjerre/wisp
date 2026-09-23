@@ -48,3 +48,16 @@
 - No analytics or crash reporting that transmits location data.
 - Deleting a session (see [UI Flows](ui-flows.md)) must remove its points
   too — no orphaned data left behind.
+
+## Privacy policy
+
+- Wisp must publish a privacy policy (`PRIVACY.md` at the repo root)
+  describing what data is accessed, where it stays, and the one case
+  where data leaves the device (reverse geocoding, above). App stores
+  (e.g. Google Play) require a URL to this document before they'll
+  publish a listing that requests sensitive permissions.
+- Whenever a change to this spec's "Required access" or "Data handling"
+  sections changes what the app actually does with user data,
+  `PRIVACY.md` must be updated in the same change — it must never
+  describe behavior the app no longer has, or omit behavior it has
+  gained.
