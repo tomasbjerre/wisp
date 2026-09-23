@@ -42,6 +42,15 @@ jobs:
             # Fix a location up front so Tracking has a real position to show instead of
             # hanging on "Finding your location…" — see InstructionVideoTest.
             adb emu geo fix 18.0686 59.3293
+            # /sdcard's emulated storage can lag a few seconds behind sys.boot_completed
+            # (already waited for by this point) on a freshly booted emulator — without
+            # this, screenrecord has occasionally failed outright with "Unable to open
+            # ... No such file or directory" and produced no video at all.
+            for i in $(seq 1 15); do
+              adb shell touch /sdcard/.wisp-ready 2>/dev/null && break
+              sleep 1
+            done
+            adb shell rm -f /sdcard/.wisp-ready
             adb shell screenrecord --time-limit 180 /sdcard/wisp-instruction-video.mp4 &
             RECORD_PID=$!
             ./gradlew connectedDebugAndroidTest
