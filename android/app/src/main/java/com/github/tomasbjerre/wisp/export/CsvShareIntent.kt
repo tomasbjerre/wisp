@@ -19,10 +19,13 @@ object CsvShareIntent {
         context: Context,
         sessionsCsv: String,
         trackPointsCsv: String,
+        chooserTitle: String = "Export history as CSV",
+        sessionsFileName: String = SESSIONS_FILE_NAME,
+        trackPointsFileName: String = TRACK_POINTS_FILE_NAME,
     ): Intent {
         val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
-        val sessionsUri = writeAndShareableUri(context, exportsDir, SESSIONS_FILE_NAME, sessionsCsv)
-        val trackPointsUri = writeAndShareableUri(context, exportsDir, TRACK_POINTS_FILE_NAME, trackPointsCsv)
+        val sessionsUri = writeAndShareableUri(context, exportsDir, sessionsFileName, sessionsCsv)
+        val trackPointsUri = writeAndShareableUri(context, exportsDir, trackPointsFileName, trackPointsCsv)
 
         val sendIntent =
             Intent(Intent.ACTION_SEND_MULTIPLE).apply {
@@ -30,7 +33,7 @@ object CsvShareIntent {
                 putParcelableArrayListExtra(Intent.EXTRA_STREAM, arrayListOf(sessionsUri, trackPointsUri))
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-        return Intent.createChooser(sendIntent, "Export history as CSV")
+        return Intent.createChooser(sendIntent, chooserTitle)
     }
 
     private fun writeAndShareableUri(
