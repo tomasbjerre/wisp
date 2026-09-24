@@ -21,16 +21,12 @@ body:
         - Tracking (live recording)
         - Detail (a past or just-finished activity)
         - Not tied to a specific screen / a new screen
-    validations:
-      required: true
 
   - type: textarea
     id: problem
     attributes:
       label: What problem would this solve?
       description: What are you trying to do today that Wisp doesn't support well?
-    validations:
-      required: true
 
   - type: textarea
     id: proposal
@@ -40,13 +36,10 @@ body:
         Describe the change. If it involves an existing control, use its
         name — e.g. **Start**, **Pause**/**Continue**, **Stop**,
         **Delete**, **Export CSV**, **Export Image**, or **Back**.
-    validations:
-      required: true
 
   - type: textarea
     id: alternatives
     attributes:
       label: Alternatives you've considered
       description: Any workarounds you're using today, or other approaches.
-    validations:
-      required: false
+
