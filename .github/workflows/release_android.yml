@@ -76,6 +76,15 @@ jobs:
             # Fix a location up front so Tracking has a real position to show instead of
             # hanging on "Finding your location…" — see InstructionVideoTest.
             adb emu geo fix 18.0686 59.3293
+            # ScreenshotTest's live-Tracking captures and InstructionVideoTest's
+            # Pause/Continue segment need actual movement, not just a fixed point —
+            # recording only starts once a fix implies at least walking pace (see
+            # specs/tracking.md#start-gating). Feed a slow walk north for the whole test
+            # run (~6.5 minutes, well past both tests' combined runtime) in the
+            # background; killed below once connectedDebugAndroidTest finishes. One
+            # line, not a multi-line for loop — see the comment below on why.
+            (for i in $(seq 1 200); do adb emu geo fix 18.0686 "$(awk -v i="$i" 'BEGIN{printf "%.6f", 59.3293 + i*0.000045}')"; sleep 2; done) &
+            WALK_PID=$!
             # /sdcard's emulated storage can lag a few seconds behind sys.boot_completed
             # (already waited for by this point) on a freshly booted emulator — without
             # this, screenrecord has occasionally failed outright with "Unable to open
@@ -101,6 +110,7 @@ jobs:
             # without ever reaching screenrecord's signal handler.
             adb shell pkill -INT screenrecord 2>/dev/null || true
             wait "$RECORD_PID" 2>/dev/null || true
+            kill "$WALK_PID" 2>/dev/null || true
             sleep 2
             adb pull /sdcard/wisp-instruction-video.mp4 instruction-video-raw.mp4 || true
             # screenrecord's raw output has known non-monotonic timestamps that ffmpeg and
@@ -183,12 +193,22 @@ jobs:
 
       - name: Install screenshots into the Play listing and README
         run: |
+          # screencap (see ScreenshotTest) only writes PNG, and an uncompressed PNG of a
+          # satellite map capture runs several MB — re-encoded as JPEG here since these
+          # land in git history on every release and the visual difference at this
+          # content (photographic map tiles, not sharp-edged UI) is negligible. -strip
+          # drops PNG metadata JPEG has no use for.
+          sudo apt-get update && sudo apt-get install -y imagemagick
           mkdir -p app/src/main/play/listings/en-US/graphics/phone-screenshots
-          cp app/src/main/play/listings/en-US/graphics/phone-screenshots-raw/*.png \
-            app/src/main/play/listings/en-US/graphics/phone-screenshots/
+          rm -f app/src/main/play/listings/en-US/graphics/phone-screenshots/*.jpg
+          for f in app/src/main/play/listings/en-US/graphics/phone-screenshots-raw/*.png; do
+            name=$(basename "$f" .png)
+            convert "$f" -strip -quality 87 "app/src/main/play/listings/en-US/graphics/phone-screenshots/$name.jpg"
+          done
           rm -rf app/src/main/play/listings/en-US/graphics/phone-screenshots-raw
           mkdir -p ../docs/screenshots
-          cp app/src/main/play/listings/en-US/graphics/phone-screenshots/*.png ../docs/screenshots/
+          rm -f ../docs/screenshots/*.jpg
+          cp app/src/main/play/listings/en-US/graphics/phone-screenshots/*.jpg ../docs/screenshots/
 
       - name: Write this release's notes (Play)
         run: |
@@ -256,7 +276,7 @@ jobs:
             # Screenshots are also committed to git (Play listing + docs/screenshots) —
             # attaching them here too just makes them downloadable straight from the
             # release, without needing to check out the repo.
-            for f in app/src/main/play/listings/en-US/graphics/phone-screenshots/*.png; do
+            for f in app/src/main/play/listings/en-US/graphics/phone-screenshots/*.jpg; do
               [ -f "$f" ] && UPLOAD_FILES+=("$f")
             done
             if [ ${#UPLOAD_FILES[@]} -gt 0 ]; then

@@ -115,8 +115,68 @@ adb pull /sdcard/wisp-screenshots .
 ```
 
 The `release_android` workflow runs this automatically on every release (see
-below) and commits the result to `docs/screenshots/` and
-`app/src/main/play/listings/en-US/graphics/phone-screenshots/`.
+below), re-encodes each capture as a JPEG (`screencap` only writes PNG,
+and an uncompressed PNG of a satellite map capture runs several MB —
+JPEG at this content is visually indistinguishable and a fraction of the
+size, which matters since these are committed to git history on every
+release), and commits the result to `docs/screenshots/` and
+`app/src/main/play/listings/en-US/graphics/phone-screenshots/`. Every
+screen/state in `specs/ui-flows.md` should have an entry here — if you add
+a feature that changes what's on screen, add a capture for it in
+`ScreenshotTest` (and `InstructionVideoTest`, below) in the same change.
+
+#### Running it against a local emulator
+
+No physical device needed. One-time setup, using the SDK already pointed
+to by `android/local.properties`'s `sdk.dir`:
+
+```bash
+SDK=$(sed -n 's/sdk.dir=//p' local.properties)   # run from android/
+export ANDROID_HOME="$SDK" ANDROID_SDK_ROOT="$SDK"
+export PATH="$SDK/platform-tools:$PATH"
+
+# Install the same image CI uses (api-level 35, google_apis, x86_64) if you
+# don't have it yet:
+"$SDK/cmdline-tools/"*/bin/sdkmanager --install "system-images;android-35;google_apis;x86_64"
+
+echo no | "$SDK/cmdline-tools/"*/bin/avdmanager create avd \
+  -n wisp_test -k "system-images;android-35;google_apis;x86_64" -d pixel_6
+```
+
+Boot it (headless — no window needed) and wait for it to come up:
+
+```bash
+"$SDK/emulator/emulator" -avd wisp_test -no-window -gpu swiftshader_indirect \
+  -noaudio -no-boot-anim -camera-back none &
+adb wait-for-device
+until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do sleep 2; done
+```
+
+Fix a location so Tracking has a real position instead of hanging on
+"Finding your location…" (see `specs/tracking.md#start-gating`):
+
+```bash
+adb emu geo fix 18.0686 59.3293
+```
+
+`ScreenshotTest`'s live-Tracking captures (recording/paused/satellite) need
+actual movement, not just a fixed point — Wisp only starts the clock once a
+fix implies at least walking pace (`specs/tracking.md#start-gating`). Feed
+it a slow walk north while the instrumented test runs, e.g. in a background
+loop:
+
+```bash
+lat=59.3293
+for i in $(seq 1 60); do
+  lat=$(echo "$lat + 0.000045" | bc)   # ~5m north per step
+  adb emu geo fix 18.0686 "$lat"
+  sleep 2
+done &
+```
+
+Then run the test and pull the results as above. Kill the emulator
+(`adb -s emulator-5554 emu kill`) when done — it has no separate "stop"
+command.
 
 ## Play Store release
 

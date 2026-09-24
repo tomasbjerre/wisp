@@ -13,3 +13,5 @@ android/*/release/
 
 # macOS
 .DS_Store
+
+.kotlin

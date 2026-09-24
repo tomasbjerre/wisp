@@ -74,6 +74,26 @@ class InstructionVideoTest {
         // specs/tracking.md#start-gating) before wrapping up.
         Thread.sleep(TRACKING_SETTLE_MILLIS)
 
+        // Show the satellite toggle (specs/ui-flows.md#2-tracking-active-recording) —
+        // present whether or not movement has been confirmed yet.
+        composeRule.onNodeWithText("Satellite").performClick()
+        composeRule.waitForIdle()
+        Thread.sleep(MAP_TILE_SETTLE_MILLIS)
+        composeRule.onNodeWithText("Map").performClick()
+        composeRule.waitForIdle()
+
+        // Pause/Continue only appear once recording has actually started (not while
+        // still waiting for movement) — skip them rather than block the whole video on a
+        // walk that may not have been simulated for this run (e.g. a local ad hoc run
+        // with a single fixed `adb emu geo fix`, no movement loop).
+        if (composeRule.onAllNodesWithText("Pause").fetchSemanticsNodes().isNotEmpty()) {
+            composeRule.onNodeWithText("Pause").performClick()
+            composeRule.waitForIdle()
+            Thread.sleep(PAUSE_MILLIS)
+            composeRule.onNodeWithText("Continue").performClick()
+            composeRule.waitForIdle()
+        }
+
         composeRule.onNodeWithText("Stop").performClick()
         composeRule.waitForIdle()
         Thread.sleep(MAP_TILE_SETTLE_MILLIS)
