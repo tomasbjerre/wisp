@@ -73,6 +73,16 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           working-directory: ./android
           script: |
+            # The AVD is restored from a cached snapshot (see the AVD cache step above),
+            # and /sdcard persists as part of that snapshot — without this, a screenshot
+            # left over from whatever ScreenshotTest looked like when that snapshot was
+            # taken survives untouched (ScreenshotTest only ever adds/overwrites its own
+            # named files, never clears the directory first), so a later `adb pull`
+            # silently returns extra, stale images alongside the current ones. Confirmed:
+            # a leftover "3-detail.png" from before ScreenshotTest was renumbered rode
+            # along for months, pushing the Play listing to 9 screenshots and failing
+            # `publishReleaseListing` with "You can only upload 8 phoneScreenshots."
+            adb shell rm -rf /sdcard/wisp-screenshots
             # Fix a location up front so Tracking has a real position to show instead of
             # hanging on "Finding your location…" — see InstructionVideoTest.
             adb emu geo fix 18.0686 59.3293
@@ -220,7 +230,12 @@ jobs:
           done
           rm -rf app/src/main/play/listings/en-US/graphics/phone-screenshots-raw
           mkdir -p ../docs/screenshots
-          rm -f ../docs/screenshots/*.jpg
+          # No `rm -f ../docs/screenshots/*.jpg` first: docs/screenshots also holds
+          # one-off screenshots outside this numbered set (e.g.
+          # information-dialog.jpg, illustrating a dialog ScreenshotTest doesn't
+          # capture) — wiping the whole directory before copying deleted those every
+          # release. Copying over just overwrites same-named files, which is all this
+          # step is actually responsible for.
           cp app/src/main/play/listings/en-US/graphics/phone-screenshots/*.jpg ../docs/screenshots/
 
       - name: Write this release's notes (Play)
