@@ -26,32 +26,26 @@ class MovementGateTest {
     }
 
     @Test
-    fun `platform-reported speed at or above walking pace counts as movement`() {
+    fun `a platform-reported speed spike with no real displacement is not movement`() {
+        // Regression test for #56: a device held still can report a brief speed spike
+        // (GPS multipath/signal noise) well above walking pace while never actually
+        // moving — this must not start a session with zero real displacement.
         val gate = MovementGate()
         gate.hasStartedMoving(fix(lat = 59.0, lon = 18.0, t = 0))
 
-        val startedMoving = gate.hasStartedMoving(fix(lat = 59.0, lon = 18.0, t = 1_000, speedMps = 1.2f))
-
-        assertThat(startedMoving).isTrue()
-    }
-
-    @Test
-    fun `platform-reported speed below walking pace is not movement`() {
-        val gate = MovementGate()
-        gate.hasStartedMoving(fix(lat = 59.0, lon = 18.0, t = 0))
-
-        val startedMoving = gate.hasStartedMoving(fix(lat = 59.0, lon = 18.0, t = 1_000, speedMps = 0.2f))
+        val startedMoving = gate.hasStartedMoving(fix(lat = 59.0, lon = 18.0, t = 1_000, speedMps = 8.0f))
 
         assertThat(startedMoving).isFalse()
     }
 
     @Test
-    fun `without a platform speed, distance and time since the anchor are used instead`() {
+    fun `distance and time since the anchor decide movement, regardless of any platform speed`() {
         val gate = MovementGate()
-        gate.hasStartedMoving(fix(lat = 59.00000, lon = 18.00000, t = 0, speedMps = null))
+        gate.hasStartedMoving(fix(lat = 59.00000, lon = 18.00000, t = 0, speedMps = 0f))
 
-        // ~11 meters in 5 seconds => ~2.2 m/s, well above walking pace.
-        val startedMoving = gate.hasStartedMoving(fix(lat = 59.0001, lon = 18.00000, t = 5_000, speedMps = null))
+        // ~11 meters in 5 seconds => ~2.2 m/s, well above walking pace — despite a
+        // platform speed reading that on its own would say otherwise.
+        val startedMoving = gate.hasStartedMoving(fix(lat = 59.0001, lon = 18.00000, t = 5_000, speedMps = 0f))
 
         assertThat(startedMoving).isTrue()
     }

@@ -21,6 +21,14 @@ class MovementGate {
      * anchor). The anchor is fixed, not the immediately preceding fix, so a
      * short burst of GPS jitter across a couple of samples can't accumulate
      * into a false positive the way comparing only consecutive fixes could.
+     *
+     * Deliberately always computed from position + time, never from
+     * [LocationFix.speedMps] (the platform's own instantaneous speed
+     * reading) — that field is a Doppler-based estimate that can spike well
+     * above walking pace from multipath/signal noise while the device isn't
+     * moving at all, which used to start a session with zero real
+     * displacement (see specs/tracking.md#start-gating: movement is defined
+     * relative to the anchor *position*, not a raw speed reading).
      */
     fun hasStartedMoving(fix: LocationFix): Boolean {
         val previous = anchor
@@ -31,8 +39,7 @@ class MovementGate {
         val movedMeters = GeoUtils.haversineMeters(previous.latitude, previous.longitude, fix.latitude, fix.longitude)
         val elapsedSeconds = (fix.timestampMillis - previous.timestampMillis) / 1000.0
         val impliedSpeedMps = if (elapsedSeconds > 0) movedMeters / elapsedSeconds else 0.0
-        val speedMps = fix.speedMps?.toDouble() ?: impliedSpeedMps
-        return speedMps >= MIN_WALKING_SPEED_MPS
+        return impliedSpeedMps >= MIN_WALKING_SPEED_MPS
     }
 
     companion object {

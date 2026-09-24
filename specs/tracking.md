@@ -38,9 +38,12 @@ two gates first:
 
 Recording (the timer and the track) actually starts the moment a
 subsequent fix implies movement at or above a walking pace (roughly
-0.8 m/s / ~3 km/h) relative to that first position — using the platform's
-reported instantaneous speed where available, otherwise distance ÷ time
-between fixes.
+0.8 m/s / ~3 km/h) relative to that first position — computed as distance
+÷ time between that fix and the first one, never from the platform's own
+reported instantaneous speed. A device held still can still report a
+brief speed spike well above walking pace (GPS multipath/signal noise,
+not real movement), which started sessions with zero actual displacement
+when this gate trusted it.
 
 This gating applies only to a session's initial Start — resuming after
 Pause does not re-require movement, since the user has already
