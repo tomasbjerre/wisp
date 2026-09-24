@@ -85,4 +85,48 @@ object GeoUtils {
         val averageSpeed = if (durationSeconds > 0) distance / durationSeconds else 0.0
         return Summary(distance, durationSeconds, averageSpeed, maxSpeed)
     }
+
+    private const val SPLIT_DISTANCE_METERS = 1_000.0
+
+    /**
+     * See specs/tracking.md#km-splits: the time it took to cover each complete
+     * kilometer, one entry per split, in recorded order. A split's duration is
+     * interpolated linearly within whichever recorded segment crosses that
+     * kilometer boundary (segments are a few meters at most — see
+     * [com.github.tomasbjerre.wisp.location.TrackRecorder] — so linear
+     * interpolation is indistinguishable from the true crossing point). Like
+     * [summarize], a segmentStart point's incoming pair is skipped entirely, so
+     * paused time/distance never counts toward a split.
+     */
+    fun kmSplitsSeconds(points: List<TrackPoint>): List<Long> {
+        val splits = mutableListOf<Long>()
+        var cumulativeDistance = 0.0
+        var cumulativeDurationMillis = 0.0
+        var durationAtLastSplitMillis = 0.0
+        var nextSplitDistance = SPLIT_DISTANCE_METERS
+
+        for (i in 1 until points.size) {
+            val prev = points[i - 1]
+            val curr = points[i]
+            if (curr.segmentStart) continue
+
+            val segmentDistance = haversineMeters(prev.latitude, prev.longitude, curr.latitude, curr.longitude)
+            val segmentDurationMillis = (curr.timestamp - prev.timestamp).toDouble()
+            val segmentStartDistance = cumulativeDistance
+            val segmentEndDistance = segmentStartDistance + segmentDistance
+
+            while (segmentEndDistance >= nextSplitDistance) {
+                val fraction =
+                    if (segmentDistance > 0) (nextSplitDistance - segmentStartDistance) / segmentDistance else 0.0
+                val durationAtSplitMillis = cumulativeDurationMillis + segmentDurationMillis * fraction
+                splits += ((durationAtSplitMillis - durationAtLastSplitMillis) / 1000).toLong()
+                durationAtLastSplitMillis = durationAtSplitMillis
+                nextSplitDistance += SPLIT_DISTANCE_METERS
+            }
+
+            cumulativeDistance = segmentEndDistance
+            cumulativeDurationMillis += segmentDurationMillis
+        }
+        return splits
+    }
 }
