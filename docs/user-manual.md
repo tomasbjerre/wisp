@@ -26,8 +26,14 @@ This is what you see when you open Wisp. It has:
   screen.
 - **Delete** — the trash icon on each row deletes that activity directly
   from Home, without having to open it first. You'll be asked to confirm.
-- **Feedback** — the ⓘ icon in the top-right opens Wisp's GitHub issues
-  page in your browser, for bug reports or feature requests.
+- **Information** — the ⓘ icon in the top-right opens a small dialog with
+  Wisp's version and your device model/Android version (handy if you're
+  about to report a bug — issue reports ask for both, in the same
+  format shown here, so you can copy them straight in), a link to
+  report a problem or request a feature (opens Wisp's GitHub issues in
+  your browser), and a link to this manual:
+
+  <img src="screenshots/information-dialog.jpg" alt="Information dialog with app version and links" width="300">
 
 The first time you open Wisp, before you've recorded anything, the
 history list is replaced with a short empty-state message instead:

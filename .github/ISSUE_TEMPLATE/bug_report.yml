@@ -49,13 +49,18 @@ body:
     id: device
     attributes:
       label: Device and Android version
+      description: >-
+        Also shown by Wisp's ⓘ icon on Home, in this same format —
+        you can copy it straight from there.
       placeholder: e.g. Pixel 7, Android 15
 
   - type: input
     id: app-version
     attributes:
       label: Wisp version
-      description: Found on the Play Store listing or your device's app info screen.
+      description: >-
+        Tap the ⓘ icon on Wisp's Home screen — it's shown right at the top
+        of that view.
 
   - type: textarea
     id: extra
