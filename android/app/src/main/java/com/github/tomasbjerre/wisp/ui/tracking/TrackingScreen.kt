@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.location.TrackingUiState
 import com.github.tomasbjerre.wisp.ui.Formatting
+import com.github.tomasbjerre.wisp.ui.common.MapType
 import com.github.tomasbjerre.wisp.ui.common.RouteMap
 
 /** See specs/ui-flows.md#2-tracking-active-recording. */
@@ -93,9 +95,36 @@ fun TrackingScreen(
         return
     }
 
+    // See specs/ui-flows.md#2-tracking-active-recording: only lasts for this viewing of
+    // the screen, not remembered between recordings — no settings to persist it to.
+    var mapType by remember { mutableStateOf(MapType.STANDARD) }
+
     Column(modifier = Modifier.fillMaxSize()) {
-        RouteMap(route = state.route, isLive = true, modifier = Modifier.fillMaxSize().weight(1f))
+        Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+            RouteMap(route = state.route, isLive = true, mapType = mapType, modifier = Modifier.fillMaxSize())
+            MapTypeToggle(
+                mapType = mapType,
+                onToggle = { mapType = if (mapType == MapType.STANDARD) MapType.SATELLITE else MapType.STANDARD },
+                modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
+            )
+        }
         TrackingStatsPanel(state = state, permissions = permissions)
+    }
+}
+
+@Composable
+private fun MapTypeToggle(
+    mapType: MapType,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // Labeled with the view tapping it switches *to* (matches Pause/Continue's own
+    // convention of naming the action, not the current state).
+    val label = if (mapType == MapType.STANDARD) "Satellite" else "Map"
+    Surface(modifier = modifier, shape = RoundedCornerShape(50), tonalElevation = 4.dp) {
+        TextButton(onClick = onToggle) {
+            Text(label)
+        }
     }
 }
 
