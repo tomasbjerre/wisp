@@ -1,5 +1,6 @@
 import com.github.triplet.gradle.androidpublisher.ResolutionStrategy
 import io.gitlab.arturbosch.detekt.Detekt
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 import java.io.File
 import java.util.Base64
@@ -86,16 +87,22 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     buildFeatures {
         compose = true
     }
 
     testOptions {
         unitTests.all { it.useJUnitPlatform() }
+    }
+}
+
+kotlin {
+    // Replaces the deprecated `android { kotlinOptions { jvmTarget = "17" } }` — Kotlin
+    // 2.4+ turns that old DSL into a hard compile error (see renovate.json's Kotlin
+    // toolchain block for why that bump isn't in yet), so this needed migrating before
+    // it could ever land, not after.
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 

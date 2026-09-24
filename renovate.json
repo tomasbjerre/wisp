@@ -36,6 +36,23 @@
       "groupName": "Kotlin toolchain (Kotlin, Compose compiler, KSP)"
     },
     {
+      // Grouping (above) only combines updates that are due at the same time — it
+      // doesn't stop either half from being proposed alone when they're not. Kotlin
+      // 2.4.20 and KSP 2.3.12 landed as two separate PRs (#45, #46), and neither
+      // builds by itself: KSP 2.3.12 expects a Kotlin Gradle Plugin API
+      // (KotlinJvmCompilerOptions.getJvmDefault()) that this project's pinned Kotlin
+      // 2.0.21 doesn't have, and 2.3.12 isn't even the version that pairs with
+      // 2.4.20 in the first place — KSP hasn't published a build against Kotlin
+      // 2.4.x yet, so Renovate is offering its own latest independently rather than
+      // a real matched pair. (Kotlin 2.4.20 alone also failed for an unrelated
+      // reason — the deprecated `kotlinOptions { jvmTarget = "17" }` DSL became a
+      // hard error in 2.4+ — fixed in android/app/build.gradle.kts regardless of
+      // this block, so it's ready whenever a real matched pair shows up.) Re-enable
+      // once KSP publishes a build for the Kotlin version being proposed.
+      "matchPackageNames": ["org.jetbrains.kotlin.android", "com.google.devtools.ksp"],
+      "enabled": false
+    },
+    {
       // Deliberately pinned below its own latest release: kotlinx-coroutines-test
       // 1.10+ requires a newer Kotlin compiler (2.1+) than this project's pinned
       // Kotlin 2.0.21 — see android/app/build.gradle.kts. Bumping it alone breaks
