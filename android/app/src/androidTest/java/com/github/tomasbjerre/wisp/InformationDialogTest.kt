@@ -1,5 +1,6 @@
 package com.github.tomasbjerre.wisp
 
+import android.os.Build
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -29,6 +30,9 @@ class InformationDialogTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName
         composeRule.onNode(hasText("Version $versionName", substring = true)).assertIsDisplayed()
+        composeRule
+            .onNode(hasText("${Build.MODEL}, Android ${Build.VERSION.RELEASE}", substring = true))
+            .assertIsDisplayed()
         composeRule.onNodeWithText("Report a problem or request a feature").assertIsDisplayed()
         composeRule.onNodeWithText("User manual").assertIsDisplayed()
 

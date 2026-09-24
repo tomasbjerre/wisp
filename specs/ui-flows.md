@@ -111,8 +111,10 @@ Start button and history list, opening an **Information** view — not a
 fourth full screen/navigation destination, since there's nothing here
 that needs one; a dialog over Home is enough. It shows:
 
-- The app's version, so a user filing an issue doesn't have to go
-  digging for it elsewhere.
+- The app's version and the device model/Android version, so a user
+  filing an issue doesn't have to go digging for either elsewhere — and
+  can copy them straight into the matching fields the issue templates
+  already ask for.
 - A link to https://github.com/tomasbjerre/wisp/issues, opening in the
   user's browser, to report a problem or request a feature.
 - A link to the [user manual](https://github.com/tomasbjerre/wisp/blob/main/docs/user-manual.md),

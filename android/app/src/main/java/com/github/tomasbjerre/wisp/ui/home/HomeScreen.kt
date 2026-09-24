@@ -1,6 +1,7 @@
 package com.github.tomasbjerre.wisp.ui.home
 
 import android.content.Context
+import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -167,6 +168,9 @@ private fun InformationDialog(onDismiss: () -> Unit) {
         text = {
             Column {
                 Text("Version ${appVersionName(context)}", style = MaterialTheme.typography.bodyLarge)
+                // Same "<model>, Android <release>" shape as the bug report issue
+                // template's own placeholder text, so this can be copied straight in.
+                Text(deviceInfo(), style = MaterialTheme.typography.bodyLarge)
                 TextButton(onClick = { uriHandler.openUri(FEEDBACK_URL) }, modifier = Modifier.fillMaxWidth()) {
                     Text("Report a problem or request a feature")
                 }
@@ -184,6 +188,8 @@ private fun InformationDialog(onDismiss: () -> Unit) {
 // the device's own app-info screen would show.
 private fun appVersionName(context: Context): String =
     context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown"
+
+private fun deviceInfo(): String = "${Build.MODEL}, Android ${Build.VERSION.RELEASE}"
 
 @Composable
 private fun SessionList(
