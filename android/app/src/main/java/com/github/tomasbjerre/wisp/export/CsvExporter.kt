@@ -8,7 +8,7 @@ import java.util.Locale
 
 /** See specs/export.md#format. Pure string generation — no I/O, no Android types. */
 object CsvExporter {
-    private const val HEADER = "started_at,distance_km,duration_seconds,average_speed_kmh,max_speed_kmh"
+    private const val HEADER = "started_at,distance_km,duration_seconds,average_speed_kmh,max_speed_kmh,steps"
 
     private val TIMESTAMP_FORMAT = DateTimeFormatter.ISO_INSTANT
 
@@ -22,7 +22,13 @@ object CsvExporter {
         val distanceKm = "%.2f".format(Locale.ROOT, session.distanceMeters / 1000.0)
         val averageSpeedKmh = "%.1f".format(Locale.ROOT, session.averageSpeedMps * 3.6)
         val maxSpeedKmh = "%.1f".format(Locale.ROOT, session.maxSpeedMps * 3.6)
-        return listOf(startedAt, distanceKm, session.durationSeconds.toString(), averageSpeedKmh, maxSpeedKmh)
-            .joinToString(",")
+        return listOf(
+            startedAt,
+            distanceKm,
+            session.durationSeconds.toString(),
+            averageSpeedKmh,
+            maxSpeedKmh,
+            session.steps.toString(),
+        ).joinToString(",")
     }
 }

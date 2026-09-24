@@ -13,6 +13,16 @@ object Formatting {
 
     fun speedKmh(metersPerSecond: Double): String = "%.1f km/h".format(metersPerSecond * 3.6)
 
+    /** See specs/tracking.md#step-count. Callers omit this entirely when steps is 0. */
+    fun stepsPerMinute(
+        steps: Long,
+        durationSeconds: Long,
+    ): String {
+        val minutes = durationSeconds / 60.0
+        val perMinute = if (minutes > 0) steps / minutes else 0.0
+        return "%.0f steps/min".format(perMinute)
+    }
+
     fun duration(seconds: Long): String {
         val h = seconds / 3600
         val m = (seconds % 3600) / 60

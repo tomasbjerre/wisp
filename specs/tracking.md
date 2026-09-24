@@ -96,6 +96,30 @@ that session's Detail screen.
 - Speed and distance are stored internally in SI units (meters, meters per
   second) and formatted for display at the UI layer.
 
+## Step count
+
+- Wisp counts steps for a session using the device's step-count sensor
+  (where present), so the total can be shown and exported (see
+  [Data Model](data-model.md#session) and [Export](export.md#format)).
+- Gated the same way the timer and track are (see
+  [Start gating](#start-gating)): steps taken before movement is confirmed
+  don't count. Steps while paused don't count either, matching how paused
+  time is excluded from distance/duration.
+- Not every device has a step-count sensor, and the platform may require
+  a permission for it the user can decline — either way this is a
+  best-effort enhancement, not a requirement for recording: with no
+  sensor or no permission, the session's step count is simply 0, and
+  nowhere in the UI treats that as an error or asks the user to fix
+  anything (see [Permissions & Privacy](permissions-and-privacy.md#required-access)).
+- A session recovered after an interruption (see
+  [What must survive interruption](#what-must-survive-interruption)) has
+  no step count — there's no live sensor to recover it from — same as any
+  other best-effort data that depends on the app having been running.
+- **Steps per minute**, shown on
+  [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session): total
+  steps ÷ recording-time minutes (excluding paused time, like average
+  speed). Omitted entirely when the session's step count is 0.
+
 ## Km splits
 
 - A **split** is the time it took to cover one complete kilometer of a

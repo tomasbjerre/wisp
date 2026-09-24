@@ -36,8 +36,10 @@ class TrackingService : LifecycleService() {
     private val repository by lazy { (application as WispApplication).repository }
     private val locationTracker by lazy { LocationTracker(this) }
     private val geocodingService by lazy { GeocodingService(this) }
+    private val stepCounterTracker by lazy { StepCounterTracker(this) }
     private var recorder = TrackRecorder()
     private var movementGate = MovementGate()
+    private var stepRecorder = StepRecorder()
 
     private var sessionId: Long? = null
     private var sequence = 0
@@ -70,6 +72,7 @@ class TrackingService : LifecycleService() {
         startForeground(NOTIFICATION_ID, buildNotification(_state.value))
         recorder = TrackRecorder()
         movementGate = MovementGate()
+        stepRecorder = StepRecorder()
         sequence = 0
         pausedAccumulatedMillis = 0L
         lifecycleScope.launch {
@@ -86,6 +89,7 @@ class TrackingService : LifecycleService() {
     private fun pause() {
         locationTracker.stop()
         recorder.pause()
+        stepRecorder.pause()
         pauseStartedElapsedRealtime = SystemClock.elapsedRealtime()
         stopTicker()
         _state.update { it.copy(isPaused = true) }
@@ -96,6 +100,7 @@ class TrackingService : LifecycleService() {
         pausedAccumulatedMillis += SystemClock.elapsedRealtime() - pauseStartedElapsedRealtime
         _state.update { it.copy(isPaused = false) }
         locationTracker.start(::onLocation)
+        stepRecorder.resume()
         startTicker()
         updateNotification()
     }
@@ -121,18 +126,20 @@ class TrackingService : LifecycleService() {
 
     private fun stop() {
         locationTracker.stop()
+        stepCounterTracker.stop()
         stopTicker()
         val id = sessionId
         // Never saw movement (see specs/tracking.md#start-gating) => no points were ever
         // recorded, so there's nothing to show — discard rather than saving a session
         // whose Detail screen would just be a permanent blank map.
         val neverMoved = _state.value.isWaitingForMovement
+        val steps = stepRecorder.steps
         lifecycleScope.launch {
             if (id != null) {
                 if (neverMoved) {
                     repository.deleteSessionById(id)
                 } else {
-                    repository.finishSession(id, System.currentTimeMillis())
+                    repository.finishSession(id, System.currentTimeMillis(), steps = steps)
                 }
             }
             _state.update {
@@ -192,6 +199,9 @@ class TrackingService : LifecycleService() {
             recordingStartElapsedRealtime = SystemClock.elapsedRealtime()
             _state.update { it.copy(isWaitingForMovement = false) }
             startTicker()
+            // See specs/tracking.md#step-count: gated the same as the timer/track, so
+            // steps taken before movement is confirmed don't count.
+            stepCounterTracker.start(stepRecorder::onStepCounterChanged)
         }
 
         val recorded = recorder.accept(fix) ?: return

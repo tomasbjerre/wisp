@@ -9,7 +9,7 @@ class CsvExporterTest {
     @Test
     fun `an empty history is just the header row`() {
         assertThat(CsvExporter.toCsv(emptyList()))
-            .isEqualTo("started_at,distance_km,duration_seconds,average_speed_kmh,max_speed_kmh\r\n")
+            .isEqualTo("started_at,distance_km,duration_seconds,average_speed_kmh,max_speed_kmh,steps\r\n")
     }
 
     @Test
@@ -24,13 +24,14 @@ class CsvExporterTest {
                 durationSeconds = 600,
                 averageSpeedMps = 2.0,
                 maxSpeedMps = 5.5,
+                steps = 812,
             )
 
         val csv = CsvExporter.toCsv(listOf(session))
 
         assertThat(csv).isEqualTo(
-            "started_at,distance_km,duration_seconds,average_speed_kmh,max_speed_kmh\r\n" +
-                "2026-09-26T14:03:00Z,1.23,600,7.2,19.8\r\n",
+            "started_at,distance_km,duration_seconds,average_speed_kmh,max_speed_kmh,steps\r\n" +
+                "2026-09-26T14:03:00Z,1.23,600,7.2,19.8,812\r\n",
         )
     }
 

@@ -119,6 +119,29 @@ class SessionRepositoryTest {
         }
 
     @Test
+    fun `finishing a session persists its step count`() =
+        runTest {
+            // See specs/tracking.md#step-count.
+            val sessionId = repository.startSession(startedAt = 0)
+
+            repository.finishSession(sessionId, endedAt = 1_000, steps = 812)
+
+            assertThat(repository.observeSession(sessionId).first()!!.steps).isEqualTo(812L)
+        }
+
+    @Test
+    fun `a session finished without a step count defaults to zero steps`() =
+        runTest {
+            // No live sensor to recover a step count from — see
+            // specs/tracking.md#step-count and #what-must-survive-interruption.
+            val sessionId = repository.startSession(startedAt = 0)
+
+            repository.finishSession(sessionId, endedAt = 1_000)
+
+            assertThat(repository.observeSession(sessionId).first()!!.steps).isZero()
+        }
+
+    @Test
     fun `the nearest city can be recorded for a finished session`() =
         runTest {
             val sessionId = repository.startSession(startedAt = 0)

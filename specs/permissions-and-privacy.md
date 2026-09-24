@@ -22,6 +22,13 @@
   Tracking screen when it isn't already granted (see
   [UI Flows](ui-flows.md#2-tracking-active-recording)); this is advisory,
   not a permission — recording still works if the user declines.
+- **Activity recognition** (required by the platform, on versions that
+  require it, to read the device's step-count sensor), requested
+  opportunistically alongside location when a recording starts. Unlike
+  location, this is never required for recording to work: if declined, or
+  the device has no step-count sensor, that session's step count is
+  simply 0 (see [Tracking](tracking.md#step-count)) — no explanation, no
+  retry prompt, nothing blocking.
 
 ## Denied or restricted permission
 

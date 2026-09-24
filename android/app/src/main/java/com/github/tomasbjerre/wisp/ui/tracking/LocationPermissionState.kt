@@ -93,8 +93,16 @@ fun rememberLocationPermissionState(): LocationPermissionState {
             background = hasBackground,
             batteryExemption = hasBatteryExemption,
             requestForeground = {
+                // Activity recognition (see specs/permissions-and-privacy.md#required-access)
+                // is bundled into this same system dialog — it's opportunistic, not
+                // gated/tracked like the location permissions above: nothing here reads its
+                // result, a decline just means that session has no step count.
                 foregroundLauncher.launch(
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACTIVITY_RECOGNITION,
+                    ),
                 )
             },
             requestBackground = { backgroundLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION) },
