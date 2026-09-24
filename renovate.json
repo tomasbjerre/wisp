@@ -38,11 +38,16 @@
     {
       // Grouping (above) only combines updates that are due at the same time — it
       // doesn't stop any member from being proposed alone when the others aren't due.
-      // Kotlin 2.4.20 and KSP 2.3.12 landed as two separate PRs (#45, #46; recreated
-      // as #62/#63 after being closed, since disabling a package here stops Renovate
-      // proposing it again but doesn't retroactively close PRs opened before the rule
-      // existed), and neither builds by itself: KSP 2.3.12 expects a Kotlin Gradle
-      // Plugin API (KotlinJvmCompilerOptions.getJvmDefault()) that this project's
+      // Kotlin 2.4.20 and KSP 2.3.12 landed as two separate PRs (#45, #46 — closed,
+      // then recreated as #62/#63, then again as #67/#68 even after this rule already
+      // disabled both packages). Root cause: the org-inherited config
+      // (github>tomasbjerre/renovate-config//org-inherited-config) sets
+      // `recreateWhen: always`, which reopens a PR from its still-existing branch on
+      // the next run regardless of a local `enabled: false` here — `enabled: false`
+      // alone only stops a *new* PR/branch from being created. `recreateWhen: never`
+      // below overrides that for this repo, for just these packages. Neither builds by
+      // itself: KSP 2.3.12 expects a Kotlin Gradle Plugin API
+      // (KotlinJvmCompilerOptions.getJvmDefault()) that this project's
       // pinned Kotlin 2.0.21 doesn't have, and 2.3.12 isn't even the version that
       // pairs with 2.4.20 in the first place — KSP hasn't published a build against
       // Kotlin 2.4.x yet, so Renovate is offering its own latest independently rather
@@ -60,7 +65,8 @@
         "org.jetbrains.kotlin.plugin.compose",
         "com.google.devtools.ksp"
       ],
-      "enabled": false
+      "enabled": false,
+      "recreateWhen": "never"
     },
     {
       // Deliberately pinned below its own latest release: kotlinx-coroutines-test
@@ -68,7 +74,8 @@
       // Kotlin 2.0.21 — see android/app/build.gradle.kts. Bumping it alone breaks
       // the build; it must be raised by hand together with a Kotlin upgrade.
       "matchPackageNames": ["org.jetbrains.kotlinx:kotlinx-coroutines-test"],
-      "enabled": false
+      "enabled": false,
+      "recreateWhen": "never"
     },
     {
       // The entire androidx.lifecycle groupId's 2.11.0 release requires
@@ -79,7 +86,8 @@
       // least 37" (PRs #18-21). Blocked here instead of closing them by hand
       // each cycle. Re-enable once compileSdk/AGP are bumped.
       "matchPackagePrefixes": ["androidx.lifecycle:"],
-      "enabled": false
+      "enabled": false,
+      "recreateWhen": "never"
     },
     {
       // Same compileSdk 37 / AGP 9.1.0+ requirement as the androidx.lifecycle
@@ -87,7 +95,8 @@
       // ("androidx.core:core-ktx:1.19.0 requires ... compileSdk of at least
       // 37"). Re-enable once compileSdk/AGP are bumped.
       "matchPackageNames": ["androidx.core:core-ktx", "androidx.core:core"],
-      "enabled": false
+      "enabled": false,
+      "recreateWhen": "never"
     },
     {
       // androidx.activity:activity-compose 1.13.0 fails CI on this project
@@ -96,7 +105,8 @@
       // version bump. Blocked as another Immortal PR Renovate keeps
       // recreating after being closed unmerged.
       "matchPackageNames": ["androidx.activity:activity-compose"],
-      "enabled": false
+      "enabled": false,
+      "recreateWhen": "never"
     },
     {
       // Same compileSdk 37 / AGP 9.1.0+ requirement as the androidx.lifecycle
@@ -104,7 +114,8 @@
       // 2.11.0 transitively, confirmed by the CI failure on PR #28. Re-enable
       // once compileSdk/AGP are bumped.
       "matchPackageNames": ["androidx.navigation:navigation-compose"],
-      "enabled": false
+      "enabled": false,
+      "recreateWhen": "never"
     },
     {
       // play-services-location 21.4.0's jar carries Kotlin metadata binary
@@ -113,7 +124,8 @@
       // version of Kotlin" (PR #31). Must go up together with a Kotlin
       // upgrade, like kotlinx-coroutines-test above.
       "matchPackageNames": ["com.google.android.gms:play-services-location"],
-      "enabled": false
+      "enabled": false,
+      "recreateWhen": "never"
     },
     {
       // All androidx.room artifacts (runtime, ktx, compiler) are released
