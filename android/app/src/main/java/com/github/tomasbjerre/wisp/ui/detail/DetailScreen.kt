@@ -13,8 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -139,23 +139,32 @@ private fun SessionSummaryPanel(
         if (kmSplitsSeconds.isNotEmpty()) {
             KmSplitsList(kmSplitsSeconds, modifier = Modifier.padding(top = 8.dp))
         }
-        Row(
+        // Two rows of two, not one row of four (see #60) — four equal-weight buttons in
+        // one row left barely enough width each for "Export Image"/"Export CSV" to fit
+        // without wrapping into an unreadable stack on a narrow phone. FilledTonalButton,
+        // not OutlinedButton: a visible fill reads as a button against the map behind it,
+        // where a thin outline alone did not.
+        Column(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            OutlinedButton(onClick = onBack, modifier = Modifier.weight(1f)) {
-                Text("Back")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = onBack, modifier = Modifier.weight(1f)) {
+                    Text("Back")
+                }
+                // See specs/export.md#single-activity-as-an-image.
+                FilledTonalButton(onClick = onExportImage, enabled = session != null, modifier = Modifier.weight(1f)) {
+                    Text("Export Image")
+                }
             }
-            // See specs/export.md#single-activity-as-an-image.
-            OutlinedButton(onClick = onExportImage, enabled = session != null, modifier = Modifier.weight(1f)) {
-                Text("Export Image")
-            }
-            // See specs/export.md#single-activity-as-csv.
-            OutlinedButton(onClick = onExportCsv, enabled = session != null, modifier = Modifier.weight(1f)) {
-                Text("Export CSV")
-            }
-            OutlinedButton(onClick = onDeleteClick, modifier = Modifier.weight(1f)) {
-                Text("Delete")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // See specs/export.md#single-activity-as-csv.
+                FilledTonalButton(onClick = onExportCsv, enabled = session != null, modifier = Modifier.weight(1f)) {
+                    Text("Export CSV")
+                }
+                FilledTonalButton(onClick = onDeleteClick, modifier = Modifier.weight(1f)) {
+                    Text("Delete")
+                }
             }
         }
     }
