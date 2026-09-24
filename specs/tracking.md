@@ -87,6 +87,22 @@ that session's Detail screen.
 - Speed and distance are stored internally in SI units (meters, meters per
   second) and formatted for display at the UI layer.
 
+## Km splits
+
+- A **split** is the time it took to cover one complete kilometer of a
+  session — shown on [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session)
+  so a user can see which parts of the activity were faster or slower.
+- Computed from the session's recorded points on demand (not stored
+  alongside the session, unlike distance/duration/speed) — points are
+  already loaded to draw the route on Detail, so there's nothing extra to
+  fetch.
+- Paused time and distance are excluded the same way they are from the
+  session totals (see [Distance calculation](#distance-calculation)): a
+  pause never counts toward completing a split.
+- Only complete kilometers are listed — a session that ends partway
+  through one (e.g. 3.4 km) shows 3 splits, not a fractional 4th one.
+- A session under 1 km has no splits to show.
+
 ## What must survive interruption
 
 - If the app is killed by the OS while recording, the session recorded so

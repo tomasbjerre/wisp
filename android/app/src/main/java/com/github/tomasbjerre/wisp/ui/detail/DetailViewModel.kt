@@ -6,6 +6,7 @@ import com.github.tomasbjerre.wisp.data.Session
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.TrackPoint
 import com.github.tomasbjerre.wisp.location.LatLon
+import com.github.tomasbjerre.wisp.util.GeoUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -25,9 +26,16 @@ class DetailViewModel(
     private val _route = MutableStateFlow<List<LatLon>>(emptyList())
     val route: StateFlow<List<LatLon>> = _route.asStateFlow()
 
+    // See specs/tracking.md#km-splits — derived from the same points loaded for the
+    // route above, not a separate query.
+    private val _kmSplitsSeconds = MutableStateFlow<List<Long>>(emptyList())
+    val kmSplitsSeconds: StateFlow<List<Long>> = _kmSplitsSeconds.asStateFlow()
+
     init {
         viewModelScope.launch {
-            _route.value = repository.getPoints(sessionId).map { it.toLatLon() }
+            val points = repository.getPoints(sessionId)
+            _route.value = points.map { it.toLatLon() }
+            _kmSplitsSeconds.value = GeoUtils.kmSplitsSeconds(points)
         }
     }
 

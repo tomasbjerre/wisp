@@ -7,6 +7,10 @@ import org.junit.jupiter.api.Test
 
 /** Verifies specs/tracking.md#distance-calculation and #speed-calculation. */
 class GeoUtilsTest {
+    // Mirrors GeoUtils' own private constant — haversineMeters is exact along one
+    // meridian (dLon = 0), so this lets test points be placed at an exact distance.
+    private val earthRadiusMeters = 6_371_000.0
+
     @Test
     fun `haversine distance between two known points matches the expected distance`() {
         // Stockholm Central Station to Uppsala Central Station, ~63 km apart.
@@ -99,6 +103,52 @@ class GeoUtilsTest {
             )
         assertThat(GeoUtils.summarize(points).maxSpeedMps).isEqualTo(9.0)
     }
+
+    @Test
+    fun `a session under 1km has no splits`() {
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
+                pointAtDistance(seq = 1, t = 200_000, distanceMeters = 500.0, segmentStart = false),
+            )
+        assertThat(GeoUtils.kmSplitsSeconds(points)).isEmpty()
+    }
+
+    @Test
+    fun `splits a constant-pace session into equal per-km durations, ignoring the trailing partial km`() {
+        // ~300.5s per km pace, 2.5km total: two full splits, the trailing 500m dropped.
+        // (300.5s, not an exact 300s, so truncation to whole seconds has clear margin
+        // either side of the boundary — see pointAtDistance's meridian round-trip.)
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
+                pointAtDistance(seq = 1, t = 751_250, distanceMeters = 2_500.0, segmentStart = false),
+            )
+        assertThat(GeoUtils.kmSplitsSeconds(points)).containsExactly(300L, 300L)
+    }
+
+    @Test
+    fun `a pause between two km does not inflate that split's time`() {
+        // See specs/tracking.md#km-splits: paused time/distance is excluded exactly like
+        // specs/tracking.md#distance-calculation's session totals.
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
+                pointAtDistance(seq = 1, t = 300_500, distanceMeters = 1_000.0, segmentStart = false),
+                // Paused here for an hour, resuming at the same spot.
+                pointAtDistance(seq = 2, t = 3_900_500, distanceMeters = 1_000.0, segmentStart = true),
+                pointAtDistance(seq = 3, t = 4_201_000, distanceMeters = 2_000.0, segmentStart = false),
+            )
+        assertThat(GeoUtils.kmSplitsSeconds(points)).containsExactly(300L, 300L)
+    }
+
+    /** A point [distanceMeters] north of a fixed origin, along one meridian (exact — see haversineMeters). */
+    private fun pointAtDistance(
+        seq: Int,
+        t: Long,
+        distanceMeters: Double,
+        segmentStart: Boolean,
+    ) = point(seq, t, lat = 59.0 + Math.toDegrees(distanceMeters / earthRadiusMeters), lon = 18.0, segmentStart)
 
     private fun point(
         seq: Int,

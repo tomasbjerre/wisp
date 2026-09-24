@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,6 +51,7 @@ fun DetailScreen(
         viewModel(factory = viewModelFactory { initializer { DetailViewModel(repository, sessionId) } })
     val session by viewModel.session.collectAsStateWithLifecycle()
     val route by viewModel.route.collectAsStateWithLifecycle()
+    val kmSplitsSeconds by viewModel.kmSplitsSeconds.collectAsStateWithLifecycle()
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var mapView by remember { mutableStateOf<MapView?>(null) }
     val context = LocalContext.current
@@ -74,6 +78,7 @@ fun DetailScreen(
 
             SessionSummaryPanel(
                 session = session,
+                kmSplitsSeconds = kmSplitsSeconds,
                 onBack = onBack,
                 onExportImage = {
                     val map = mapView ?: return@SessionSummaryPanel
@@ -104,6 +109,7 @@ fun DetailScreen(
 @Composable
 private fun SessionSummaryPanel(
     session: Session?,
+    kmSplitsSeconds: List<Long>,
     onBack: () -> Unit,
     onExportImage: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -114,6 +120,10 @@ private fun SessionSummaryPanel(
         // below visibly jumps down once the text pops in. See specs/ui-flows.md#3-detail.
         Text(distanceAndDurationLine(session), style = MaterialTheme.typography.titleLarge)
         Text(speedsLine(session), style = MaterialTheme.typography.bodyLarge)
+        // See specs/tracking.md#km-splits. Omitted entirely under 1 km, not just empty.
+        if (kmSplitsSeconds.isNotEmpty()) {
+            KmSplitsList(kmSplitsSeconds, modifier = Modifier.padding(top = 8.dp))
+        }
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -128,6 +138,24 @@ private fun SessionSummaryPanel(
             OutlinedButton(onClick = onDeleteClick, modifier = Modifier.weight(1f)) {
                 Text("Delete")
             }
+        }
+    }
+}
+
+@Composable
+private fun KmSplitsList(
+    kmSplitsSeconds: List<Long>,
+    modifier: Modifier = Modifier,
+) {
+    // Bounded height + LazyColumn: a short run's few splits render with no scrolling at
+    // all, while a long one (marathon-length) scrolls within this panel instead of
+    // pushing the Back/Export/Delete row off the bottom of the screen.
+    LazyColumn(modifier = modifier.fillMaxWidth().heightIn(max = 160.dp)) {
+        items(kmSplitsSeconds.size) { index ->
+            Text(
+                "Km ${index + 1}: ${Formatting.duration(kmSplitsSeconds[index])}",
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
     }
 }
