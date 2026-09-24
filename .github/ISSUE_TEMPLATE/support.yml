@@ -21,8 +21,6 @@ body:
         - Tracking (live recording)
         - Detail (a past or just-finished activity)
         - Not tied to a specific screen
-    validations:
-      required: true
 
   - type: textarea
     id: question
@@ -32,13 +30,11 @@ body:
         If it involves a specific control, name it — e.g. **Start**,
         **Pause**/**Continue**, **Stop**, **Delete**, **Export CSV**,
         **Export Image**, or **Back**.
-    validations:
-      required: true
+
 
   - type: textarea
     id: extra
     attributes:
       label: Anything else?
       description: Screenshots or other context that might help.
-    validations:
-      required: false
+
