@@ -161,10 +161,10 @@ class SessionRepositoryTest {
             repository.appendPoint(sessionId, 0, 0, 59.0, 18.0, 5f, null, segmentStart = true)
             repository.appendPoint(sessionId, 1, 5_000, 59.001, 18.0, 5f, null, segmentStart = false)
 
-            val recovered = repository.recoverUnfinishedSession()
+            val recovered = repository.recoverUnfinishedSessions()
 
-            assertThat(recovered?.id).isEqualTo(sessionId)
-            assertThat(recovered?.endedAt).isEqualTo(5_000L)
+            assertThat(recovered.map { it.id }).containsExactly(sessionId)
+            assertThat(recovered.single().endedAt).isEqualTo(5_000L)
         }
 
     @Test
@@ -173,7 +173,7 @@ class SessionRepositoryTest {
             val sessionId = repository.startSession(startedAt = 0)
             repository.finishSession(sessionId, endedAt = 1_000)
 
-            assertThat(repository.recoverUnfinishedSession()).isNull()
+            assertThat(repository.recoverUnfinishedSessions()).isEmpty()
         }
 
     @Test
@@ -183,10 +183,28 @@ class SessionRepositoryTest {
             // movement" (specs/tracking.md#start-gating) — never recorded a point.
             val sessionId = repository.startSession(startedAt = 0)
 
-            val recovered = repository.recoverUnfinishedSession()
+            val recovered = repository.recoverUnfinishedSessions()
 
-            assertThat(recovered).isNull()
+            assertThat(recovered).isEmpty()
             assertThat(repository.observeSession(sessionId).first()).isNull()
+        }
+
+    @Test
+    fun `every unfinished session is recovered, not just the most recent`() =
+        runTest {
+            // See specs/data-model.md#data-integrity-on-start: two interrupted in a row
+            // before either was ever recovered must both be handled, not just the newest.
+            val older = repository.startSession(startedAt = 0)
+            repository.appendPoint(older, 0, 0, 59.0, 18.0, 5f, null, segmentStart = true)
+            repository.appendPoint(older, 1, 5_000, 59.001, 18.0, 5f, null, segmentStart = false)
+            val newer = repository.startSession(startedAt = 10_000)
+            // No points for `newer` — should be discarded, not recovered, same as any
+            // other never-moved session.
+
+            val recovered = repository.recoverUnfinishedSessions()
+
+            assertThat(recovered.map { it.id }).containsExactly(older)
+            assertThat(repository.observeSession(newer).first()).isNull()
         }
 
     @Test

@@ -28,7 +28,10 @@ interface SessionDao {
     @Query("SELECT * FROM sessions WHERE id = :id")
     fun observeById(id: Long): Flow<Session?>
 
-    /** Recovery path from specs/tracking.md — a session never finalized on last run. */
-    @Query("SELECT * FROM sessions WHERE endedAt IS NULL ORDER BY startedAt DESC LIMIT 1")
-    suspend fun findUnfinished(): Session?
+    /**
+     * Recovery path from specs/tracking.md — every session never finalized on last run.
+     * Not limited to one: see specs/data-model.md#data-integrity-on-start.
+     */
+    @Query("SELECT * FROM sessions WHERE endedAt IS NULL ORDER BY startedAt DESC")
+    suspend fun findAllUnfinished(): List<Session>
 }

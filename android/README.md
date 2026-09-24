@@ -86,6 +86,15 @@ the requirement actually works, not that a mock was told to say so:
   SQLite database via Room + [Robolectric](http://robolectric.org/), not a
   mocked DAO. It verifies every query listed in
   `specs/data-model.md#required-queries` directly.
+- **Schema migrations** (`WispDatabaseMigrationTest`) — see
+  `specs/data-model.md#data-integrity-on-start`: a schema change must carry
+  existing data forward, not silently drop it. Tested by seeding a real,
+  file-based database at the *old* schema version (a small `@Database`
+  declared just for the test, mirroring what `WispDatabase` actually was at
+  that version — not an exported-schema fixture), then reopening the same
+  file through the real, current `WispDatabase.build` — the exact
+  production path, migration included — and asserting the old data is
+  still there. Add one of these alongside every future `Migration`.
 - Assertions use [AssertJ](https://assertj.github.io/doc/).
 
 Run them with `./gradlew testDebugUnitTest`.

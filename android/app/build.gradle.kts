@@ -118,6 +118,10 @@ dependencies {
     implementation("androidx.room:room-runtime:2.8.5")
     implementation("androidx.room:room-ktx:2.8.5")
     ksp("androidx.room:room-compiler:2.8.5")
+    // Processes the legacy @Database/@Entity/@Dao declared in WispDatabaseMigrationTest
+    // (test sources aren't covered by the ksp(...) dependency above, which only
+    // processes the main source set).
+    kspTest("androidx.room:room-compiler:2.8.5")
 
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("org.osmdroid:osmdroid-android:6.1.20")

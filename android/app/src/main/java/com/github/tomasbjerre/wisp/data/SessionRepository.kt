@@ -87,21 +87,27 @@ class SessionRepository(
     }
 
     /**
-     * See specs/tracking.md#what-must-survive-interruption. A session killed before it
-     * ever recorded a point (still "locating" or "waiting for movement" — see
+     * See specs/tracking.md#what-must-survive-interruption and
+     * specs/data-model.md#data-integrity-on-start. Recovers every session left marked
+     * as still recording, not just the most recent one — ordinarily there's at most
+     * one, but this must never assume that. A session killed before it ever recorded a
+     * point (still "locating" or "waiting for movement" — see
      * specs/tracking.md#start-gating) has nothing to recover, and finishing it anyway
      * would leave a broken zero-point entry in history — discard it instead, same as a
      * live Stop during that window (see TrackingService.stop).
      */
-    suspend fun recoverUnfinishedSession(): Session? {
-        val unfinished = sessionDao.findUnfinished() ?: return null
-        val points = trackPointDao.getForSession(unfinished.id)
-        if (points.isEmpty()) {
-            sessionDao.delete(unfinished)
-            return null
+    suspend fun recoverUnfinishedSessions(): List<Session> {
+        val recovered = mutableListOf<Session>()
+        for (unfinished in sessionDao.findAllUnfinished()) {
+            val points = trackPointDao.getForSession(unfinished.id)
+            if (points.isEmpty()) {
+                sessionDao.delete(unfinished)
+                continue
+            }
+            val endedAt = points.lastOrNull()?.timestamp ?: unfinished.startedAt
+            finishSession(unfinished.id, endedAt)
+            sessionDao.getById(unfinished.id)?.let { recovered += it }
         }
-        val endedAt = points.lastOrNull()?.timestamp ?: unfinished.startedAt
-        finishSession(unfinished.id, endedAt)
-        return sessionDao.getById(unfinished.id)
+        return recovered
     }
 }

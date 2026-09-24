@@ -4,6 +4,22 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+
+/**
+ * Adds Session.steps (see specs/tracking.md#step-count). Real users already have
+ * schema version 2 — every release shipped so far (v0.1.0-v0.3.0, per CHANGELOG.md)
+ * used it — so this must preserve their existing sessions, not wipe them (see
+ * specs/data-model.md#data-integrity-on-start). Existing rows get steps = 0, same as
+ * any session recorded before this feature existed.
+ */
+internal val MIGRATION_2_3 =
+    object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE sessions ADD COLUMN steps INTEGER NOT NULL DEFAULT 0")
+        }
+    }
 
 @Database(entities = [Session::class, TrackPoint::class], version = 3, exportSchema = false)
 abstract class WispDatabase : RoomDatabase() {
@@ -15,9 +31,12 @@ abstract class WispDatabase : RoomDatabase() {
         fun build(context: Context): WispDatabase =
             Room
                 .databaseBuilder(context.applicationContext, WispDatabase::class.java, "wisp.db")
-                // Wisp has no public release with real user data yet (see ../../CHANGELOG.md),
-                // so a real Migration isn't worth writing for this schema bump. Add one before
-                // this matters, i.e. before a schema change ships to real users.
+                .addMigrations(MIGRATION_2_3)
+                // Safety net only, not the primary path — see
+                // specs/data-model.md#data-integrity-on-start. Every schema change that has
+                // actually shipped to real users has an explicit Migration above; this only
+                // catches a version Wisp never shipped (e.g. a version older than any real
+                // release), where there's no real data to preserve anyway.
                 .fallbackToDestructiveMigration()
                 .build()
     }
