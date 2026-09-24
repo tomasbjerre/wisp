@@ -20,6 +20,26 @@ class GeoUtilsTest {
     }
 
     @Test
+    fun `min zoom for a target width matches the standard web mercator scale`() {
+        // See specs/ui-flows.md#2-tracking-active-recording. At zoom 0 a 256px-wide map
+        // shows the whole ~40,075km equator; doubling widthPx or halving widthMeters both
+        // require one more zoom level to keep the same on-screen width.
+        val zoom = GeoUtils.minZoomForWidthMeters(widthPx = 256, widthMeters = 40_075_016.686)
+        assertThat(zoom).isCloseTo(0.0, within(0.01))
+
+        val zoomForDoubleWidthPx = GeoUtils.minZoomForWidthMeters(widthPx = 512, widthMeters = 40_075_016.686)
+        assertThat(zoomForDoubleWidthPx).isCloseTo(zoom + 1.0, within(0.01))
+
+        val zoomForHalfWidthMeters = GeoUtils.minZoomForWidthMeters(widthPx = 256, widthMeters = 40_075_016.686 / 2)
+        assertThat(zoomForHalfWidthMeters).isCloseTo(zoom + 1.0, within(0.01))
+    }
+
+    @Test
+    fun `min zoom for an unmeasured view (zero width) is the platform minimum`() {
+        assertThat(GeoUtils.minZoomForWidthMeters(widthPx = 0, widthMeters = 100_000.0)).isZero()
+    }
+
+    @Test
     fun `summarize of no points has zero distance and duration`() {
         val summary = GeoUtils.summarize(emptyList())
         assertThat(summary.distanceMeters).isZero()

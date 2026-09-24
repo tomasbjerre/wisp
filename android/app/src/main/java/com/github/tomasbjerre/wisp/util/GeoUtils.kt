@@ -3,12 +3,34 @@ package com.github.tomasbjerre.wisp.util
 import com.github.tomasbjerre.wisp.data.TrackPoint
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.ln
 import kotlin.math.sin
 import kotlin.math.sqrt
 
 /** See specs/tracking.md#distance-calculation. */
 object GeoUtils {
     private const val EARTH_RADIUS_METERS = 6_371_000.0
+
+    // Standard Web Mercator/OSM tile scheme: meters-per-pixel at the equator at
+    // zoom 0, for 256px tiles. See https://wiki.openstreetmap.org/wiki/Zoom_levels.
+    private const val EQUATOR_METERS_PER_PIXEL_AT_ZOOM_0 = 156_543.03392804097
+
+    /**
+     * The (fractional) zoom level at which a map [widthPx] pixels wide shows
+     * [widthMeters] meters of the world, at the equator — used to cap how far a
+     * map can zoom out (see specs/ui-flows.md#2-tracking-active-recording).
+     * Real-world width per pixel shrinks at higher latitudes, so this is a
+     * conservative (never-wider-than-requested) cap everywhere off the equator.
+     * Returns 0.0 (osmdroid's own minimum) if either input is non-positive —
+     * e.g. before the map view has been measured.
+     */
+    fun minZoomForWidthMeters(
+        widthPx: Int,
+        widthMeters: Double,
+    ): Double {
+        if (widthPx <= 0 || widthMeters <= 0) return 0.0
+        return ln(EQUATOR_METERS_PER_PIXEL_AT_ZOOM_0 * widthPx / widthMeters) / ln(2.0)
+    }
 
     /** Great-circle distance between two points, in meters. */
     fun haversineMeters(

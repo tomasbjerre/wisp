@@ -42,6 +42,11 @@ screen while recording.
 - A map filling most of the screen, centered on the current location,
   drawing the route as it's recorded, with a marker for the current
   position (see [Accessibility](accessibility.md#map-markers-and-route)).
+  Zooming out is capped at roughly 100 km of width — not the entire
+  world — so a stray pinch-out never leaves the user looking at a
+  near-blank globe with their tiny route lost in the middle of it. This
+  cap applies to Detail's map too (below), since both use the same map
+  component.
 - A live stats panel below the map (not laid over it — see
   [Accessibility](accessibility.md#text-contrast)): current speed,
   elapsed distance, elapsed time — all zero while waiting for movement.
