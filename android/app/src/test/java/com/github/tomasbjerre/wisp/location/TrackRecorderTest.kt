@@ -48,6 +48,41 @@ class TrackRecorderTest {
     }
 
     @Test
+    fun `a gps jump implying an impossible speed is discarded`() {
+        val recorder = TrackRecorder()
+        recorder.accept(fix(lat = 59.0000, lon = 18.0000, accuracy = 5f, t = 0))
+
+        // ~500m in 1s => ~500 m/s — a GPS glitch, not real movement.
+        val jump = recorder.accept(fix(lat = 59.0045, lon = 18.0000, accuracy = 5f, t = 1_000))
+
+        assertThat(jump).isNull()
+    }
+
+    @Test
+    fun `fast but plausible movement is still recorded`() {
+        val recorder = TrackRecorder()
+        recorder.accept(fix(lat = 59.0000, lon = 18.0000, accuracy = 5f, t = 0))
+
+        // ~50m in 1s => ~50 m/s (180 km/h) — fast, but within the generous cap.
+        val moved = recorder.accept(fix(lat = 59.00045, lon = 18.0000, accuracy = 5f, t = 1_000))
+
+        assertThat(moved).isNotNull
+    }
+
+    @Test
+    fun `a resume far from where recording paused is not treated as an impossible jump`() {
+        val recorder = TrackRecorder()
+        recorder.accept(fix(lat = 59.0000, lon = 18.0000, accuracy = 5f, t = 0))
+        recorder.pause()
+
+        // Resumes 50km away after an hour — a real gap while paused, not a GPS glitch.
+        val resumed = recorder.accept(fix(lat = 59.5000, lon = 18.0000, accuracy = 5f, t = 3_600_000))
+
+        assertThat(resumed).isNotNull
+        assertThat(resumed!!.segmentStart).isTrue()
+    }
+
+    @Test
     fun `the first fix after a pause always starts a new segment even without movement`() {
         val recorder = TrackRecorder()
         recorder.accept(fix(lat = 59.0, lon = 18.0, accuracy = 5f, t = 0))

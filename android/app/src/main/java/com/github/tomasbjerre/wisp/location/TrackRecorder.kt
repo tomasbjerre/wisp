@@ -51,6 +51,9 @@ class TrackRecorder {
             } else {
                 GeoUtils.haversineMeters(previous.latitude, previous.longitude, fix.latitude, fix.longitude)
             }
+        val elapsedSeconds = if (previous != null) (fix.timestampMillis - previous.timestampMillis) / 1000.0 else 0.0
+
+        if (!isSegmentStart && isImplausibleJump(movedMeters, elapsedSeconds)) return null
         if (!isSegmentStart && movedMeters < MIN_MOVEMENT_METERS) return null
 
         segmentPending = false
@@ -58,8 +61,7 @@ class TrackRecorder {
         val rawSpeed =
             fix.speedMps?.toDouble()
                 ?: if (previous != null && !isSegmentStart) {
-                    val seconds = (fix.timestampMillis - previous.timestampMillis) / 1000.0
-                    if (seconds > 0) movedMeters / seconds else 0.0
+                    if (elapsedSeconds > 0) movedMeters / elapsedSeconds else 0.0
                 } else {
                     0.0
                 }
@@ -79,10 +81,27 @@ class TrackRecorder {
         return recorded
     }
 
+    /**
+     * See specs/tracking.md#location-sampling: a jump this fast is a GPS glitch, not real
+     * movement. Only ever checked against the previous point within the same segment (the
+     * caller guards on `!isSegmentStart`) — a teleport-on-resume across a pause is expected
+     * and handled separately, not a glitch.
+     */
+    private fun isImplausibleJump(
+        movedMeters: Double,
+        elapsedSeconds: Double,
+    ): Boolean {
+        val impliedSpeedMps = if (elapsedSeconds > 0) movedMeters / elapsedSeconds else Double.MAX_VALUE
+        return impliedSpeedMps > MAX_PLAUSIBLE_SPEED_MPS
+    }
+
     companion object {
         /** See specs/tracking.md#location-sampling. */
         const val MAX_ACCEPTABLE_ACCURACY_METERS = 30f
         const val MIN_MOVEMENT_METERS = 3.0
         const val SPEED_SMOOTHING = 0.3
+
+        /** ~200 km/h — generous on purpose, see specs/tracking.md#location-sampling. */
+        const val MAX_PLAUSIBLE_SPEED_MPS = 55.0
     }
 }
