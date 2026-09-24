@@ -59,6 +59,22 @@ commit type per the commit conventions). Purely mechanical chores (e.g.
   the relevant one there as part of the PR) so the same image documents
   the feature in the repo and in the PR, instead of a throwaway image that
   only lives in the PR description.
+- If the change touches a screen that already has more than one gallery
+  screenshot (e.g. Tracking has four: waiting, recording, paused,
+  satellite), regenerate that screen's *entire* set together via a full
+  `ScreenshotTest` run, not just the one state you happened to be
+  verifying — a partial refresh leaves the others stale, showing the
+  pre-fix layout, which reads as the bug still being there (see #76: the
+  statusBarsPadding fix in #55 was correct and merged, but only one of
+  Tracking's four screenshots got regenerated afterward).
+- A UI element positioned via `Box`/`Modifier.align(...)` *outside*
+  `Scaffold`'s `topBar`/`bottomBar` slots does not get window-inset
+  padding automatically the way content inside those slots does — add
+  `.statusBarsPadding()`/`.navigationBarsPadding()` explicitly, and
+  verify it in the live screenshot above, specifically checking the
+  screen's top/bottom edges against the status/navigation bar (not just
+  that the element renders at all) — this is exactly how #55 happened
+  (`TrackingScreen`'s satellite toggle).
 - Embed it in the PR body as
   `![<label>](https://raw.githubusercontent.com/tomasbjerre/wisp/<branch>/docs/screenshots/<file>.jpg)`
   once the branch is pushed — GitHub doesn't render repo-relative image
