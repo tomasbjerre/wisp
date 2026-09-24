@@ -18,12 +18,15 @@ One recorded activity.
 | `averageSpeedMps` | number | `distanceMeters / durationSeconds` |
 | `maxSpeedMps` | number | highest recorded current-speed sample |
 | `nearestCity` | text, nullable | name of the city/place nearest the session's start point; null until resolved, or if it couldn't be resolved (see [Permissions & Privacy](permissions-and-privacy.md#data-handling)) |
+| `steps` | integer | total steps counted during the session, excluding paused time (see [Tracking](tracking.md#step-count)); 0 if no step sensor/permission was available, or the session was recovered after an interruption |
 
 `distanceMeters`, `durationSeconds`, `averageSpeedMps`, and `maxSpeedMps`
 are derived from the session's points but should be stored (not
 recomputed on every read) so history lists stay cheap to render.
 `nearestCity` is resolved after the session finishes and stored once
 known — it never blocks finishing a session or navigating away from it.
+`steps` comes from a live sensor reading during recording, not from the
+points, so it can't be recomputed later the way the others can.
 
 ## TrackPoint
 

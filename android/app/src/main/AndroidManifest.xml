@@ -7,6 +7,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- See specs/permissions-and-privacy.md#required-access: reads the device's
+         step-count sensor during a recording. Not required for recording to work —
+         declining just means that session has no step count. -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <!-- See specs/permissions-and-privacy.md#required-access: lets Tracking offer a way to
          exempt Wisp from battery optimization, so background recording (e.g. phone in a
          pocket) is less likely to be paused by the OS. -->

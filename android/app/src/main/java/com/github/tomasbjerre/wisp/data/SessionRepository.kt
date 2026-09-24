@@ -43,10 +43,15 @@ class SessionRepository(
         )
     }
 
-    /** Recomputes and persists aggregate stats, then marks the session finished. */
+    /**
+     * Recomputes and persists aggregate stats, then marks the session finished. [steps]
+     * defaults to 0 — recovery (below) has no live sensor to read it from, see
+     * specs/tracking.md#step-count.
+     */
     suspend fun finishSession(
         sessionId: Long,
         endedAt: Long,
+        steps: Long = 0,
     ) {
         val session = sessionDao.getById(sessionId) ?: return
         val summary = GeoUtils.summarize(trackPointDao.getForSession(sessionId))
@@ -57,6 +62,7 @@ class SessionRepository(
                 durationSeconds = summary.durationSeconds,
                 averageSpeedMps = summary.averageSpeedMps,
                 maxSpeedMps = summary.maxSpeedMps,
+                steps = steps,
             ),
         )
     }

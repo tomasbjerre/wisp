@@ -17,4 +17,5 @@ data class Session(
     val averageSpeedMps: Double = 0.0,
     val maxSpeedMps: Double = 0.0,
     val nearestCity: String? = null,
+    val steps: Long = 0,
 )

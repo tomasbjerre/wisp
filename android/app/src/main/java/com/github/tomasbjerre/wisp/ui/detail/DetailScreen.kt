@@ -129,6 +129,12 @@ private fun SessionSummaryPanel(
         // below visibly jumps down once the text pops in. See specs/ui-flows.md#3-detail.
         Text(distanceAndDurationLine(session), style = MaterialTheme.typography.titleLarge)
         Text(speedsLine(session), style = MaterialTheme.typography.bodyLarge)
+        // See specs/tracking.md#step-count. Omitted entirely with no step count, not just
+        // empty — most sessions on most devices will never have one.
+        if (session != null && session.steps > 0) {
+            val stepsPerMinute = Formatting.stepsPerMinute(session.steps, session.durationSeconds)
+            Text(stepsPerMinute, style = MaterialTheme.typography.bodyLarge)
+        }
         // See specs/tracking.md#km-splits. Omitted entirely under 1 km, not just empty.
         if (kmSplitsSeconds.isNotEmpty()) {
             KmSplitsList(kmSplitsSeconds, modifier = Modifier.padding(top = 8.dp))

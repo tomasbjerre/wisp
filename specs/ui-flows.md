@@ -75,7 +75,9 @@ screen while recording.
 - Summary stats below the map, in their own panel (see
   [Accessibility](accessibility.md#text-contrast)): date/time, nearest
   city if known (see [Data Model](data-model.md#session)), distance,
-  duration, average speed, max speed.
+  duration, average speed, max speed, steps per minute (see
+  [Tracking](tracking.md#step-count) — omitted entirely when the session
+  has no step count).
 - Below the summary stats, a list of km splits (see
   [Tracking](tracking.md#km-splits)) — one row per completed kilometer,
   its split time. Omitted entirely for a session under 1 km.

@@ -51,6 +51,7 @@ order as the history list):
 | `duration_seconds` | `Session.durationSeconds` | integer |
 | `average_speed_kmh` | `Session.averageSpeedMps` | number, ×3.6, 1 decimal |
 | `max_speed_kmh` | `Session.maxSpeedMps` | number, ×3.6, 1 decimal |
+| `steps` | `Session.steps` | integer; 0 if no step sensor/permission was available (see [Tracking](tracking.md#step-count)) |
 
 **Track points** — one data row per point, grouped by session (most
 recent session first) and in recorded order within each session:

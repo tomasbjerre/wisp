@@ -1,6 +1,6 @@
 # Wisp — Privacy Policy
 
-_Last updated: 2026-09-23_
+_Last updated: 2026-09-24_
 
 Wisp is a GPS tracker for any activity — running, cycling, walking, or
 anything else. This page explains what data it accesses and what happens
@@ -17,6 +17,11 @@ which is the source of truth for Wisp's data-handling behavior.
   background.
 - The session data this produces: your route (a series of GPS points),
   distance, speed, duration, and timestamps.
+- **Step count**, from your device's step-count sensor, only while a
+  recording is active. Not every device has this sensor, and you can
+  decline the permission it needs on versions of Android that require
+  one — either way, recording still works, that session just has no step
+  count.
 
 ## Where your data goes
 
