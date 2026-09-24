@@ -41,6 +41,29 @@ works in the Android implementation.
 - When you add or change a requirement in `specs/`, add or update the test
   that covers it in the same change.
 
+## Rule: ship every bug fix and feature as a PR
+
+Work on a branch and open it as a pull request (`gh pr create`) instead of
+pushing straight to `main` — this applies to every change that fixes a bug
+or implements a feature (i.e. anything that would get a `fix`/`feat`
+commit type per the commit conventions). Purely mechanical chores (e.g.
+`chore`/`ci`/`docs` one-liners) can still go straight to `main` if asked.
+
+- If the change is user-visible (touches a Home/Tracking/Detail screen —
+  see `specs/ui-flows.md`), the PR description must include a screenshot
+  of the affected screen. Capture it with the local Android emulator (see
+  [`android/README.md#screenshots`](android/README.md#screenshots)) rather
+  than skipping it — there's no other reliable way to prove the change
+  actually renders correctly.
+- Prefer sourcing that screenshot from `docs/screenshots/` (adding/updating
+  the relevant one there as part of the PR) so the same image documents
+  the feature in the repo and in the PR, instead of a throwaway image that
+  only lives in the PR description.
+- Embed it in the PR body as
+  `![<label>](https://raw.githubusercontent.com/tomasbjerre/wisp/<branch>/docs/screenshots/<file>.jpg)`
+  once the branch is pushed — GitHub doesn't render repo-relative image
+  paths in PR bodies, only absolute URLs.
+
 ## Layout
 
 - `specs/` — what Wisp does, independent of any implementation.

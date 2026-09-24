@@ -13,7 +13,9 @@ sport-specific settings.
 
 ## Screenshots
 
-<img src="docs/screenshots/2-home-history.png" alt="Home screen with activity history" width="250"> <img src="docs/screenshots/3-detail.png" alt="Detail screen with route map" width="250">
+<img src="docs/screenshots/2-home-history.jpg" alt="Home screen with activity history" width="200"> <img src="docs/screenshots/4-tracking-recording.jpg" alt="Tracking screen while recording a route" width="200"> <img src="docs/screenshots/7-detail.jpg" alt="Detail screen with route map" width="200">
+
+More, covering every screen/state, in [`docs/screenshots/`](docs/screenshots/).
 
 ## Structure
 
