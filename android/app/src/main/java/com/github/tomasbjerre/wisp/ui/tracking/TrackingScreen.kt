@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -105,7 +106,11 @@ fun TrackingScreen(
             MapTypeToggle(
                 mapType = mapType,
                 onToggle = { mapType = if (mapType == MapType.STANDARD) MapType.SATELLITE else MapType.STANDARD },
-                modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
+                // statusBarsPadding: MainActivity draws edge-to-edge (see
+                // TrackingStatsPanel's navigationBarsPadding below for the same reason
+                // at the bottom), so without this the toggle sits under the status bar
+                // — easy to miss or to hit the notification shade instead (see #55).
+                modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp),
             )
         }
         TrackingStatsPanel(state = state, permissions = permissions)
