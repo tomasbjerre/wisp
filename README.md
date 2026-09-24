@@ -11,6 +11,9 @@ sport-specific settings.
 
 *(Link goes live once the first release is published — see [Play Store release](android/README.md#play-store-release).)*
 
+New to Wisp? See the [user manual](docs/user-manual.md) for a walkthrough
+of every screen and control.
+
 ## Screenshots
 
 <img src="docs/screenshots/2-home-history.jpg" alt="Home screen with activity history" width="200"> <img src="docs/screenshots/4-tracking-recording.jpg" alt="Tracking screen while recording a route" width="200"> <img src="docs/screenshots/7-detail.jpg" alt="Detail screen with route map" width="200">
@@ -24,6 +27,8 @@ More, covering every screen/state, in [`docs/screenshots/`](docs/screenshots/).
   it; if behavior needs to change, change the spec, not just the code.
 - [`android/`](android/README.md) — the native Android (Kotlin + Jetpack
   Compose) implementation.
+- [`docs/user-manual.md`](docs/user-manual.md) — the user-facing
+  walkthrough of every screen and control, with screenshots.
 
 ## Android quick start
 
