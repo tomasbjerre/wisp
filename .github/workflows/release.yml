@@ -43,6 +43,14 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      # git-changelog-command-line below is fetched via `npx --yes`, three times in this
+      # job — without this, npm re-downloads it from the registry on every run.
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-git-changelog-command-line-4.0.8
+
       - name: Configure git identity
         run: |
           git config user.name "github-actions[bot]"
