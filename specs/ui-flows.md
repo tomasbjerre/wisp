@@ -56,6 +56,12 @@ screen while recording.
 - A live stats panel below the map (not laid over it — see
   [Accessibility](accessibility.md#text-contrast)): current speed,
   elapsed distance, elapsed time — all zero while waiting for movement.
+  Also steps per minute (see [Tracking](tracking.md#step-count)) and the
+  most recently completed kilometer split (see
+  [Tracking](tracking.md#km-splits)) — each omitted until there's one to
+  show, same as Detail. Unlike Detail, only the latest split is shown,
+  not the full list — there's no room for a growing list on this screen,
+  and "how was that last km" is what's actually useful mid-run.
 - A **Pause**/**Continue** control (labeled Continue while paused) and a
   **Stop** control, both visible together at all times once recording has
   actually started — recording or paused, it's always exactly these two

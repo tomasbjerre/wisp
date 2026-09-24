@@ -221,6 +221,8 @@ class TrackingService : LifecycleService() {
                     distanceMeters = summary.distanceMeters,
                     currentSpeedMps = recorder.currentSpeedMps,
                     route = points.map { p -> LatLon(p.latitude, p.longitude) },
+                    steps = stepRecorder.steps,
+                    latestKmSplitSeconds = GeoUtils.kmSplitsSeconds(points).lastOrNull(),
                 )
             }
             updateNotification()

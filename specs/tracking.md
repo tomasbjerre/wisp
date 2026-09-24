@@ -138,19 +138,23 @@ that session's Detail screen.
   no step count — there's no live sensor to recover it from — same as any
   other best-effort data that depends on the app having been running.
 - **Steps per minute**, shown on
-  [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session): total
-  steps ÷ recording-time minutes (excluding paused time, like average
-  speed). Omitted entirely when the session's step count is 0.
+  [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session) and live
+  on [Tracking](ui-flows.md#2-tracking-active-recording): total steps ÷
+  recording-time minutes (excluding paused time, like average speed).
+  Omitted entirely when the session's step count is 0.
 
 ## Km splits
 
 - A **split** is the time it took to cover one complete kilometer of a
   session — shown on [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session)
-  so a user can see which parts of the activity were faster or slower.
+  (the full list) and live on
+  [Tracking](ui-flows.md#2-tracking-active-recording) (only the most
+  recently completed one) so a user can see which parts of the activity
+  were faster or slower.
 - Computed from the session's recorded points on demand (not stored
   alongside the session, unlike distance/duration/speed) — points are
-  already loaded to draw the route on Detail, so there's nothing extra to
-  fetch.
+  already loaded to draw the route on Detail, and already held in memory
+  while recording, so there's nothing extra to fetch either way.
 - Paused time and distance are excluded the same way they are from the
   session totals (see [Distance calculation](#distance-calculation)): a
   pause never counts toward completing a split.

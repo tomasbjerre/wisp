@@ -20,4 +20,10 @@ data class TrackingUiState(
     val elapsedSeconds: Long = 0,
     val currentSpeedMps: Double = 0.0,
     val route: List<LatLon> = emptyList(),
+    // See specs/tracking.md#step-count. 0 both when there's genuinely no steps yet and
+    // when there's no sensor/permission — the UI treats those identically (omit).
+    val steps: Long = 0,
+    // See specs/tracking.md#km-splits. Only the most recently completed split — the
+    // full list is Detail's job, live Tracking only ever needs "how was that last km".
+    val latestKmSplitSeconds: Long? = null,
 )
