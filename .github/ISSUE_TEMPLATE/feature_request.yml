@@ -43,3 +43,11 @@ body:
       label: Alternatives you've considered
       description: Any workarounds you're using today, or other approaches.
 
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Attachments (optional)
+      description: >
+        Drag and drop or paste files here — e.g. mockups, screenshots,
+        or an example CSV/GPX.
+

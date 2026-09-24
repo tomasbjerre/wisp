@@ -62,3 +62,11 @@ body:
     attributes:
       label: Anything else?
       description: Screenshots, logs, or other context.
+
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Attachments (optional)
+      description: >
+        Drag and drop or paste files here — e.g. screenshots, screen
+        recordings, an exported CSV/GPX, or logcat output.

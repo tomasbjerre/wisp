@@ -38,3 +38,11 @@ body:
       label: Anything else?
       description: Screenshots or other context that might help.
 
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Attachments (optional)
+      description: >
+        Drag and drop or paste files here — e.g. screenshots or an
+        exported CSV/GPX.
+
