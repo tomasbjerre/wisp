@@ -1,0 +1,44 @@
+name: Support / question
+description: Ask for help using Wisp, or something that's unclear.
+title: "[Support]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Wisp has three screens — **Home** (the list of past activities
+        and the Start button), **Tracking** (the live map and stats
+        shown while recording), and **Detail** (the map and stats for
+        one past or just-finished activity). Using these names below
+        helps answer your question faster.
+
+  - type: dropdown
+    id: screen
+    attributes:
+      label: Which screen is this about?
+      options:
+        - Home (activity list / Start button)
+        - Tracking (live recording)
+        - Detail (a past or just-finished activity)
+        - Not tied to a specific screen
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What do you need help with?
+      description: >
+        If it involves a specific control, name it — e.g. **Start**,
+        **Pause**/**Continue**, **Stop**, **Delete**, **Export CSV**,
+        **Export Image**, or **Back**.
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots or other context that might help.
+    validations:
+      required: false

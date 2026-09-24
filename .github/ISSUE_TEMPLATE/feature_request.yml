@@ -1,0 +1,52 @@
+name: Feature request
+description: Suggest something new, or a change to how Wisp behaves.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion. Wisp has three screens — **Home**
+        (the list of past activities and the Start button), **Tracking**
+        (the live map and stats shown while recording), and **Detail**
+        (the map and stats for one past or just-finished activity).
+        Using these names below helps place the request correctly.
+
+  - type: dropdown
+    id: screen
+    attributes:
+      label: Which screen does this affect (if any)?
+      options:
+        - Home (activity list / Start button)
+        - Tracking (live recording)
+        - Detail (a past or just-finished activity)
+        - Not tied to a specific screen / a new screen
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: What are you trying to do today that Wisp doesn't support well?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+      description: >
+        Describe the change. If it involves an existing control, use its
+        name — e.g. **Start**, **Pause**/**Continue**, **Stop**,
+        **Delete**, **Export CSV**, **Export Image**, or **Back**.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Any workarounds you're using today, or other approaches.
+    validations:
+      required: false
