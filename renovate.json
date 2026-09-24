@@ -70,6 +70,37 @@
       // recreating after being closed unmerged.
       "matchPackageNames": ["androidx.activity:activity-compose"],
       "enabled": false
+    },
+    {
+      // Same compileSdk 37 / AGP 9.1.0+ requirement as the androidx.lifecycle
+      // block above — navigation-compose 2.10.1 pulls in androidx.lifecycle
+      // 2.11.0 transitively, confirmed by the CI failure on PR #28. Re-enable
+      // once compileSdk/AGP are bumped.
+      "matchPackageNames": ["androidx.navigation:navigation-compose"],
+      "enabled": false
+    },
+    {
+      // play-services-location 21.4.0's jar carries Kotlin metadata binary
+      // version 2.3.0, newer than this project's pinned Kotlin 2.0.21 compiler
+      // can read — kspDebugKotlin fails with "compiled with an incompatible
+      // version of Kotlin" (PR #31). Must go up together with a Kotlin
+      // upgrade, like kotlinx-coroutines-test above.
+      "matchPackageNames": ["com.google.android.gms:play-services-location"],
+      "enabled": false
+    },
+    {
+      // All androidx.room artifacts (runtime, ktx, compiler) are released
+      // together and must be on the same version — Google requires this
+      // explicitly. Renovate previously proposed them one at a time (room-ktx
+      // alone went to 2.8.5 while room-runtime stayed at 2.6.1), leaving the
+      // project on a mismatched, unsupported combination that happens to
+      // still compile. Grouped so a bump always proposes all three together.
+      "matchPackageNames": [
+        "androidx.room:room-runtime",
+        "androidx.room:room-ktx",
+        "androidx.room:room-compiler"
+      ],
+      "groupName": "Room (runtime, ktx, compiler)"
     }
   ]
 }
