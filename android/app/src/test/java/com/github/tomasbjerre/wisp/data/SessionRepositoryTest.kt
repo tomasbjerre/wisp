@@ -52,11 +52,27 @@ class SessionRepositoryTest {
     fun `sessions are listed most recent first`() =
         runTest {
             val older = repository.startSession(startedAt = 1_000)
+            repository.finishSession(older, endedAt = 1_500)
             val newer = repository.startSession(startedAt = 2_000)
+            repository.finishSession(newer, endedAt = 2_500)
 
             val sessions = repository.observeSessions().first()
 
             assertThat(sessions.map { it.id }).containsExactly(newer, older)
+        }
+
+    @Test
+    fun `a session still recording does not appear in the list`() =
+        runTest {
+            // See specs/data-model.md#required-queries: only finished sessions belong in
+            // history — an in-progress or not-yet-recovered session must stay invisible.
+            val finished = repository.startSession(startedAt = 1_000)
+            repository.finishSession(finished, endedAt = 1_500)
+            repository.startSession(startedAt = 2_000)
+
+            val sessions = repository.observeSessions().first()
+
+            assertThat(sessions.map { it.id }).containsExactly(finished)
         }
 
     @Test

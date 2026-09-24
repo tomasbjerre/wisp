@@ -1,5 +1,6 @@
 package com.github.tomasbjerre.wisp.ui.tracking
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,13 @@ fun TrackingScreen(
     val context = LocalContext.current
     val permissions = rememberLocationPermissionState()
     val state by TrackingService.state.collectAsStateWithLifecycle()
+
+    // See specs/ui-flows.md#2-tracking-active-recording: the only way out of this screen
+    // is Stop. Without this, system/gesture back would pop straight to Home while the
+    // session is still active, orphaning it — TrackingService keeps running against a
+    // sessionId no longer reachable from the UI, and a later Start creates a second
+    // session on top of it instead of resuming or stopping the first.
+    BackHandler(enabled = state.isRecording) {}
 
     // Start exactly once per time this screen is entered — not reactively on every
     // isRecording flip, otherwise stopping (isRecording -> false) would immediately
