@@ -37,19 +37,29 @@
     },
     {
       // Grouping (above) only combines updates that are due at the same time — it
-      // doesn't stop either half from being proposed alone when they're not. Kotlin
-      // 2.4.20 and KSP 2.3.12 landed as two separate PRs (#45, #46), and neither
-      // builds by itself: KSP 2.3.12 expects a Kotlin Gradle Plugin API
-      // (KotlinJvmCompilerOptions.getJvmDefault()) that this project's pinned Kotlin
-      // 2.0.21 doesn't have, and 2.3.12 isn't even the version that pairs with
-      // 2.4.20 in the first place — KSP hasn't published a build against Kotlin
-      // 2.4.x yet, so Renovate is offering its own latest independently rather than
-      // a real matched pair. (Kotlin 2.4.20 alone also failed for an unrelated
+      // doesn't stop any member from being proposed alone when the others aren't due.
+      // Kotlin 2.4.20 and KSP 2.3.12 landed as two separate PRs (#45, #46; recreated
+      // as #62/#63 after being closed, since disabling a package here stops Renovate
+      // proposing it again but doesn't retroactively close PRs opened before the rule
+      // existed), and neither builds by itself: KSP 2.3.12 expects a Kotlin Gradle
+      // Plugin API (KotlinJvmCompilerOptions.getJvmDefault()) that this project's
+      // pinned Kotlin 2.0.21 doesn't have, and 2.3.12 isn't even the version that
+      // pairs with 2.4.20 in the first place — KSP hasn't published a build against
+      // Kotlin 2.4.x yet, so Renovate is offering its own latest independently rather
+      // than a real matched pair. (Kotlin 2.4.20 alone also failed for an unrelated
       // reason — the deprecated `kotlinOptions { jvmTarget = "17" }` DSL became a
-      // hard error in 2.4+ — fixed in android/app/build.gradle.kts regardless of
-      // this block, so it's ready whenever a real matched pair shows up.) Re-enable
-      // once KSP publishes a build for the Kotlin version being proposed.
-      "matchPackageNames": ["org.jetbrains.kotlin.android", "com.google.devtools.ksp"],
+      // hard error in 2.4+ — fixed in android/app/build.gradle.kts regardless of this
+      // block, so it's ready whenever a real matched pair shows up.) The Compose
+      // compiler plugin must match the Kotlin version exactly (see the groupName
+      // rule above) so it's included here too, even though it hasn't landed as its
+      // own stray PR yet — it's sitting in the same rate-limited queue as the other
+      // two, and would fail the same way if it fired alone. Re-enable all three once
+      // KSP publishes a build for the Kotlin version being proposed.
+      "matchPackageNames": [
+        "org.jetbrains.kotlin.android",
+        "org.jetbrains.kotlin.plugin.compose",
+        "com.google.devtools.ksp"
+      ],
       "enabled": false
     },
     {
