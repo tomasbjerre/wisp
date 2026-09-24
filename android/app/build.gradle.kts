@@ -79,6 +79,13 @@ android {
                 "proguard-rules.pro",
             )
             signingConfigs.findByName("release")?.let { signingConfig = it }
+            // Native code comes in transitively (play-services-location, Room's SQLite
+            // bindings), not from anything in this repo — but Play Console still wants
+            // debug symbols for it to symbolicate native crashes/ANRs. FULL (not just
+            // SYMBOL_TABLE) for full native stack traces, not just crash addresses.
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
     }
 
