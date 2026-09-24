@@ -54,7 +54,9 @@ screen while recording.
   **Stop** control, both visible together at all times once recording has
   actually started — recording or paused, it's always exactly these two
   controls, no intermediate confirmation step. While waiting for
-  movement, only **Stop** is shown (there's nothing to pause yet).
+  movement, only **Stop** is shown (there's nothing to pause yet). Also
+  flips to paused on its own after a sustained stop (see
+  [Tracking](tracking.md#auto-pause)) — same controls either way.
 - Tapping Stop finalizes the session immediately and navigates to that
   session's Detail screen — unless movement was never confirmed (see
   [Tracking](tracking.md#start-gating)), in which case the session is

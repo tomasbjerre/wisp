@@ -52,6 +52,25 @@ discarded entirely rather than saved — nothing meaningful was recorded
 broken-looking blank entry to history. The user returns to Home, not to
 that session's Detail screen.
 
+## Auto-pause
+
+- A session that's actively recording (past start gating, not already
+  paused) pauses itself automatically once no real movement has been
+  detected for a sustained period — roughly 15 seconds below walking
+  pace. Otherwise a red light, a rest stop, or standing around after
+  finishing would silently count as part of the activity, the same
+  problem [start gating](#start-gating) solves for the very beginning of
+  a session, just recurring anywhere in the middle of one.
+- Uses the same movement signal and threshold as start gating, just
+  applied continuously during recording (a sustained absence of it)
+  instead of once at the beginning (a confirmed presence of it).
+- Behaves exactly like tapping Pause manually — same Continue control on
+  [Tracking](ui-flows.md#2-tracking-active-recording), no distinct
+  "auto-paused" indicator. Resuming is always a manual tap; auto-pause
+  never auto-resumes itself the moment movement resumes, so a person
+  only ever starts the clock again by deliberately choosing to, not by
+  an incidental shuffle a few seconds after stopping.
+
 ## Location sampling
 
 - Request the highest-accuracy location updates the platform offers for
