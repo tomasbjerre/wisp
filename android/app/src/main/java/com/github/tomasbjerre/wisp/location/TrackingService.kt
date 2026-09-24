@@ -40,6 +40,7 @@ class TrackingService : LifecycleService() {
     private var recorder = TrackRecorder()
     private var movementGate = MovementGate()
     private var stepRecorder = StepRecorder()
+    private var stationaryGate = StationaryGate()
 
     private var sessionId: Long? = null
     private var sequence = 0
@@ -73,6 +74,7 @@ class TrackingService : LifecycleService() {
         recorder = TrackRecorder()
         movementGate = MovementGate()
         stepRecorder = StepRecorder()
+        stationaryGate = StationaryGate()
         sequence = 0
         pausedAccumulatedMillis = 0L
         lifecycleScope.launch {
@@ -101,6 +103,9 @@ class TrackingService : LifecycleService() {
         _state.update { it.copy(isPaused = false) }
         locationTracker.start(::onLocation)
         stepRecorder.resume()
+        // Fresh idle clock (see specs/tracking.md#auto-pause) — otherwise time spent
+        // paused would count toward the next auto-pause's idle threshold.
+        stationaryGate = StationaryGate()
         startTicker()
         updateNotification()
     }
@@ -186,22 +191,13 @@ class TrackingService : LifecycleService() {
                 timestampMillis = location.time,
             )
 
-        // See specs/tracking.md#start-gating: show the current position as soon as it's
-        // known, but hold off starting the timer/track until the user is actually moving.
-        if (_state.value.isWaitingForMovement) {
-            if (fix.accuracyMeters > TrackRecorder.MAX_ACCEPTABLE_ACCURACY_METERS) return
-            val startedMoving = movementGate.hasStartedMoving(fix)
-            _state.update { it.copy(isLocating = false, route = listOf(LatLon(fix.latitude, fix.longitude))) }
-            if (!startedMoving) {
-                updateNotification()
-                return
-            }
-            recordingStartElapsedRealtime = SystemClock.elapsedRealtime()
-            _state.update { it.copy(isWaitingForMovement = false) }
-            startTicker()
-            // See specs/tracking.md#step-count: gated the same as the timer/track, so
-            // steps taken before movement is confirmed don't count.
-            stepCounterTracker.start(stepRecorder::onStepCounterChanged)
+        if (handleStartGating(fix)) return
+
+        // See specs/tracking.md#auto-pause: a sustained lack of movement while actively
+        // recording pauses the session automatically, exactly like a manual Pause tap.
+        if (stationaryGate.onFix(fix)) {
+            pause()
+            return
         }
 
         val recorded = recorder.accept(fix) ?: return
@@ -229,6 +225,31 @@ class TrackingService : LifecycleService() {
             }
             updateNotification()
         }
+    }
+
+    /**
+     * See specs/tracking.md#start-gating. Returns true once this [fix] has been fully
+     * handled by start-gating and the caller should stop processing it further — either
+     * it was rejected by the accuracy filter, or movement still isn't confirmed yet.
+     */
+    private fun handleStartGating(fix: LocationFix): Boolean {
+        if (!_state.value.isWaitingForMovement) return false
+        if (fix.accuracyMeters > TrackRecorder.MAX_ACCEPTABLE_ACCURACY_METERS) return true
+
+        val startedMoving = movementGate.hasStartedMoving(fix)
+        _state.update { it.copy(isLocating = false, route = listOf(LatLon(fix.latitude, fix.longitude))) }
+        if (!startedMoving) {
+            updateNotification()
+            return true
+        }
+
+        recordingStartElapsedRealtime = SystemClock.elapsedRealtime()
+        _state.update { it.copy(isWaitingForMovement = false) }
+        startTicker()
+        // See specs/tracking.md#step-count: gated the same as the timer/track, so steps
+        // taken before movement is confirmed don't count.
+        stepCounterTracker.start(stepRecorder::onStepCounterChanged)
+        return false
     }
 
     private fun ensureNotificationChannel() {
