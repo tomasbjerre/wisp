@@ -21,8 +21,6 @@ body:
         - Tracking (live recording)
         - Detail (a past or just-finished activity)
         - Not tied to a specific screen
-    validations:
-      required: true
 
   - type: textarea
     id: what-happened
@@ -37,8 +35,6 @@ body:
         1. On the Tracking screen, I tapped Pause...
         2. I expected the timer to stop...
         3. Instead...
-    validations:
-      required: true
 
   - type: textarea
     id: steps
@@ -48,29 +44,21 @@ body:
         1. Open Home
         2. Tap Start
         3. ...
-    validations:
-      required: false
 
   - type: input
     id: device
     attributes:
       label: Device and Android version
       placeholder: e.g. Pixel 7, Android 15
-    validations:
-      required: false
 
   - type: input
     id: app-version
     attributes:
       label: Wisp version
       description: Found on the Play Store listing or your device's app info screen.
-    validations:
-      required: false
 
   - type: textarea
     id: extra
     attributes:
       label: Anything else?
       description: Screenshots, logs, or other context.
-    validations:
-      required: false
