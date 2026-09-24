@@ -29,7 +29,9 @@ This is what you see when you open Wisp. It has:
 - **Information** — the ⓘ icon in the top-right opens a small dialog with
   Wisp's version (handy if you're about to report a bug — issue reports
   ask for it), a link to report a problem or request a feature (opens
-  Wisp's GitHub issues in your browser), and a link to this manual.
+  Wisp's GitHub issues in your browser), and a link to this manual:
+
+  <img src="screenshots/information-dialog.jpg" alt="Information dialog with app version and links" width="300">
 
 The first time you open Wisp, before you've recorded anything, the
 history list is replaced with a short empty-state message instead:
