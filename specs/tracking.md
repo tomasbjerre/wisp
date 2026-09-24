@@ -61,6 +61,15 @@ that session's Detail screen.
   route line without excessive battery drain or storage bloat.
 - Discard fixes with poor accuracy (accuracy radius worse than ~30 meters)
   rather than letting them distort the route or spike the speed reading.
+- Discard a fix whose implied speed from the previous accepted point
+  (distance ÷ time between them) is implausible for any activity Wisp is
+  used for — roughly 55 m/s / ~200 km/h — even if its reported accuracy
+  passed the filter above. A sudden jump that fast is a GPS glitch
+  (multipath reflection off buildings, a bad fix), not real movement, and
+  letting it through would spike distance, average speed, and max speed
+  with a value nobody actually reached. Generous on purpose: it must
+  never reject genuine fast movement (running, cycling, even a car), only
+  the kind of jump no tracked activity can produce.
 - Each accepted fix becomes one point on the current session's track.
 
 ## Distance calculation
