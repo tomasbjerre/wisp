@@ -63,6 +63,12 @@ commit type per the commit conventions). Purely mechanical chores (e.g.
   `![<label>](https://raw.githubusercontent.com/tomasbjerre/wisp/<branch>/docs/screenshots/<file>.jpg)`
   once the branch is pushed — GitHub doesn't render repo-relative image
   paths in PR bodies, only absolute URLs.
+- If the change adds or changes a feature (not a pure bug fix), also
+  update [`docs/user-manual.md`](docs/user-manual.md) in the same PR —
+  it's the user-facing walkthrough of every screen/control, and it going
+  stale is exactly how a manual stops being trustworthy. A pure bug fix
+  usually doesn't need this (the screen already worked the way the manual
+  describes); a new control, a changed flow, or a new screen state does.
 
 ## Layout
 
