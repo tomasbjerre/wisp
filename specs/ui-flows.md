@@ -28,12 +28,12 @@ The app's entry point.
 Entered by tapping Start on Home. Stays active in the background/locked
 screen while recording.
 
-- The only way to leave this screen is Stop (see [Navigation](#navigation)
-  below) — the system/gesture back action does nothing while a session is
-  active, whether still gating on movement or already recording/paused.
-  Otherwise the back action would return to Home while the session (and
-  its recording) is still ongoing but no longer reachable from the UI,
-  leaving it to linger unfinished — see
+- The system/gesture back action behaves exactly like tapping Stop (see
+  [Navigation](#navigation) below) — same finalize-or-discard logic, same
+  destination (that session's Detail screen, or Home if movement was
+  never confirmed). It does not simply return to Home on its own: leaving
+  the session's recording ongoing but no longer reachable from the UI
+  would leave it to linger unfinished — see
   [Tracking](tracking.md#what-must-survive-interruption).
 - Entering this screen doesn't show the map and controls right away — see
   [Tracking](tracking.md#start-gating) for the "locating" (a loading
