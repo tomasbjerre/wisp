@@ -11,8 +11,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.doOnLayout
 import com.github.tomasbjerre.wisp.location.LatLon
 import com.github.tomasbjerre.wisp.util.GeoUtils
+import org.osmdroid.tileprovider.tilesource.ITileSource
+import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.util.MapTileIndex
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
@@ -46,6 +49,41 @@ private const val CURRENT_POSITION_COLOR = 0xFF1565C0.toInt() // blue
 private const val MARKER_DIAMETER_DP = 18f
 private const val MARKER_RING_DP = 2f
 
+/** See specs/ui-flows.md#2-tracking-active-recording — Tracking's map-type toggle. */
+enum class MapType {
+    STANDARD,
+    SATELLITE,
+}
+
+// osmdroid's built-in TileSourceFactory.USGS_SAT covers only the United States (its
+// basemap.nationalmap.gov source is USGS's National Map), unusable for an app tracking
+// any activity anywhere. Esri's World Imagery service is the standard free, globally
+// covering alternative — same style of ArcGIS REST tile endpoint, just a different
+// {z}/{y}/{x} URL order than the {z}/{x}/{y} OnlineTileSourceBase's XYTileSource
+// subclass assumes, hence the small override below instead of reusing that class.
+private val SATELLITE_TILE_SOURCE: ITileSource =
+    object : OnlineTileSourceBase(
+        "EsriWorldImagery",
+        0,
+        19,
+        256,
+        "",
+        arrayOf("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/"),
+        "Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+    ) {
+        override fun getTileURLString(pMapTileIndex: Long): String =
+            baseUrl +
+                MapTileIndex.getZoom(pMapTileIndex) + "/" +
+                MapTileIndex.getY(pMapTileIndex) + "/" +
+                MapTileIndex.getX(pMapTileIndex)
+    }
+
+private fun MapType.tileSource(): ITileSource =
+    when (this) {
+        MapType.STANDARD -> TileSourceFactory.MAPNIK
+        MapType.SATELLITE -> SATELLITE_TILE_SOURCE
+    }
+
 /**
  * Draws [route] on an OpenStreetMap tile view, with a start marker and an
  * end marker — the latter shown as a distinct "current position" marker
@@ -55,6 +93,7 @@ private const val MARKER_RING_DP = 2f
 fun RouteMap(
     route: List<LatLon>,
     isLive: Boolean = false,
+    mapType: MapType = MapType.STANDARD,
     modifier: Modifier = Modifier,
     onMapViewReady: ((MapView) -> Unit)? = null,
 ) {
@@ -62,12 +101,14 @@ fun RouteMap(
     // Not Compose state on purpose (mirrors mapViewRef above) — flips once, the first
     // time real data arrives, and must never itself trigger a recomposition.
     val hasZoomedToRoute = remember { booleanArrayOf(false) }
+    val currentMapType = remember { arrayOfNulls<MapType>(1) }
 
     AndroidView(
         modifier = modifier,
         factory = { context ->
             MapView(context).apply {
-                setTileSource(TileSourceFactory.MAPNIK)
+                setTileSource(mapType.tileSource())
+                currentMapType[0] = mapType
                 setMultiTouchControls(true)
                 controller.setZoom(FALLBACK_ZOOM)
                 controller.setCenter(FALLBACK_CENTER)
@@ -77,6 +118,10 @@ fun RouteMap(
             }
         },
         update = { mapView ->
+            if (currentMapType[0] != mapType) {
+                mapView.setTileSource(mapType.tileSource())
+                currentMapType[0] = mapType
+            }
             mapView.overlays.clear()
             if (route.isNotEmpty()) {
                 val density = mapView.resources.displayMetrics.density

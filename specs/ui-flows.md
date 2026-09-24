@@ -47,6 +47,12 @@ screen while recording.
   near-blank globe with their tiny route lost in the middle of it. This
   cap applies to Detail's map too (below), since both use the same map
   component.
+- A small control over a corner of the map switches between the standard
+  street map and a satellite view, so the terrain around a route can be
+  inspected either way. Its current choice only lasts for this viewing of
+  the screen — it isn't remembered between recordings, and isn't offered
+  on Detail (see [Accessibility](accessibility.md#map-markers-and-route)
+  for why the route/markers stay legible on either).
 - A live stats panel below the map (not laid over it — see
   [Accessibility](accessibility.md#text-contrast)): current speed,
   elapsed distance, elapsed time — all zero while waiting for movement.
