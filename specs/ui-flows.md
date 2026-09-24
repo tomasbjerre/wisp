@@ -80,8 +80,9 @@ screen while recording.
   [Tracking](tracking.md#km-splits)) — one row per completed kilometer,
   its split time. Omitted entirely for a session under 1 km.
 - **Back**, **Export Image** (see
-  [Export](export.md#single-activity-as-an-image)), and **Delete**
-  controls, in that order, below the map.
+  [Export](export.md#single-activity-as-an-image)), **Export CSV** (see
+  [Export](export.md#single-activity-as-csv)), and **Delete** controls,
+  in that order, below the map.
 - Delete has a confirmation step before it actually deletes.
 
 ## Feedback and support

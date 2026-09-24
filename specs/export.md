@@ -1,9 +1,9 @@
 # Export
 
-Two independent exports: the full history as a CSV file, and a single
-activity as an image. Both hand off to the platform's share/save
-mechanism rather than writing to a fixed location — the user picks where
-the file goes.
+Three independent exports: the full history as a CSV file, a single
+activity as a CSV file, and a single activity as an image. All hand off
+to the platform's share/save mechanism rather than writing to a fixed
+location — the user picks where the file goes.
 
 ## History as CSV
 
@@ -19,10 +19,9 @@ Sheets, etc.) or fed into other tools.
   summaries file; someone who wants route geometry — for a GIS tool, a
   custom analysis, etc. — has it too, without opening each session's map
   individually.
-- Exports everything — there is no date-range or per-session picker. The
-  history list is already the way to work with a subset (open one session
-  at a time). If a real need for partial export shows up later, it should
-  be added here as its own requirement rather than assumed now.
+- Exports everything — there is no date-range picker. For a single
+  session, see [Single activity as CSV](#single-activity-as-csv) below
+  instead.
 - Nothing is exported automatically or on a schedule. Export only happens
   when the user explicitly asks for it.
 
@@ -63,6 +62,19 @@ recent session first) and in recorded order within each session:
 | `latitude` | `TrackPoint.latitude` | number, degrees, 6 decimals |
 | `longitude` | `TrackPoint.longitude` | number, degrees, 6 decimals |
 | `speed_kmh` | `TrackPoint.speedMps` | number, ×3.6, 1 decimal; blank if the platform didn't report a speed for that point |
+
+## Single activity as CSV
+
+Same two-file format as [History as CSV](#history-as-csv) above (same
+columns, same header rows), scoped to just the one activity the user is
+currently looking at — a session summaries file with exactly one data
+row, and a track points file with just that session's points.
+
+### Trigger
+
+An "Export CSV" action on [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session),
+alongside Export Image and Delete. Not available for an activity still
+in progress, same as Export Image.
 
 ## Single activity as an image
 

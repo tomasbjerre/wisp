@@ -31,9 +31,15 @@ class DetailViewModel(
     private val _kmSplitsSeconds = MutableStateFlow<List<Long>>(emptyList())
     val kmSplitsSeconds: StateFlow<List<Long>> = _kmSplitsSeconds.asStateFlow()
 
+    // Raw points, kept for CSV export (see specs/export.md#single-activity-as-csv) — same
+    // load as route/kmSplitsSeconds above, not a separate query.
+    private val _points = MutableStateFlow<List<TrackPoint>>(emptyList())
+    val points: StateFlow<List<TrackPoint>> = _points.asStateFlow()
+
     init {
         viewModelScope.launch {
             val points = repository.getPoints(sessionId)
+            _points.value = points
             _route.value = points.map { it.toLatLon() }
             _kmSplitsSeconds.value = GeoUtils.kmSplitsSeconds(points)
         }

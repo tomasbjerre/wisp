@@ -1,5 +1,6 @@
 package com.github.tomasbjerre.wisp.ui.detail
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,8 +33,12 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.tomasbjerre.wisp.data.Session
 import com.github.tomasbjerre.wisp.data.SessionRepository
+import com.github.tomasbjerre.wisp.data.TrackPoint
 import com.github.tomasbjerre.wisp.export.ActivityImageExporter
+import com.github.tomasbjerre.wisp.export.CsvExporter
+import com.github.tomasbjerre.wisp.export.CsvShareIntent
 import com.github.tomasbjerre.wisp.export.ImageShareIntent
+import com.github.tomasbjerre.wisp.export.TrackPointCsvExporter
 import com.github.tomasbjerre.wisp.ui.Formatting
 import com.github.tomasbjerre.wisp.ui.common.RouteMap
 import org.osmdroid.views.MapView
@@ -52,6 +57,7 @@ fun DetailScreen(
     val session by viewModel.session.collectAsStateWithLifecycle()
     val route by viewModel.route.collectAsStateWithLifecycle()
     val kmSplitsSeconds by viewModel.kmSplitsSeconds.collectAsStateWithLifecycle()
+    val points by viewModel.points.collectAsStateWithLifecycle()
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var mapView by remember { mutableStateOf<MapView?>(null) }
     val context = LocalContext.current
@@ -81,11 +87,13 @@ fun DetailScreen(
                 kmSplitsSeconds = kmSplitsSeconds,
                 onBack = onBack,
                 onExportImage = {
-                    val map = mapView ?: return@SessionSummaryPanel
-                    val current = session ?: return@SessionSummaryPanel
-                    val image = ActivityImageExporter.compose(map, current)
-                    context.startActivity(ImageShareIntent.build(context, image))
+                    val map = mapView
+                    val current = session
+                    if (map != null && current != null) exportSessionAsImage(context, map, current)
                 },
+                // See specs/export.md#single-activity-as-csv: same two-file format as the
+                // full history export, scoped to just this one session.
+                onExportCsv = { session?.let { exportSessionAsCsv(context, it, points) } },
                 onDeleteClick = { showDeleteConfirm = true },
             )
         }
@@ -112,6 +120,7 @@ private fun SessionSummaryPanel(
     kmSplitsSeconds: List<Long>,
     onBack: () -> Unit,
     onExportImage: () -> Unit,
+    onExportCsv: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
@@ -134,6 +143,10 @@ private fun SessionSummaryPanel(
             // See specs/export.md#single-activity-as-an-image.
             OutlinedButton(onClick = onExportImage, enabled = session != null, modifier = Modifier.weight(1f)) {
                 Text("Export Image")
+            }
+            // See specs/export.md#single-activity-as-csv.
+            OutlinedButton(onClick = onExportCsv, enabled = session != null, modifier = Modifier.weight(1f)) {
+                Text("Export CSV")
             }
             OutlinedButton(onClick = onDeleteClick, modifier = Modifier.weight(1f)) {
                 Text("Delete")
@@ -158,6 +171,34 @@ private fun KmSplitsList(
             )
         }
     }
+}
+
+private fun exportSessionAsImage(
+    context: Context,
+    mapView: MapView,
+    session: Session,
+) {
+    val image = ActivityImageExporter.compose(mapView, session)
+    context.startActivity(ImageShareIntent.build(context, image))
+}
+
+private fun exportSessionAsCsv(
+    context: Context,
+    session: Session,
+    points: List<TrackPoint>,
+) {
+    val sessionsCsv = CsvExporter.toCsv(listOf(session))
+    val trackPointsCsv = TrackPointCsvExporter.toCsv(listOf(session to points))
+    context.startActivity(
+        CsvShareIntent.build(
+            context,
+            sessionsCsv,
+            trackPointsCsv,
+            chooserTitle = "Export activity as CSV",
+            sessionsFileName = "wisp-activity.csv",
+            trackPointsFileName = "wisp-activity-track-points.csv",
+        ),
+    )
 }
 
 private fun distanceAndDurationLine(session: Session?): String =
