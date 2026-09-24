@@ -161,9 +161,12 @@ that session's Detail screen.
   far must not be lost. Points already accepted are persisted incrementally
   during recording, not only at stop.
 - If the device reboots or the app is force-closed mid-recording, on next
-  launch the app should treat the last unstopped session as stopped at its
-  last recorded point, rather than silently discarding it — unless it has
-  no recorded points at all (interrupted while still "locating" or
-  "waiting for movement", see [Start gating](#start-gating)), in which
-  case there's no point to stop at, and it's discarded like any other
-  never-moved session.
+  launch the app should treat every unstopped session it finds this way
+  (ordinarily just one, but see
+  [Data integrity on start](data-model.md#data-integrity-on-start) for
+  why the check can't assume that) as stopped at its last recorded
+  point, rather than silently discarding it — unless it has no recorded
+  points at all (interrupted while still "locating" or "waiting for
+  movement", see [Start gating](#start-gating)), in which case there's
+  no point to stop at, and it's discarded like any other never-moved
+  session.

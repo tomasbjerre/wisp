@@ -67,5 +67,35 @@ Any implementation's storage layer must support:
 3. Load one session with all of its points, in `sequence` order, to draw
    its route and show its detail summary.
 4. Delete a session and all of its points.
-5. Find the most recent session that has no `endedAt` (to recover from an
-   interrupted recording — see [Tracking](tracking.md)).
+5. Find every session that has no `endedAt` (to recover from an
+   interrupted recording — see [Tracking](tracking.md)). Ordinarily at
+   most one such session exists at a time, but the query itself must not
+   assume that — see [Data integrity on start](#data-integrity-on-start).
+
+## Data integrity on start
+
+Stored data an implementation reads must never be trusted blindly just
+because it came from local storage — a previous run could have been
+killed mid-write, or a future version of Wisp could change what a stored
+value is allowed to mean. On every app start:
+
+- Any session left in an impossible state — the clearest example being
+  one still marked as recording (`endedAt` still null) when the app
+  obviously isn't recording anything, because it just started — is
+  fixed if a fix is well-defined, or discarded if it isn't. See
+  [Tracking](tracking.md#what-must-survive-interruption) for exactly how
+  that's decided for this case: finished at its last recorded point if
+  it has any, deleted entirely if it doesn't. This check must cover
+  *every* session left in that state, not only the most recently started
+  one — e.g. two interrupted in a row before either was ever recovered.
+- A storage schema change (a new field, a changed meaning for an
+  existing one, a new required relationship) must carry the existing
+  data forward — via an explicit, tested migration — rather than
+  discarding it. This applies from the first release Wisp actually ships
+  to real users onward: once real devices hold real activity history, an
+  implementation detail changing shape is never a reason to silently
+  erase someone's recorded activities. A schema change with no
+  reasonable migration path (rare) must say why in the change itself,
+  not leave it unstated.
+- Future storage-integrity checks belong here as they're identified —
+  this section is the list, not just the one example above.

@@ -26,7 +26,8 @@ class WispApplication : Application() {
         Configuration.getInstance().load(this, osmdroidPrefs)
         Configuration.getInstance().userAgentValue = packageName
 
-        // See specs/tracking.md#what-must-survive-interruption.
-        CoroutineScope(Dispatchers.IO).launch { repository.recoverUnfinishedSession() }
+        // See specs/tracking.md#what-must-survive-interruption and
+        // specs/data-model.md#data-integrity-on-start.
+        CoroutineScope(Dispatchers.IO).launch { repository.recoverUnfinishedSessions() }
     }
 }
