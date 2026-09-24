@@ -45,12 +45,15 @@ fun TrackingScreen(
     val permissions = rememberLocationPermissionState()
     val state by TrackingService.state.collectAsStateWithLifecycle()
 
-    // See specs/ui-flows.md#2-tracking-active-recording: the only way out of this screen
-    // is Stop. Without this, system/gesture back would pop straight to Home while the
-    // session is still active, orphaning it — TrackingService keeps running against a
-    // sessionId no longer reachable from the UI, and a later Start creates a second
-    // session on top of it instead of resuming or stopping the first.
-    BackHandler(enabled = state.isRecording) {}
+    // See specs/ui-flows.md#2-tracking-active-recording: back behaves exactly like
+    // tapping Stop (below), not like leaving the screen — without this, system/gesture
+    // back would pop straight to Home while the session is still active, orphaning it —
+    // TrackingService keeps running against a sessionId no longer reachable from the
+    // UI, and a later Start creates a second session on top of it instead of resuming
+    // or stopping the first. The existing LaunchedEffects below (watching isRecording/
+    // sessionId/wasDiscarded) already navigate correctly once TrackingService.stop
+    // updates state, the same as if Stop itself had been tapped.
+    BackHandler(enabled = state.isRecording) { TrackingService.stop(context) }
 
     // Start exactly once per time this screen is entered — not reactively on every
     // isRecording flip, otherwise stopping (isRecording -> false) would immediately
