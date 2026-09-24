@@ -55,7 +55,9 @@ body:
     id: app-version
     attributes:
       label: Wisp version
-      description: Found on the Play Store listing or your device's app info screen.
+      description: >-
+        Tap the ⓘ icon on Wisp's Home screen — it's shown right at the top
+        of that view.
 
   - type: textarea
     id: extra

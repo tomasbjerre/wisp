@@ -1,5 +1,6 @@
 package com.github.tomasbjerre.wisp.ui.home
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,6 +54,11 @@ import kotlinx.coroutines.launch
 
 private const val FEEDBACK_URL = "https://github.com/tomasbjerre/wisp/issues"
 
+// GitHub-rendered link, same pattern as PRIVACY.md's Play Store listing URL (see
+// android/README.md#one-time-setup) — not a raw file path, so it opens as a normal web
+// page in the user's browser rather than downloading a markdown file.
+private const val USER_MANUAL_URL = "https://github.com/tomasbjerre/wisp/blob/main/docs/user-manual.md"
+
 /** See specs/ui-flows.md#1-home. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,9 +71,16 @@ fun HomeScreen(
         viewModel(factory = viewModelFactory { initializer { HomeViewModel(repository) } })
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     var pendingDelete by remember { mutableStateOf<Session?>(null) }
+    var showInfo by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { HomeTopBar(sessions = sessions, loadPointsBySession = viewModel::loadPointsBySession) },
+        topBar = {
+            HomeTopBar(
+                sessions = sessions,
+                loadPointsBySession = viewModel::loadPointsBySession,
+                onInfoClick = { showInfo = true },
+            )
+        },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) {
@@ -101,6 +114,11 @@ fun HomeScreen(
             onDismiss = { pendingDelete = null },
         )
     }
+
+    // See specs/ui-flows.md#feedback-and-support.
+    if (showInfo) {
+        InformationDialog(onDismiss = { showInfo = false })
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -108,8 +126,8 @@ fun HomeScreen(
 private fun HomeTopBar(
     sessions: List<Session>,
     loadPointsBySession: suspend () -> List<Pair<Session, List<TrackPoint>>>,
+    onInfoClick: () -> Unit,
 ) {
-    val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -130,12 +148,42 @@ private fun HomeTopBar(
                 Icon(Icons.Filled.Share, contentDescription = "Export history as CSV")
             }
             // See specs/ui-flows.md#feedback-and-support.
-            IconButton(onClick = { uriHandler.openUri(FEEDBACK_URL) }) {
-                Icon(Icons.Filled.Info, contentDescription = "Feedback, problems, or feature requests")
+            IconButton(onClick = onInfoClick) {
+                Icon(Icons.Filled.Info, contentDescription = "App version, feedback, and the user manual")
             }
         },
     )
 }
+
+/** See specs/ui-flows.md#feedback-and-support. */
+@Composable
+private fun InformationDialog(onDismiss: () -> Unit) {
+    val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Wisp") },
+        text = {
+            Column {
+                Text("Version ${appVersionName(context)}", style = MaterialTheme.typography.bodyLarge)
+                TextButton(onClick = { uriHandler.openUri(FEEDBACK_URL) }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Report a problem or request a feature")
+                }
+                TextButton(onClick = { uriHandler.openUri(USER_MANUAL_URL) }, modifier = Modifier.fillMaxWidth()) {
+                    Text("User manual")
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+    )
+}
+
+// Read from the installed package rather than a compile-time constant, so this always
+// reflects what's actually running on the device, the same version Play Console and
+// the device's own app-info screen would show.
+private fun appVersionName(context: Context): String =
+    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown"
 
 @Composable
 private fun SessionList(

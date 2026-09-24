@@ -104,11 +104,19 @@ screen while recording.
 ## Feedback and support
 
 It must be clear to a user how to report feedback, problems, or feature
-requests. Wisp has no in-app support flow of its own — the app surfaces a
-visible, reachable link to https://github.com/tomasbjerre/wisp/issues (e.g.
-from Home) that opens in the user's browser. This does not need its own
-screen; a single action/icon is enough, kept out of the way of the
-Start button and history list.
+requests, and how to find technical details (like the app version) that
+issue reports ask for. Wisp has no in-app support flow or settings screen
+of its own, so this is a single icon on Home, kept out of the way of the
+Start button and history list, opening an **Information** view — not a
+fourth full screen/navigation destination, since there's nothing here
+that needs one; a dialog over Home is enough. It shows:
+
+- The app's version, so a user filing an issue doesn't have to go
+  digging for it elsewhere.
+- A link to https://github.com/tomasbjerre/wisp/issues, opening in the
+  user's browser, to report a problem or request a feature.
+- A link to the [user manual](https://github.com/tomasbjerre/wisp/blob/main/docs/user-manual.md),
+  also opening in the user's browser.
 
 ## Navigation
 
