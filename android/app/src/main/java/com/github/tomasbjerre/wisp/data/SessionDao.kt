@@ -18,7 +18,8 @@ interface SessionDao {
     @Delete
     suspend fun delete(session: Session)
 
-    @Query("SELECT * FROM sessions ORDER BY startedAt DESC")
+    /** See specs/data-model.md#required-queries — only finished sessions belong in history. */
+    @Query("SELECT * FROM sessions WHERE endedAt IS NOT NULL ORDER BY startedAt DESC")
     fun observeAll(): Flow<List<Session>>
 
     @Query("SELECT * FROM sessions WHERE id = :id")

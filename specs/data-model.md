@@ -54,9 +54,13 @@ Any implementation's storage layer must support:
 
 1. Create a session and append points to it incrementally while recording
    (not just a single bulk write at stop).
-2. List all sessions, most recent first, with enough fields to render a
-   history row (start time, distance, duration, average speed) without
-   loading every point.
+2. List all **finished** sessions (`endedAt` set), most recent first, with
+   enough fields to render a history row (start time, distance, duration,
+   average speed) without loading every point. A session that is still
+   recording, or one left behind unfinished by an interruption and not
+   yet recovered (see [Tracking](tracking.md#what-must-survive-interruption)),
+   must never appear in this list — Home only shows past activities (see
+   [UI Flows](ui-flows.md#1-home)).
 3. Load one session with all of its points, in `sequence` order, to draw
    its route and show its detail summary.
 4. Delete a session and all of its points.
