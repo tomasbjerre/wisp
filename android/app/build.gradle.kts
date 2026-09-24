@@ -119,7 +119,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.8.5")
     ksp("androidx.room:room-compiler:2.6.1")
 
-    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.google.android.gms:play-services-location:21.4.0")
     implementation("org.osmdroid:osmdroid-android:6.1.20")
 
     // Pure logic (GeoUtils, TrackRecorder, Formatting): plain JUnit Jupiter, no mocks.
