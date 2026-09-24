@@ -8,7 +8,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.doOnLayout
 import com.github.tomasbjerre.wisp.location.LatLon
+import com.github.tomasbjerre.wisp.util.GeoUtils
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -24,6 +26,10 @@ private const val DEFAULT_ZOOM = 17.0
 // reads as an unremarkable blank world map instead.
 private const val FALLBACK_ZOOM = 2.0
 private val FALLBACK_CENTER = GeoPoint(0.0, 0.0)
+
+// See specs/ui-flows.md#2-tracking-active-recording: zooming out is capped so the map
+// never shows the whole world, however far a pinch-out goes.
+private const val MAX_ZOOM_OUT_WIDTH_METERS = 100_000.0
 
 // See specs/accessibility.md#map-markers-and-route: a single line color isn't
 // reliably visible against every map background, so the route gets a light
@@ -65,6 +71,7 @@ fun RouteMap(
                 setMultiTouchControls(true)
                 controller.setZoom(FALLBACK_ZOOM)
                 controller.setCenter(FALLBACK_CENTER)
+                doOnLayout { setMinZoomLevel(GeoUtils.minZoomForWidthMeters(width, MAX_ZOOM_OUT_WIDTH_METERS)) }
                 mapViewRef[0] = this
                 onMapViewReady?.invoke(this)
             }
