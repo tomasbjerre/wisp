@@ -91,24 +91,25 @@ jobs:
             # recording only starts once a fix implies at least walking pace (see
             # specs/tracking.md#start-gating). Feed a slow walk north for the whole test
             # run (~6.5 minutes, well past both tests' combined runtime) in the
-            # background; stopped below once the rest of this script finishes (see the
-            # trap a few lines down). One line, not a multi-line for loop — see the
-            # comment below on why.
+            # background; stopped explicitly below, once it's no longer needed (a
+            # sentinel file the loop polls for every iteration, not `kill "$!"` on its
+            # PID — tried that and it did not reliably stop the loop). One line, not a
+            # multi-line for loop — see the comment below on why.
+            #
+            # Deliberately NOT a `trap ... EXIT`: this action appears to run each line of
+            # this script: block as its own `sh -c` invocation (confirmed from a run's own
+            # log: consecutive lines each show as a separate `[command]/usr/bin/sh -c
+            # <line>` entry) — background jobs and plain variables started on one line are
+            # still visible to later lines (that's the existing RECORD_PID/wait pattern
+            # below), but a `trap ... EXIT` set on a line with nothing else on it fires
+            # essentially immediately, when that line's own single-line shell exits, not
+            # at the end of the whole script. That fired this loop's stop file within
+            # seconds of starting it, starving ScreenshotTest's movement-dependent
+            # captures of any real walk and failing the run with a ComposeTimeoutException
+            # instead. An explicit line run after the last command that needs the walk
+            # (below) is what actually works here, matching the RECORD_PID pattern.
             rm -f /tmp/wisp-walk-stop
             (for i in $(seq 1 200); do [ -f /tmp/wisp-walk-stop ] && exit 0; adb emu geo fix 18.0686 "$(awk -v i="$i" 'BEGIN{printf "%.6f", 59.3293 + i*0.000045}')"; sleep 2; done) &
-            # A sentinel file, not `kill "$!"` on this subshell's PID — tried that first
-            # (a `trap ... EXIT` calling kill) and it did NOT reliably stop the loop: a
-            # run that otherwise completed successfully (all screenshots pulled, video
-            # encoded) still spent the next ~minute spamming "could not connect to TCP
-            # port 5554" into the log during the action's own Terminate Emulator step,
-            # meaning the trap fired but the kill signal didn't actually reach/stop the
-            # backgrounded subshell in this action's process tree. Touching a file the
-            # loop polls for every iteration (≤2s latency) doesn't depend on signal
-            # delivery working at all, only on a shared filesystem, which is guaranteed.
-            # Also survives errexit killing the rest of this script early (as in the CI
-            # run that first exposed the orphaned-loop problem): the trap below still
-            # runs on that early exit and creates the file just the same.
-            trap 'touch /tmp/wisp-walk-stop' EXIT
             # /sdcard's emulated storage can lag a few seconds behind sys.boot_completed
             # (already waited for by this point) on a freshly booted emulator — without
             # this, screenrecord has occasionally failed outright with "Unable to open
@@ -134,6 +135,7 @@ jobs:
             # without ever reaching screenrecord's signal handler.
             adb shell pkill -INT screenrecord 2>/dev/null || true
             wait "$RECORD_PID" 2>/dev/null || true
+            touch /tmp/wisp-walk-stop
             sleep 2
             adb pull /sdcard/wisp-instruction-video.mp4 instruction-video-raw.mp4 || true
             # screenrecord's raw output has known non-monotonic timestamps that ffmpeg and
