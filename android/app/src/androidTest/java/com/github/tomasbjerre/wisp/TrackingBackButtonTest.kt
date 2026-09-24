@@ -1,7 +1,7 @@
 package com.github.tomasbjerre.wisp
 
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -9,6 +9,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.github.tomasbjerre.wisp.location.TrackingService
+import com.github.tomasbjerre.wisp.ui.TestTags
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,6 +34,10 @@ class TrackingBackButtonTest {
         instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.ACCESS_FINE_LOCATION")
 
         composeRule.waitForIdle()
+        // Not assumed to be zero: connectedDebugAndroidTest runs every instrumented test
+        // class against the same app install/database, and e.g. ScreenshotTest seeds
+        // sessions of its own — this only needs the count to be unchanged, not empty.
+        val historyCountBefore = composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).fetchSemanticsNodes().size
         composeRule.onNodeWithText("Start").performClick()
         composeRule.waitForIdle()
 
@@ -47,12 +53,14 @@ class TrackingBackButtonTest {
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
             composeRule.onAllNodesWithText("Start").fetchSemanticsNodes().isNotEmpty()
         }
-        // No phantom entry (see #56/#59): the empty state is still showing, and the
-        // service itself no longer thinks a session is active.
-        composeRule.onNodeWithText("No activities yet — tap Start to record your first route.").assertIsDisplayed()
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
             !TrackingService.state.value.isRecording
         }
+        // No phantom entry (see #56/#59): same history count as before this test ever
+        // touched Start, not "zero" — see the comment on historyCountBefore above.
+        composeRule.waitForIdle()
+        val historyCountAfter = composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).fetchSemanticsNodes().size
+        assertEquals(historyCountBefore, historyCountAfter)
     }
 
     private companion object {

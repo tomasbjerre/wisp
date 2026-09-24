@@ -85,6 +85,13 @@ jobs:
             # line, not a multi-line for loop — see the comment below on why.
             (for i in $(seq 1 200); do adb emu geo fix 18.0686 "$(awk -v i="$i" 'BEGIN{printf "%.6f", 59.3293 + i*0.000045}')"; sleep 2; done) &
             WALK_PID=$!
+            # Belt-and-suspenders over the explicit kill below: this script runs with
+            # errexit, so a failing ./gradlew line (as in the CI run that first exposed
+            # this) exits the shell immediately, skipping every line after it — without
+            # this trap, the loop above keeps running for its full ~6.5 minutes after the
+            # emulator has already been torn down, spamming "could not connect to TCP
+            # port 5554" into the log for the rest of the job.
+            trap 'kill "$WALK_PID" 2>/dev/null || true' EXIT
             # /sdcard's emulated storage can lag a few seconds behind sys.boot_completed
             # (already waited for by this point) on a freshly booted emulator — without
             # this, screenrecord has occasionally failed outright with "Unable to open
@@ -110,7 +117,6 @@ jobs:
             # without ever reaching screenrecord's signal handler.
             adb shell pkill -INT screenrecord 2>/dev/null || true
             wait "$RECORD_PID" 2>/dev/null || true
-            kill "$WALK_PID" 2>/dev/null || true
             sleep 2
             adb pull /sdcard/wisp-instruction-video.mp4 instruction-video-raw.mp4 || true
             # screenrecord's raw output has known non-monotonic timestamps that ffmpeg and
