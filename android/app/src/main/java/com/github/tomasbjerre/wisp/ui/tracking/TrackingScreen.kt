@@ -175,6 +175,20 @@ private fun TrackingStatsPanel(
                 "${Formatting.distance(state.distanceMeters)} · ${Formatting.duration(state.elapsedSeconds)}",
                 style = MaterialTheme.typography.bodyLarge,
             )
+            // See specs/tracking.md#step-count: omitted entirely with no step count, same
+            // rule as Detail — most sessions on most devices will never have one.
+            if (state.steps > 0) {
+                Text(
+                    Formatting.stepsPerMinute(state.steps, state.elapsedSeconds),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
+            // See specs/tracking.md#km-splits: only the latest split, not the full list
+            // Detail shows — there's no room for a growing list on this screen, and
+            // "how was that last km" is what's actually useful mid-run.
+            state.latestKmSplitSeconds?.let { seconds ->
+                Text("Last km: ${Formatting.duration(seconds)}", style = MaterialTheme.typography.bodyLarge)
+            }
             TrackingControls(isPaused = state.isPaused, isWaitingForMovement = state.isWaitingForMovement)
         }
     }
