@@ -13,7 +13,7 @@ plugins {
     // se.bjurr.gradle.update-versions hooks into.
     id("base")
     id("com.android.application") version "8.13.2" apply false
-    id("org.jetbrains.kotlin.android") version "2.0.21" apply false
+    id("org.jetbrains.kotlin.android") version "2.4.20" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" apply false
     id("com.google.devtools.ksp") version "2.0.21-1.0.28" apply false
     id("io.gitlab.arturbosch.detekt") version "1.23.8" apply false
