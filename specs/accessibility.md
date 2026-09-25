@@ -30,6 +30,11 @@ happened to exist when this was written.
   a single fixed color to "probably" contrast; where activity info needs
   to be near a map (e.g. the exported image), it sits on its own
   solid-background panel instead.
+- That panel stays solid while the user interacts with the map: the map
+  is confined to its own area, so panning, flinging or zooming it never
+  draws map tiles or route over a neighboring panel's text or controls
+  (Tracking's stats and buttons, Detail's summary) — not even
+  temporarily mid-gesture.
 - Meeting the contrast requirement and looking good for users who don't
   need it are the same goal, not a trade-off — pick a palette that
   satisfies both rather than defaulting to plain black-on-white only
