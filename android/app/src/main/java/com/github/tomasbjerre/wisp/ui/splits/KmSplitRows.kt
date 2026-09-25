@@ -10,8 +10,6 @@ data class KmSplitRow(
     val speedMps: Double,
     /** Steps taken over this row's distance; null when the session has no steps per split. */
     val steps: Long?,
-    /** This row's speed relative to the fastest row's, 0..1 — the length of its bar. */
-    val relativeSpeed: Float,
     val isPartial: Boolean,
 )
 
@@ -34,7 +32,6 @@ object KmSplitRows {
                     durationSeconds = seconds,
                     speedMps = speedMps(METERS_PER_KM, seconds),
                     steps = splits.completeSteps?.getOrNull(index),
-                    relativeSpeed = 0f,
                     isPartial = false,
                 )
             }
@@ -45,13 +42,10 @@ object KmSplitRows {
                     durationSeconds = it.durationSeconds,
                     speedMps = speedMps(it.distanceMeters, it.durationSeconds),
                     steps = it.steps,
-                    relativeSpeed = 0f,
                     isPartial = true,
                 )
             }
-        val all = complete + listOfNotNull(partial)
-        val fastest = all.maxOfOrNull { it.speedMps } ?: 0.0
-        return all.map { it.copy(relativeSpeed = if (fastest > 0) (it.speedMps / fastest).toFloat() else 0f) }
+        return complete + listOfNotNull(partial)
     }
 
     /**

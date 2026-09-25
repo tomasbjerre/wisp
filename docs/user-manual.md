@@ -146,20 +146,18 @@ just-finished:
 Opened with the **Km splits** link on Detail, for analyzing an activity
 kilometer by kilometer:
 
-<img src="screenshots/detail-km-splits.jpg" alt="Km splits view with a row and bar per kilometer" width="300">
+<img src="screenshots/detail-km-splits.jpg" alt="Km splits view with a row per kilometer" width="300">
 
 - **Fastest / Slowest** — which kilometer was quickest and which was
   slowest, with their times. Shown once there are at least two complete
   kilometers to compare.
 - **One row per kilometer** — its number, how long it took, your average
-  speed over it, how many steps you took over it (when your phone counts
-  steps — see [Tracking](#tracking)), and a bar: the longer the bar, the faster that
-  kilometer, so the quick and slow stretches of the activity stand out
-  at a glance.
+  speed over it, and how many steps you took over it (when your phone
+  counts steps — see [Tracking](#tracking)).
 - **The last partial kilometer** — the bit after your last complete
   kilometer (e.g. `+0.40` for the last 400 m), dimmed since its time and
-  steps cover a shorter distance than the others. Its speed and bar still
-  compare directly.
+  steps cover a shorter distance than the others. Its speed still
+  compares directly.
 - **Back** — the arrow in the top-left (or your phone's back gesture)
   returns to Detail.
 
