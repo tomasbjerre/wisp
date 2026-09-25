@@ -62,7 +62,7 @@ jobs:
           echo "VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
 
       - name: Download screenshots
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: screenshots
           path: android/app/src/main/play/listings/en-US/graphics/phone-screenshots-raw
@@ -71,7 +71,7 @@ jobs:
       # because of that step's if-no-files-found: warn — the video is attached to the
       # GitHub Release for human review, it's never required for publishing to Play.
       - name: Download instruction video
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: instruction-video
           path: android/video-raw
