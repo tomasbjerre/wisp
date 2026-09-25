@@ -46,7 +46,7 @@ jobs:
       # git-changelog-command-line below is fetched via `npx --yes`, three times in this
       # job — without this, npm re-downloads it from the registry on every run.
       - name: Cache npm
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: npm-git-changelog-command-line-4.0.8
