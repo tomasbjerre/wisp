@@ -68,6 +68,7 @@ class ScreenshotTest {
         Thread.sleep(MAP_TILE_SETTLE_MILLIS)
         screenshot("7-detail")
 
+        captureDetailSatellite()
         captureDeleteConfirm()
         captureKmSplits()
 
@@ -81,6 +82,19 @@ class ScreenshotTest {
         composeRule.waitForIdle()
 
         captureTrackingStates()
+    }
+
+    /**
+     * See specs/ui-flows.md#3-detail. Unnumbered, same reasoning as captureKmSplits: the
+     * Play listing slots are already spent by "7-detail".
+     */
+    private fun captureDetailSatellite() {
+        composeRule.onNodeWithText("Satellite").performClick()
+        composeRule.waitForIdle()
+        Thread.sleep(MAP_TILE_SETTLE_MILLIS)
+        screenshot("detail-satellite")
+        composeRule.onNodeWithText("Map").performClick()
+        composeRule.waitForIdle()
     }
 
     private fun captureDeleteConfirm() {

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +32,7 @@ import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.location.TrackingUiState
 import com.github.tomasbjerre.wisp.ui.Formatting
 import com.github.tomasbjerre.wisp.ui.common.MapType
+import com.github.tomasbjerre.wisp.ui.common.MapTypeToggle
 import com.github.tomasbjerre.wisp.ui.common.RouteMap
 
 /** See specs/ui-flows.md#2-tracking-active-recording. */
@@ -117,22 +117,6 @@ fun TrackingScreen(
             )
         }
         TrackingStatsPanel(state = state, permissions = permissions)
-    }
-}
-
-@Composable
-private fun MapTypeToggle(
-    mapType: MapType,
-    onToggle: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    // Labeled with the view tapping it switches *to* (matches Pause/Continue's own
-    // convention of naming the action, not the current state).
-    val label = if (mapType == MapType.STANDARD) "Satellite" else "Map"
-    Surface(modifier = modifier, shape = RoundedCornerShape(50), tonalElevation = 4.dp) {
-        TextButton(onClick = onToggle) {
-            Text(label)
-        }
     }
 }
 

@@ -2,6 +2,7 @@ package com.github.tomasbjerre.wisp.ui.detail
 
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -41,7 +43,10 @@ import com.github.tomasbjerre.wisp.export.CsvShareIntent
 import com.github.tomasbjerre.wisp.export.ExportFileNames
 import com.github.tomasbjerre.wisp.export.ImageShareIntent
 import com.github.tomasbjerre.wisp.export.TrackPointCsvExporter
+import com.github.tomasbjerre.wisp.location.LatLon
 import com.github.tomasbjerre.wisp.ui.Formatting
+import com.github.tomasbjerre.wisp.ui.common.MapType
+import com.github.tomasbjerre.wisp.ui.common.MapTypeToggle
 import com.github.tomasbjerre.wisp.ui.common.RouteMap
 import org.osmdroid.views.MapView
 
@@ -63,6 +68,9 @@ fun DetailScreen(
     val points by viewModel.points.collectAsStateWithLifecycle()
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var mapView by remember { mutableStateOf<MapView?>(null) }
+    // Only lasts for this viewing of the screen, same as Tracking's toggle — no settings
+    // to persist it to. See specs/ui-flows.md#3-detail.
+    var mapType by remember { mutableStateOf(MapType.STANDARD) }
     val context = LocalContext.current
 
     Scaffold(
@@ -79,10 +87,12 @@ fun DetailScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            RouteMap(
+            DetailMap(
                 route = route,
-                modifier = Modifier.fillMaxSize().weight(1f),
+                mapType = mapType,
+                onMapTypeChange = { mapType = it },
                 onMapViewReady = { mapView = it },
+                modifier = Modifier.fillMaxWidth().weight(1f),
             )
 
             SessionSummaryPanel(
@@ -104,16 +114,53 @@ fun DetailScreen(
     }
 
     if (showDeleteConfirm) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Delete this activity?") },
-            text = { Text("This can't be undone.") },
-            confirmButton = {
-                Button(onClick = { viewModel.delete(onDeleted) }) { Text("Delete") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
-            },
+        DeleteConfirmDialog(
+            onConfirm = { viewModel.delete(onDeleted) },
+            onDismiss = { showDeleteConfirm = false },
+        )
+    }
+}
+
+@Composable
+private fun DeleteConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Delete this activity?") },
+        text = { Text("This can't be undone.") },
+        confirmButton = {
+            Button(onClick = onConfirm) { Text("Delete") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
+}
+
+/** See specs/ui-flows.md#3-detail — Detail's map plus its standard/satellite toggle. */
+@Composable
+private fun DetailMap(
+    route: List<LatLon>,
+    mapType: MapType,
+    onMapTypeChange: (MapType) -> Unit,
+    onMapViewReady: (MapView) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier) {
+        RouteMap(
+            route = route,
+            mapType = mapType,
+            modifier = Modifier.fillMaxSize(),
+            onMapViewReady = onMapViewReady,
+        )
+        // No statusBarsPadding here, unlike Tracking's: this Box sits inside Scaffold's
+        // content slot, below its topBar, which already accounts for the status bar inset.
+        MapTypeToggle(
+            mapType = mapType,
+            onToggle = { onMapTypeChange(if (mapType == MapType.STANDARD) MapType.SATELLITE else MapType.STANDARD) },
+            modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
         )
     }
 }
@@ -158,13 +205,18 @@ private fun SessionSummaryPanel(
         // without wrapping into an unreadable stack on a narrow phone. FilledTonalButton,
         // not OutlinedButton: a visible fill reads as a button against the map behind it,
         // where a thin outline alone did not.
+        // Export actions on top, navigation/destructive below (see #112): the two
+        // buttons someone taps repeatedly while reviewing an activity sit together,
+        // above the two taps that leave the screen either way (back to the list, or
+        // gone for good).
         Column(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilledTonalButton(onClick = onBack, modifier = Modifier.weight(1f)) {
-                    Text("Back")
+                // See specs/export.md#single-activity-as-csv.
+                FilledTonalButton(onClick = onExportCsv, enabled = session != null, modifier = Modifier.weight(1f)) {
+                    Text("Export CSV")
                 }
                 // See specs/export.md#single-activity-as-an-image.
                 FilledTonalButton(onClick = onExportImage, enabled = session != null, modifier = Modifier.weight(1f)) {
@@ -172,9 +224,8 @@ private fun SessionSummaryPanel(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // See specs/export.md#single-activity-as-csv.
-                FilledTonalButton(onClick = onExportCsv, enabled = session != null, modifier = Modifier.weight(1f)) {
-                    Text("Export CSV")
+                FilledTonalButton(onClick = onBack, modifier = Modifier.weight(1f)) {
+                    Text("Back")
                 }
                 FilledTonalButton(onClick = onDeleteClick, modifier = Modifier.weight(1f)) {
                     Text("Delete")

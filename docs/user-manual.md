@@ -114,23 +114,28 @@ just-finished:
 
 <img src="screenshots/7-detail.jpg" alt="Detail screen showing a full recorded route" width="300">
 
-- **Map** — the full route, with a marker at the start and end.
+- **Map** — the full route, with a marker at the start and end, and the
+  same Satellite/Map toggle described under [Tracking](#tracking) above,
+  over the top-right corner:
+
+  <img src="screenshots/detail-satellite.jpg" alt="Detail screen with the satellite map view" width="300">
+
 - **Summary stats** — date/time, nearest city, distance, duration,
   average and max speed, and (when available) steps/minute.
 - **Km splits (N)** — opens the [Km splits](#km-splits) view, N being
   the number of complete kilometers. Shown only once you've covered at
   least 1 km.
-- **Back** — returns to wherever you came from (Home, or straight here
-  after finishing a recording).
-- **Export Image** — shares a snapshot of the route map and stats as an
-  image, via Android's normal share sheet (save it, send it, post it —
-  your choice, same as sharing a photo from any other app).
 - **Export CSV** — shares the activity's data as two CSV files (one row
   summarizing the activity, one with every recorded GPS point), also
   through the share sheet. Useful for importing into a spreadsheet or
   another tool. Both files — and the Export Image file — are named after
   the activity's start time, e.g. `wisp-activity-2026-09-25_06-51-12.csv`,
   so exports of different activities never get mixed up.
+- **Export Image** — shares a snapshot of the route map and stats as an
+  image, via Android's normal share sheet (save it, send it, post it —
+  your choice, same as sharing a photo from any other app).
+- **Back** — returns to wherever you came from (Home, or straight here
+  after finishing a recording).
 - **Delete** — removes the activity permanently. Asks you to confirm
   first, since this can't be undone:
 
