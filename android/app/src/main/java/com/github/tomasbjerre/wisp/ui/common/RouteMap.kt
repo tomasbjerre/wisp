@@ -7,9 +7,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.doOnLayout
 import com.github.tomasbjerre.wisp.location.LatLon
+import com.github.tomasbjerre.wisp.ui.TestTags
 import com.github.tomasbjerre.wisp.util.GeoUtils
 import org.osmdroid.tileprovider.tilesource.ITileSource
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
@@ -104,7 +107,11 @@ fun RouteMap(
     val currentMapType = remember { arrayOfNulls<MapType>(1) }
 
     AndroidView(
-        modifier = modifier,
+        // clipToBounds: osmdroid pans by scrolling its own canvas, and an AndroidView
+        // isn't clipped to its layout bounds by default — without this, dragging the
+        // map drew tiles and route over whatever sits next to it (Detail's summary
+        // panel, see #85 and specs/accessibility.md#text-contrast).
+        modifier = modifier.clipToBounds().testTag(TestTags.ROUTE_MAP),
         factory = { context ->
             MapView(context).apply {
                 setTileSource(mapType.tileSource())
