@@ -9,14 +9,12 @@ import java.io.FileOutputStream
 
 /** Writes the activity image to a cache file and wraps it in a share-sheet intent. */
 object ImageShareIntent {
-    private const val FILE_NAME = "wisp-activity.png"
-
     fun build(
         context: Context,
         image: Bitmap,
+        fileName: String,
     ): Intent {
-        val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
-        val file = File(exportsDir, FILE_NAME)
+        val file = File(ExportsCacheDir.fresh(context), fileName)
         FileOutputStream(file).use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
 
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)

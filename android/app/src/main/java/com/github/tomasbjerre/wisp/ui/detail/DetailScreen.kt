@@ -37,6 +37,7 @@ import com.github.tomasbjerre.wisp.data.TrackPoint
 import com.github.tomasbjerre.wisp.export.ActivityImageExporter
 import com.github.tomasbjerre.wisp.export.CsvExporter
 import com.github.tomasbjerre.wisp.export.CsvShareIntent
+import com.github.tomasbjerre.wisp.export.ExportFileNames
 import com.github.tomasbjerre.wisp.export.ImageShareIntent
 import com.github.tomasbjerre.wisp.export.TrackPointCsvExporter
 import com.github.tomasbjerre.wisp.ui.Formatting
@@ -194,7 +195,7 @@ private fun exportSessionAsImage(
     session: Session,
 ) {
     val image = ActivityImageExporter.compose(mapView, session)
-    context.startActivity(ImageShareIntent.build(context, image))
+    context.startActivity(ImageShareIntent.build(context, image, ExportFileNames.activityImage(session.startedAt)))
 }
 
 private fun exportSessionAsCsv(
@@ -209,9 +210,8 @@ private fun exportSessionAsCsv(
             context,
             sessionsCsv,
             trackPointsCsv,
+            fileNames = ExportFileNames.activityCsv(session.startedAt),
             chooserTitle = "Export activity as CSV",
-            sessionsFileName = "wisp-activity.csv",
-            trackPointsFileName = "wisp-activity-track-points.csv",
         ),
     )
 }

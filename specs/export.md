@@ -5,6 +5,33 @@ activity as a CSV file, and a single activity as an image. All hand off
 to the platform's share/save mechanism rather than writing to a fixed
 location — the user picks where the file goes.
 
+## File names
+
+Every exported file's name carries a timestamp, so a folder holding
+several exports (the same activity exported twice, or history exported
+last week and again today) shows at a glance which file is which — and
+sorting by name sorts them chronologically:
+
+- **History** exports are stamped with the moment of the export — a later
+  export is the more complete one.
+- **Single activity** exports (CSV and image) are stamped with the
+  activity's start time — the same activity always gets the same name,
+  and different activities never collide.
+
+The timestamp is in the device's local time zone (it's what the user saw
+on screen, unlike the UTC times *inside* the CSV — see
+[Format](#format)), formatted `yyyy-MM-dd_HH-mm-ss` — no characters that
+are illegal in file names on common platforms. The two files of a CSV
+export share one prefix so they sort next to each other:
+
+| Export | Files |
+|---|---|
+| History as CSV | `wisp-history-<export time>.csv`, `wisp-history-<export time>-track-points.csv` |
+| Single activity as CSV | `wisp-activity-<start time>.csv`, `wisp-activity-<start time>-track-points.csv` |
+| Single activity as an image | `wisp-activity-<start time>.png` |
+
+E.g. `wisp-activity-2026-09-25_06-51-12.csv`.
+
 ## History as CSV
 
 A user can export their full history — including every recorded GPS

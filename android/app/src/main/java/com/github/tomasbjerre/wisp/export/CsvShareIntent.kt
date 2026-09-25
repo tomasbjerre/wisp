@@ -12,20 +12,16 @@ import java.io.File
  * Wisp doesn't write to a fixed location.
  */
 object CsvShareIntent {
-    private const val SESSIONS_FILE_NAME = "wisp-history.csv"
-    private const val TRACK_POINTS_FILE_NAME = "wisp-track-points.csv"
-
     fun build(
         context: Context,
         sessionsCsv: String,
         trackPointsCsv: String,
+        fileNames: ExportFileNames.CsvPair,
         chooserTitle: String = "Export history as CSV",
-        sessionsFileName: String = SESSIONS_FILE_NAME,
-        trackPointsFileName: String = TRACK_POINTS_FILE_NAME,
     ): Intent {
-        val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
-        val sessionsUri = writeAndShareableUri(context, exportsDir, sessionsFileName, sessionsCsv)
-        val trackPointsUri = writeAndShareableUri(context, exportsDir, trackPointsFileName, trackPointsCsv)
+        val exportsDir = ExportsCacheDir.fresh(context)
+        val sessionsUri = writeAndShareableUri(context, exportsDir, fileNames.sessions, sessionsCsv)
+        val trackPointsUri = writeAndShareableUri(context, exportsDir, fileNames.trackPoints, trackPointsCsv)
 
         val sendIntent =
             Intent(Intent.ACTION_SEND_MULTIPLE).apply {
