@@ -34,9 +34,9 @@ class TrackingBackButtonTest {
         instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.ACCESS_FINE_LOCATION")
 
         composeRule.waitForIdle()
-        // Not assumed to be zero: connectedDebugAndroidTest runs every instrumented test
-        // class against the same app install/database, and e.g. ScreenshotTest seeds
-        // sessions of its own — this only needs the count to be unchanged, not empty.
+        // Not assumed to be zero, even though every test now starts from a cleared app
+        // (see clearPackageData in app/build.gradle.kts) — this only needs the count to
+        // be unchanged, not empty, so it doesn't depend on that.
         val historyCountBefore = composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).fetchSemanticsNodes().size
         composeRule.onNodeWithText("Start").performClick()
         composeRule.waitForIdle()

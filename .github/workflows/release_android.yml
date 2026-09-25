@@ -11,154 +11,10 @@ defaults:
     working-directory: android
 
 jobs:
+  # Emulator run: screenshots, instruction video and every instrumented test — shared
+  # with pull-request CI, see instrumented_android.yml.
   screenshots:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Enable KVM for the emulator
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      # Used below to re-encode the recorded video for player compatibility — not on
-      # this runner's PATH inside the emulator-runner action's script: block (confirmed
-      # "ffmpeg: not found" there), even though it's normally preinstalled on
-      # ubuntu-latest, so install it explicitly rather than assume it's reachable.
-      - name: Install ffmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
-
-      # Without this, every run pays for a fresh system-image download and a cold AVD
-      # boot (observed ~3-4 minutes of the "Run instrumented..." step below) — the
-      # official reactivecircus/android-emulator-runner-recommended pattern: cache the
-      # AVD's own files, and only actually create/boot-and-snapshot one (the step
-      # below) when the cache misses.
-      - name: AVD cache
-        uses: actions/cache@v6
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-35-google_apis-x86_64
-
-      - name: Create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: echo "Generated AVD snapshot for caching."
-
-      - name: Run instrumented screenshot and video test
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          working-directory: ./android
-          script: |
-            # The AVD is restored from a cached snapshot (see the AVD cache step above),
-            # and /sdcard persists as part of that snapshot — without this, a screenshot
-            # left over from whatever ScreenshotTest looked like when that snapshot was
-            # taken survives untouched (ScreenshotTest only ever adds/overwrites its own
-            # named files, never clears the directory first), so a later `adb pull`
-            # silently returns extra, stale images alongside the current ones. Confirmed:
-            # a leftover "3-detail.png" from before ScreenshotTest was renumbered rode
-            # along for months, pushing the Play listing to 9 screenshots and failing
-            # `publishReleaseListing` with "You can only upload 8 phoneScreenshots."
-            adb shell rm -rf /sdcard/wisp-screenshots
-            # Fix a location up front so Tracking has a real position to show instead of
-            # hanging on "Finding your location…" — see InstructionVideoTest.
-            adb emu geo fix 18.0686 59.3293
-            # ScreenshotTest's live-Tracking captures and InstructionVideoTest's
-            # Pause/Continue segment need actual movement, not just a fixed point —
-            # recording only starts once a fix implies at least walking pace (see
-            # specs/tracking.md#start-gating). Feed a slow walk north for the whole test
-            # run (~6.5 minutes, well past both tests' combined runtime) in the
-            # background; stopped explicitly below, once it's no longer needed (a
-            # sentinel file the loop polls for every iteration, not `kill "$!"` on its
-            # PID — tried that and it did not reliably stop the loop). One line, not a
-            # multi-line for loop — see the comment below on why.
-            #
-            # Deliberately NOT a `trap ... EXIT`: this action appears to run each line of
-            # this script: block as its own `sh -c` invocation (confirmed from a run's own
-            # log: consecutive lines each show as a separate `[command]/usr/bin/sh -c
-            # <line>` entry) — background jobs and plain variables started on one line are
-            # still visible to later lines (that's the existing RECORD_PID/wait pattern
-            # below), but a `trap ... EXIT` set on a line with nothing else on it fires
-            # essentially immediately, when that line's own single-line shell exits, not
-            # at the end of the whole script. That fired this loop's stop file within
-            # seconds of starting it, starving ScreenshotTest's movement-dependent
-            # captures of any real walk and failing the run with a ComposeTimeoutException
-            # instead. An explicit line run after the last command that needs the walk
-            # (below) is what actually works here, matching the RECORD_PID pattern.
-            rm -f /tmp/wisp-walk-stop
-            (for i in $(seq 1 200); do [ -f /tmp/wisp-walk-stop ] && exit 0; adb emu geo fix 18.0686 "$(awk -v i="$i" 'BEGIN{printf "%.6f", 59.3293 + i*0.000045}')"; sleep 2; done) &
-            # /sdcard's emulated storage can lag a few seconds behind sys.boot_completed
-            # (already waited for by this point) on a freshly booted emulator — without
-            # this, screenrecord has occasionally failed outright with "Unable to open
-            # ... No such file or directory" and produced no video at all. One line, not
-            # a multi-line for loop: this action appears to run script: one line at a
-            # time, so a `for ... do` spanning several lines breaks with a syntax error.
-            for i in $(seq 1 15); do adb shell touch /sdcard/.wisp-ready 2>/dev/null && break; sleep 1; done
-            adb shell rm -f /sdcard/.wisp-ready
-            # Assemble first, unrecorded — screenrecord is capped at 180s, and the build
-            # (a minute or more) was eating most or all of that before any app UI ever
-            # appeared, so the video showed nothing but the Android launcher. Recording
-            # now starts right before connectedDebugAndroidTest, which at this point only
-            # has to install the already-built APKs before the on-device flow begins.
-            ./gradlew assembleDebug assembleDebugAndroidTest
-            adb shell screenrecord --time-limit 180 /sdcard/wisp-instruction-video.mp4 &
-            RECORD_PID=$!
-            ./gradlew connectedDebugAndroidTest
-            # Stopped with SIGINT (not left to hit --time-limit) so screenrecord finalizes
-            # the mp4 container's trailing moov atom instead of producing a file every
-            # player rejects as corrupt. Must be sent to the *remote* screenrecord
-            # process via its own adb shell call — killing the local `adb shell &`
-            # client above (e.g. `kill -INT "$RECORD_PID"`) just drops the connection
-            # without ever reaching screenrecord's signal handler.
-            adb shell pkill -INT screenrecord 2>/dev/null || true
-            wait "$RECORD_PID" 2>/dev/null || true
-            touch /tmp/wisp-walk-stop
-            sleep 2
-            adb pull /sdcard/wisp-instruction-video.mp4 instruction-video-raw.mp4 || true
-            # screenrecord's raw output has known non-monotonic timestamps that ffmpeg and
-            # most players tolerate but VLC's decoder rejects outright ("Codec not
-            # supported"). Re-encoding (not just remuxing) normalizes that and the pixel
-            # format/profile into something every common player handles.
-            if [ -s instruction-video-raw.mp4 ]; then ffmpeg -y -fflags +genpts -i instruction-video-raw.mp4 -c:v libx264 -pix_fmt yuv420p -movflags +faststart instruction-video.mp4 || cp instruction-video-raw.mp4 instruction-video.mp4; fi
-            adb pull /sdcard/wisp-screenshots screenshots-raw
-
-      - name: Upload screenshots
-        uses: actions/upload-artifact@v4
-        with:
-          name: screenshots
-          path: android/screenshots-raw
-          retention-days: 1
-
-      - name: Upload instruction video
-        uses: actions/upload-artifact@v4
-        with:
-          name: instruction-video
-          path: android/instruction-video.mp4
-          retention-days: 1
-          if-no-files-found: warn
+    uses: ./.github/workflows/instrumented_android.yml
 
   release:
     needs: screenshots
@@ -194,9 +50,13 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Use the latest tag as the version
+        # --match 'v*': git-changelog-github-release (see release.yml) also leaves a
+        # bare "$VERSION" tag (no "v") on the commit just before each "chore(changelog)"
+        # one — without this, PREVIOUS_TAG resolved to *this* release's bare tag, one
+        # commit back, and the Play release notes listed nothing but the changelog commit.
         run: |
-          RELEASE_TAG=$(git describe --tags --abbrev=0)
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${RELEASE_TAG}^" 2>/dev/null || true)
+          RELEASE_TAG=$(git describe --tags --abbrev=0 --match 'v*')
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 --match 'v*' "${RELEASE_TAG}^" 2>/dev/null || true)
           echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
           echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> "$GITHUB_ENV"
           echo "VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
