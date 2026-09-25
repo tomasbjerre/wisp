@@ -1,3 +1,7 @@
+## v0.7.0 (2026-09-25)
+
+ - feat(android): show steps per km in the Km splits view (#95) (#96) ([fb48232f724eb6c](https://github.com/tomasbjerre/wisp/commit/fb48232f724eb6c))
+ - fix(android): isolate instrumented tests so Release Android passes (#93) (#94) ([e41a6dd102df508](https://github.com/tomasbjerre/wisp/commit/e41a6dd102df508))
 ## v0.6.0 (2026-09-25)
 
  - feat(android): add a Km splits view reachable from Detail (#86) (#90) ([859b9cd81faa9aa](https://github.com/tomasbjerre/wisp/commit/859b9cd81faa9aa))
