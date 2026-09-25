@@ -3,12 +3,17 @@ package com.github.tomasbjerre.wisp.ui.common
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.GradientDrawable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.doOnLayout
 import com.github.tomasbjerre.wisp.location.LatLon
@@ -52,10 +57,30 @@ private const val CURRENT_POSITION_COLOR = 0xFF1565C0.toInt() // blue
 private const val MARKER_DIAMETER_DP = 18f
 private const val MARKER_RING_DP = 2f
 
-/** See specs/ui-flows.md#2-tracking-active-recording — Tracking's map-type toggle. */
+/**
+ * See specs/ui-flows.md#2-tracking-active-recording and #3-detail — the map-type
+ * toggle shared by Tracking and Detail.
+ */
 enum class MapType {
     STANDARD,
     SATELLITE,
+}
+
+/** A small pill button, meant to sit over a corner of a [RouteMap], switching [mapType]. */
+@Composable
+fun MapTypeToggle(
+    mapType: MapType,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // Labeled with the view tapping it switches *to* (matches Pause/Continue's own
+    // convention of naming the action, not the current state).
+    val label = if (mapType == MapType.STANDARD) "Satellite" else "Map"
+    Surface(modifier = modifier, shape = RoundedCornerShape(50), tonalElevation = 4.dp) {
+        TextButton(onClick = onToggle) {
+            Text(label)
+        }
+    }
 }
 
 // osmdroid's built-in TileSourceFactory.USGS_SAT covers only the United States (its

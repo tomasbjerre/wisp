@@ -56,10 +56,11 @@ screen while recording.
   component.
 - A small control over a corner of the map switches between the standard
   street map and a satellite view, so the terrain around a route can be
-  inspected either way. Its current choice only lasts for this viewing of
-  the screen — it isn't remembered between recordings, and isn't offered
-  on Detail (see [Accessibility](accessibility.md#map-markers-and-route)
-  for why the route/markers stay legible on either).
+  inspected either way (see [Accessibility](accessibility.md#map-markers-and-route)
+  for why the route/markers stay legible on either). Its current choice
+  only lasts for this viewing of the screen — it isn't remembered between
+  recordings. The same control, with the same behavior, is offered on
+  Detail's map (below).
 - A live stats panel below the map (not laid over it — see
   [Accessibility](accessibility.md#text-contrast)): current speed,
   elapsed distance, elapsed time — all zero while waiting for movement.
@@ -92,7 +93,9 @@ screen while recording.
 ## 3. Detail (a past or just-finished session)
 
 - A map showing the full recorded route, with start and end markers (see
-  [Accessibility](accessibility.md#map-markers-and-route)).
+  [Accessibility](accessibility.md#map-markers-and-route)), and the same
+  standard/satellite toggle described under [Tracking](#2-tracking-active-recording)
+  above, over a corner of the map.
 - Summary stats below the map, in their own panel (see
   [Accessibility](accessibility.md#text-contrast)): date/time, nearest
   city if known (see [Data Model](data-model.md#session)), distance,
@@ -104,10 +107,11 @@ screen while recording.
   The splits themselves aren't listed here: this panel shares the screen
   with the map, and a list long enough to be useful would take the map's
   room. Omitted entirely for a session under 1 km.
-- **Back**, **Export Image** (see
-  [Export](export.md#single-activity-as-an-image)), **Export CSV** (see
-  [Export](export.md#single-activity-as-csv)), and **Delete** controls,
-  in that order, below the map.
+- Below that, two rows of two controls: **Export CSV** (see
+  [Export](export.md#single-activity-as-csv)) and **Export Image** (see
+  [Export](export.md#single-activity-as-an-image)) on top, **Back** and
+  **Delete** below — the two actions taken while reviewing an activity
+  grouped together, above the two that leave the screen either way.
 - Delete has a confirmation step before it actually deletes.
 
 ## 4. Km splits
