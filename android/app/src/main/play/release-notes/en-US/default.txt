@@ -1,2 +1,4 @@
-Wisp 0.5.0
-- chore(changelog): v0.5.0
+Wisp 0.7.0
+- chore(changelog): v0.7.0
+- feat(android): show steps per km in the Km splits view (#95) (#96)
+- fix(android): isolate instrumented tests so Release Android passes (#93) (#94)
