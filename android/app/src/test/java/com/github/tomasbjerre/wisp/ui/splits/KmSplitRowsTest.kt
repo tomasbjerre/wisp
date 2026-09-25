@@ -40,6 +40,25 @@ class KmSplitRowsTest {
     }
 
     @Test
+    fun `each row carries its own steps, the partial km included`() {
+        val splits =
+            GeoUtils.KmSplits(
+                completeSeconds = listOf(300L, 250L),
+                partial = GeoUtils.PartialSplit(470.0, 150L, steps = 560L),
+                completeSteps = listOf(1_210L, 1_150L),
+            )
+
+        assertThat(KmSplitRows.rows(splits).map { it.steps }).containsExactly(1_210L, 1_150L, 560L)
+    }
+
+    @Test
+    fun `no steps per split leaves every row's steps empty`() {
+        val splits = GeoUtils.KmSplits(listOf(300L, 250L), GeoUtils.PartialSplit(470.0, 150L))
+
+        assertThat(KmSplitRows.rows(splits).map { it.steps }).containsOnlyNulls()
+    }
+
+    @Test
     fun `no splits at all is no rows`() {
         assertThat(KmSplitRows.rows(GeoUtils.KmSplits(emptyList(), null))).isEmpty()
     }

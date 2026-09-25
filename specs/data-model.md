@@ -26,7 +26,10 @@ recomputed on every read) so history lists stay cheap to render.
 `nearestCity` is resolved after the session finishes and stored once
 known — it never blocks finishing a session or navigating away from it.
 `steps` comes from a live sensor reading during recording, not from the
-points, so it can't be recomputed later the way the others can.
+points, so it can't be recomputed later the way the others can. (Each
+point also records the running step count at that moment — see
+[TrackPoint](#trackpoint) — but only so steps can be split by kilometer,
+see [Tracking](tracking.md#km-splits); `Session.steps` stays the total.)
 
 ## TrackPoint
 
@@ -43,6 +46,7 @@ One accepted GPS fix belonging to a session.
 | `accuracyMeters` | number | reported accuracy radius, for debugging/QA, not shown to the user |
 | `speedMps` | number, nullable | instantaneous speed at this point, if the platform provided one |
 | `segmentStart` | boolean | true if this is the first point of a session, or the first point after a resume |
+| `steps` | integer | the session's step count so far when this point was recorded (see [Tracking](tracking.md#step-count)) — a running total, so the steps between any two points are the difference between theirs; 0 on every point if no step sensor/permission was available, or the point predates this field |
 
 Points recorded while a session is paused are never created — see
 [Tracking](tracking.md). `segmentStart` marks where a pause broke the track,

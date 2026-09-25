@@ -213,6 +213,9 @@ class TrackingService : LifecycleService() {
                 accuracyMeters = recorded.accuracyMeters,
                 speedMps = recorded.speedMps,
                 segmentStart = recorded.segmentStart,
+                // See specs/tracking.md#km-splits: the running count, so steps can later be
+                // split per km.
+                steps = stepRecorder.steps,
             )
             val points = repository.getPoints(id)
             val summary = GeoUtils.summarize(points)

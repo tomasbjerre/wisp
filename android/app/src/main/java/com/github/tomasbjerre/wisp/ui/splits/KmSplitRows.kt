@@ -8,6 +8,8 @@ data class KmSplitRow(
     val label: String,
     val durationSeconds: Long,
     val speedMps: Double,
+    /** Steps taken over this row's distance; null when the session has no steps per split. */
+    val steps: Long?,
     /** This row's speed relative to the fastest row's, 0..1 — the length of its bar. */
     val relativeSpeed: Float,
     val isPartial: Boolean,
@@ -27,24 +29,29 @@ object KmSplitRows {
     fun rows(splits: GeoUtils.KmSplits): List<KmSplitRow> {
         val complete =
             splits.completeSeconds.mapIndexed { index, seconds ->
-                Triple("${index + 1}", seconds, speedMps(METERS_PER_KM, seconds))
+                KmSplitRow(
+                    label = "${index + 1}",
+                    durationSeconds = seconds,
+                    speedMps = speedMps(METERS_PER_KM, seconds),
+                    steps = splits.completeSteps?.getOrNull(index),
+                    relativeSpeed = 0f,
+                    isPartial = false,
+                )
             }
         val partial =
             splits.partial?.let {
-                val label = "+%.2f".format(it.distanceMeters / METERS_PER_KM)
-                Triple(label, it.durationSeconds, speedMps(it.distanceMeters, it.durationSeconds))
+                KmSplitRow(
+                    label = "+%.2f".format(it.distanceMeters / METERS_PER_KM),
+                    durationSeconds = it.durationSeconds,
+                    speedMps = speedMps(it.distanceMeters, it.durationSeconds),
+                    steps = it.steps,
+                    relativeSpeed = 0f,
+                    isPartial = true,
+                )
             }
         val all = complete + listOfNotNull(partial)
-        val fastest = all.maxOfOrNull { it.third } ?: 0.0
-        return all.mapIndexed { index, (label, seconds, speed) ->
-            KmSplitRow(
-                label = label,
-                durationSeconds = seconds,
-                speedMps = speed,
-                relativeSpeed = if (fastest > 0) (speed / fastest).toFloat() else 0f,
-                isPartial = partial != null && index == all.lastIndex,
-            )
-        }
+        val fastest = all.maxOfOrNull { it.speedMps } ?: 0.0
+        return all.map { it.copy(relativeSpeed = if (fastest > 0) (it.speedMps / fastest).toFloat() else 0f) }
     }
 
     /**

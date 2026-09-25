@@ -50,6 +50,9 @@ fun KmSplitsScreen(
     val splits by viewModel.splits.collectAsStateWithLifecycle()
     val rows = KmSplitRows.rows(splits)
     val extremes = KmSplitRows.extremes(splits)
+    // See specs/ui-flows.md#4-km-splits: the whole column goes when there are no steps
+    // per split, rather than a column of blanks or zeros.
+    val showSteps = rows.any { it.steps != null }
 
     Scaffold(
         topBar = {
@@ -79,18 +82,27 @@ fun KmSplitsScreen(
                 km = { Text("Km", fontWeight = FontWeight.Bold) },
                 time = { Text("Time", fontWeight = FontWeight.Bold, textAlign = TextAlign.End) },
                 speed = { Text("Speed", fontWeight = FontWeight.Bold, textAlign = TextAlign.End) },
+                steps =
+                    if (showSteps) {
+                        { Text("Steps", fontWeight = FontWeight.Bold, textAlign = TextAlign.End) }
+                    } else {
+                        null
+                    },
                 bar = {},
             )
             HorizontalDivider()
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(rows) { row -> SplitRow(row) }
+                items(rows) { row -> SplitRow(row, showSteps) }
             }
         }
     }
 }
 
 @Composable
-private fun SplitRow(row: KmSplitRow) {
+private fun SplitRow(
+    row: KmSplitRow,
+    showSteps: Boolean,
+) {
     // The partial km is set apart in a dimmer color: it's a shorter distance than
     // every other row, so its time isn't directly comparable to theirs (its speed is).
     val color = if (row.isPartial) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
@@ -98,6 +110,12 @@ private fun SplitRow(row: KmSplitRow) {
         km = { Text(row.label, color = color) },
         time = { Text(Formatting.duration(row.durationSeconds), color = color, textAlign = TextAlign.End) },
         speed = { Text(Formatting.speedKmh(row.speedMps), color = color, textAlign = TextAlign.End) },
+        steps =
+            if (showSteps) {
+                { Text(row.steps?.toString() ?: "", color = color, textAlign = TextAlign.End) }
+            } else {
+                null
+            },
         bar = {
             // Length, not color, carries the comparison — see specs/accessibility.md.
             Box(
@@ -117,6 +135,7 @@ private fun SplitRowLayout(
     km: @Composable () -> Unit,
     time: @Composable () -> Unit,
     speed: @Composable () -> Unit,
+    steps: (@Composable () -> Unit)?,
     bar: @Composable () -> Unit,
 ) {
     Row(
@@ -126,6 +145,9 @@ private fun SplitRowLayout(
         Box(modifier = Modifier.width(KM_COLUMN_WIDTH)) { km() }
         Box(modifier = Modifier.width(TIME_COLUMN_WIDTH), contentAlignment = Alignment.CenterEnd) { time() }
         Box(modifier = Modifier.width(SPEED_COLUMN_WIDTH), contentAlignment = Alignment.CenterEnd) { speed() }
+        if (steps != null) {
+            Box(modifier = Modifier.width(STEPS_COLUMN_WIDTH), contentAlignment = Alignment.CenterEnd) { steps() }
+        }
         Box(
             modifier = Modifier.weight(1f).padding(start = 16.dp),
             contentAlignment = Alignment.CenterStart,
@@ -133,7 +155,9 @@ private fun SplitRowLayout(
     }
 }
 
-private val KM_COLUMN_WIDTH = 56.dp
-private val TIME_COLUMN_WIDTH = 72.dp
-private val SPEED_COLUMN_WIDTH = 96.dp
+// Sized to leave the bar room even with the Steps column on a narrow (360 dp) phone.
+private val KM_COLUMN_WIDTH = 48.dp
+private val TIME_COLUMN_WIDTH = 56.dp
+private val SPEED_COLUMN_WIDTH = 88.dp
+private val STEPS_COLUMN_WIDTH = 64.dp
 private val BAR_HEIGHT = 12.dp

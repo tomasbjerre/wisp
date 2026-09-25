@@ -147,12 +147,13 @@ kilometer by kilometer:
   slowest, with their times. Shown once there are at least two complete
   kilometers to compare.
 - **One row per kilometer** — its number, how long it took, your average
-  speed over it, and a bar: the longer the bar, the faster that
+  speed over it, how many steps you took over it (when your phone counts
+  steps — see [Tracking](#tracking)), and a bar: the longer the bar, the faster that
   kilometer, so the quick and slow stretches of the activity stand out
   at a glance.
 - **The last partial kilometer** — the bit after your last complete
-  kilometer (e.g. `+0.40` for the last 400 m), dimmed since its time
-  covers a shorter distance than the others. Its speed and bar still
+  kilometer (e.g. `+0.40` for the last 400 m), dimmed since its time and
+  steps cover a shorter distance than the others. Its speed and bar still
   compare directly.
 - **Back** — the arrow in the top-left (or your phone's back gesture)
   returns to Detail.

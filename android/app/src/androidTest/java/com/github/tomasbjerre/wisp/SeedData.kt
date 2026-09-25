@@ -2,6 +2,7 @@ package com.github.tomasbjerre.wisp
 
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.roundToLong
 import kotlin.math.sin
 
 /**
@@ -62,6 +63,7 @@ suspend fun seedSessionWithVaryingPace(
     var latitude = BASE_LATITUDE
     var longitude = BASE_LONGITUDE
     var timestamp = startedAt
+    var steps = 0.0
     for (i in 0 until pointCount) {
         if (i > 0) {
             val bearing = 0.6 + sin(i / 15.0) * 0.8
@@ -69,6 +71,8 @@ suspend fun seedSessionWithVaryingPace(
             longitude += SPLIT_SEED_STEP_METERS * sin(bearing) /
                 (METERS_PER_DEGREE_LATITUDE * cos(Math.toRadians(latitude)))
             timestamp += (secondsPerKmAt(i) * SPLIT_SEED_STEP_METERS).toLong()
+            // A steady cadence, so slower kilometers also take more steps.
+            steps += SPLIT_SEED_CADENCE_STEPS_PER_MINUTE / 60 * secondsPerKmAt(i) * SPLIT_SEED_STEP_METERS / 1_000
         }
         repository.appendPoint(
             sessionId = sessionId,
@@ -79,10 +83,11 @@ suspend fun seedSessionWithVaryingPace(
             accuracyMeters = 5f,
             speedMps = (1_000.0 / secondsPerKmAt(i)).toFloat(),
             segmentStart = i == 0,
+            steps = steps.roundToLong(),
         )
     }
 
-    repository.finishSession(sessionId, timestamp)
+    repository.finishSession(sessionId, timestamp, steps = steps.roundToLong())
 }
 
 /** Seconds per km (i.e. milliseconds per meter) for the step ending at point [i]. */
@@ -94,6 +99,7 @@ private fun secondsPerKmAt(i: Int): Double {
 // 5:40, 5:25, 5:50, 5:10, 6:05 per km, then the partial km back at 5:30.
 private val SPLIT_SEED_PACES_SECONDS_PER_KM = listOf(340.0, 325.0, 350.0, 310.0, 365.0, 330.0)
 private const val SPLIT_SEED_STEP_METERS = 50.0
+private const val SPLIT_SEED_CADENCE_STEPS_PER_MINUTE = 170.0
 
 // Matches GeoUtils.haversineMeters' earth radius, so a step is 50 m by its measure too.
 private const val METERS_PER_DEGREE_LATITUDE = 6_371_000.0 * PI / 180

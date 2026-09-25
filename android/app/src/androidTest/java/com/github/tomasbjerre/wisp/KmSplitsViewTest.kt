@@ -49,6 +49,8 @@ class KmSplitsViewTest {
         composeRule.onNodeWithText("Slowest: km 5", substring = true).assertIsDisplayed()
         listOf("1", "2", "3", "4", "5").forEach { composeRule.onNodeWithText(it).assertIsDisplayed() }
         composeRule.onNodeWithText("+", substring = true).assertIsDisplayed()
+        // The seeded run has a step count, so steps per km are shown too.
+        composeRule.onNodeWithText("Steps").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {

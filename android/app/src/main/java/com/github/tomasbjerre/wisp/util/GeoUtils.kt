@@ -4,6 +4,7 @@ import com.github.tomasbjerre.wisp.data.TrackPoint
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.ln
+import kotlin.math.roundToLong
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -96,11 +97,19 @@ object GeoUtils {
     data class PartialSplit(
         val distanceMeters: Double,
         val durationSeconds: Long,
+        /** Null when the session has no steps per split — see [KmSplits.completeSteps]. */
+        val steps: Long? = null,
     )
 
     data class KmSplits(
         val completeSeconds: List<Long>,
         val partial: PartialSplit?,
+        /**
+         * Steps taken over each complete kilometer, parallel to [completeSeconds] — or null
+         * when the session's points never recorded any steps (see
+         * specs/tracking.md#km-splits), rather than a list of zeros.
+         */
+        val completeSteps: List<Long>? = null,
     )
 
     /** See [kmSplits] — just the complete kilometers. */
@@ -116,12 +125,18 @@ object GeoUtils {
      * interpolation is indistinguishable from the true crossing point). Like
      * [summarize], a segmentStart point's incoming pair is skipped entirely, so
      * paused time/distance never counts toward a split.
+     *
+     * Steps per split come from each point's running step count, interpolated at the
+     * kilometer boundary the same way the duration is. That count already excludes
+     * paused steps (see StepRecorder), so it's read as-is, not summed per segment.
      */
     fun kmSplits(points: List<TrackPoint>): KmSplits {
         val splits = mutableListOf<Long>()
+        val splitSteps = mutableListOf<Long>()
         var cumulativeDistance = 0.0
         var cumulativeDurationMillis = 0.0
         var durationAtLastSplitMillis = 0.0
+        var stepsAtLastSplit = points.firstOrNull()?.steps?.toDouble() ?: 0.0
         var nextSplitDistance = SPLIT_DISTANCE_METERS
 
         for (i in 1 until points.size) {
@@ -140,6 +155,9 @@ object GeoUtils {
                 val durationAtSplitMillis = cumulativeDurationMillis + segmentDurationMillis * fraction
                 splits += ((durationAtSplitMillis - durationAtLastSplitMillis) / 1000).toLong()
                 durationAtLastSplitMillis = durationAtSplitMillis
+                val stepsAtSplit = prev.steps + (curr.steps - prev.steps) * fraction
+                splitSteps += (stepsAtSplit - stepsAtLastSplit).roundToLong()
+                stepsAtLastSplit = stepsAtSplit
                 nextSplitDistance += SPLIT_DISTANCE_METERS
             }
 
@@ -147,13 +165,18 @@ object GeoUtils {
             cumulativeDurationMillis += segmentDurationMillis
         }
 
+        val hasSteps = points.any { it.steps > 0 }
         val partialDistance = cumulativeDistance - splits.size * SPLIT_DISTANCE_METERS
         val partial =
             if (partialDistance >= MIN_PARTIAL_SPLIT_METERS) {
-                PartialSplit(partialDistance, ((cumulativeDurationMillis - durationAtLastSplitMillis) / 1000).toLong())
+                PartialSplit(
+                    distanceMeters = partialDistance,
+                    durationSeconds = ((cumulativeDurationMillis - durationAtLastSplitMillis) / 1000).toLong(),
+                    steps = if (hasSteps) (points.last().steps - stepsAtLastSplit).roundToLong() else null,
+                )
             } else {
                 null
             }
-        return KmSplits(splits, partial)
+        return KmSplits(splits, partial, if (hasSteps) splitSteps else null)
     }
 }

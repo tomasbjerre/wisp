@@ -200,13 +200,78 @@ class GeoUtilsTest {
         assertThat(partial.durationSeconds).isEqualTo(150L)
     }
 
+    @Test
+    fun `each km's steps are the running step count's difference across it`() {
+        // See specs/tracking.md#km-splits: a slower second km took more steps.
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true, steps = 0),
+                pointAtDistance(seq = 1, t = 300_500, distanceMeters = 1_000.0, segmentStart = false, steps = 1_100),
+                pointAtDistance(seq = 2, t = 661_000, distanceMeters = 2_000.0, segmentStart = false, steps = 2_400),
+            )
+
+        assertThat(GeoUtils.kmSplits(points).completeSteps).containsExactly(1_100L, 1_300L)
+    }
+
+    @Test
+    fun `steps at a km boundary are interpolated within the segment that crosses it, like its time`() {
+        // One 2.5 km segment at a steady cadence: 1 200 steps per km, 600 for the last 500 m.
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true, steps = 0),
+                pointAtDistance(seq = 1, t = 751_250, distanceMeters = 2_500.0, segmentStart = false, steps = 3_000),
+            )
+        val splits = GeoUtils.kmSplits(points)
+
+        assertThat(splits.completeSteps).containsExactly(1_200L, 1_200L)
+        assertThat(splits.partial!!.steps).isEqualTo(600L)
+    }
+
+    @Test
+    fun `steps taken after resuming, before the first point after the pause, still count`() {
+        // The running count already excludes paused steps (see StepRecorder), so the pause
+        // pair being skipped for distance/time must not drop the 10 steps taken between
+        // resuming and the first fix after it.
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true, steps = 0),
+                pointAtDistance(seq = 1, t = 300_500, distanceMeters = 1_000.0, segmentStart = false, steps = 1_000),
+                pointAtDistance(seq = 2, t = 3_900_500, distanceMeters = 1_000.0, segmentStart = true, steps = 1_010),
+                pointAtDistance(seq = 3, t = 4_201_000, distanceMeters = 2_000.0, segmentStart = false, steps = 2_100),
+            )
+
+        assertThat(GeoUtils.kmSplits(points).completeSteps).containsExactly(1_000L, 1_100L)
+    }
+
+    @Test
+    fun `a session whose points never recorded steps has no steps per split, not zeros`() {
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
+                pointAtDistance(seq = 1, t = 751_250, distanceMeters = 2_500.0, segmentStart = false),
+            )
+        val splits = GeoUtils.kmSplits(points)
+
+        assertThat(splits.completeSeconds).hasSize(2)
+        assertThat(splits.completeSteps).isNull()
+        assertThat(splits.partial!!.steps).isNull()
+    }
+
     /** A point [distanceMeters] north of a fixed origin, along one meridian (exact — see haversineMeters). */
     private fun pointAtDistance(
         seq: Int,
         t: Long,
         distanceMeters: Double,
         segmentStart: Boolean,
-    ) = point(seq, t, lat = 59.0 + Math.toDegrees(distanceMeters / earthRadiusMeters), lon = 18.0, segmentStart)
+        steps: Long = 0,
+    ) = point(
+        seq,
+        t,
+        lat = 59.0 + Math.toDegrees(distanceMeters / earthRadiusMeters),
+        lon = 18.0,
+        segmentStart,
+        steps = steps,
+    )
 
     private fun point(
         seq: Int,
@@ -215,6 +280,7 @@ class GeoUtilsTest {
         lon: Double,
         segmentStart: Boolean,
         speedMps: Float? = null,
+        steps: Long = 0,
     ) = TrackPoint(
         sessionId = 1,
         sequence = seq,
@@ -224,5 +290,6 @@ class GeoUtilsTest {
         accuracyMeters = 5f,
         speedMps = speedMps,
         segmentStart = segmentStart,
+        steps = steps,
     )
 }
