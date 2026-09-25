@@ -1,107 +1,24 @@
-name: Release
+name: Draft Release
 
-# Manual trigger: cutting a release is a deliberate decision, not automatic on every
-# merge. Determines the next version from Conventional Commits (see AGENTS.md),
-# prepends it to CHANGELOG.md, and tags + publishes a GitHub Release.
+# Keeps a draft GitHub Release up to date with a changelog rendered from
+# Conventional Commits (see AGENTS.md) on every push to main — it does not
+# tag or publish anything itself. Publishing that draft (by hand in the
+# GitHub UI, `gh release edit --draft=false`, or the org-wide scheduled
+# tomasbjerre/.github publish-draft-releases.yaml) creates the real tag and
+# fires the `release: published` event that release_android.yml listens for.
 #
-# This workflow is implementation-agnostic — it doesn't build or publish anything,
-# it just decides "what is the next version" for the whole repo. Building and
-# publishing the Android app for that release is a separate, later step — see
-# release_android.yml.
+# Replaces this repo's previous workflow_dispatch release.yml, which
+# computed the next version and tagged it directly — now shared with
+# tomasbjerre/keepsheet (and any future Android app in this org) via
+# tomasbjerre/.github's bundle-draft-release.yaml.
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
 
 permissions:
   contents: write
 
-env:
-  # Same semantics as Conventional Commits (see AGENTS.md).
-  MAJOR_VERSION_PATTERN: '^\w+(\([^)]+\))?!:|BREAKING CHANGE'
-  MINOR_VERSION_PATTERN: '^feat'
-  PATCH_VERSION_PATTERN: '^fix'
-
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-          # The default GITHUB_TOKEN pushes as github-actions[bot], which main's
-          # ruleset (required "build" status check) doesn't exempt — only a repo-admin
-          # role does. RELEASE_PAT is a fine-grained PAT scoped to this repo, owned by
-          # an actual admin account, so its push bypasses the rule the same way a
-          # manual admin push does.
-          token: ${{ secrets.RELEASE_PAT }}
-
-      - name: Set up JDK
-        # Needed by the git-changelog-github-release action below, not by this job's
-        # own steps (those only need Node's bundled npx).
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      # git-changelog-command-line below is fetched via `npx --yes`, three times in this
-      # job — without this, npm re-downloads it from the registry on every run.
-      - name: Cache npm
-        uses: actions/cache@v6
-        with:
-          path: ~/.npm
-          key: npm-git-changelog-command-line-4.0.8
-
-      - name: Configure git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Determine next version
-        run: |
-          HIGHEST_TAG=$(npx --yes git-changelog-command-line@4.0.8 \
-            --major-version-pattern "$MAJOR_VERSION_PATTERN" \
-            --minor-version-pattern "$MINOR_VERSION_PATTERN" \
-            --patch-version-pattern "$PATCH_VERSION_PATTERN" \
-            --print-highest-version-tag)
-          NEXT_VERSION=$(npx --yes git-changelog-command-line@4.0.8 \
-            --major-version-pattern "$MAJOR_VERSION_PATTERN" \
-            --minor-version-pattern "$MINOR_VERSION_PATTERN" \
-            --patch-version-pattern "$PATCH_VERSION_PATTERN" \
-            --print-next-version)
-          echo "HIGHEST_TAG=$HIGHEST_TAG" >> "$GITHUB_ENV"
-          echo "NEXT_TAG=v${NEXT_VERSION}" >> "$GITHUB_ENV"
-
-      - name: Prepend this release's notes to CHANGELOG.md
-        run: |
-          FROM_REF_ARGS=()
-          if [ -n "$HIGHEST_TAG" ]; then
-            FROM_REF_ARGS=(--from-ref "$HIGHEST_TAG")
-          fi
-          npx --yes git-changelog-command-line@4.0.8 \
-            "${FROM_REF_ARGS[@]}" \
-            --to-ref HEAD \
-            --prepend-to-file CHANGELOG.md \
-            --template-content "## ${NEXT_TAG} ($(date -u +%Y-%m-%d))
-
-          {{#commits}}
-           - {{{messageTitle}}} ([{{hash}}](https://github.com/tomasbjerre/wisp/commit/{{hash}}))
-          {{/commits}}
-          "
-
-      - name: Commit changelog and tag the release
-        run: |
-          git add CHANGELOG.md
-          git commit -m "chore(changelog): ${NEXT_TAG}"
-          git tag "${NEXT_TAG}"
-
-      - name: Push changelog commit and tag
-        run: |
-          git push origin HEAD
-          git push origin "${NEXT_TAG}"
-
-      - name: Create GitHub Release
-        uses: tomasbjerre/git-changelog-github-release@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          draft: false
+  draft-release:
+    uses: tomasbjerre/.github/.github/workflows/bundle-draft-release.yaml@master
+    secrets: inherit

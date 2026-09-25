@@ -5,64 +5,14 @@ on:
     branches: [main]
   pull_request:
 
-defaults:
-  run:
-    working-directory: android
-
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
+  ci:
+    uses: tomasbjerre/.github/.github/workflows/bundle-android-ci.yaml@master
 
-      - name: Set up JDK
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          # The action's default "tools" package no longer exists in the SDK repo.
-          packages: platform-tools
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
-
-      - name: Spotless (formatting outside Kotlin sources)
-        run: ./gradlew spotlessCheck
-
-      - name: ktlint
-        run: ./gradlew ktlintCheck
-
-      - name: detekt
-        run: ./gradlew detekt
-
-      - name: Android Lint
-        run: ./gradlew lintDebug
-
-      - name: Unit tests
-        run: ./gradlew testDebugUnitTest
-
-      - name: Violations summary
-        if: always()
-        run: ./gradlew violations
-
-      - name: Assemble debug APK
-        run: ./gradlew assembleDebug
-
-      - name: Upload test reports
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: reports
-          path: |
-            android/app/build/reports
-          retention-days: 14
-
-  # The same emulator run Release Android does (see instrumented_android.yml), so a
-  # broken instrumented test fails the PR that broke it instead of the next release —
-  # see #93, where one only surfaced as a failed v0.6.0 release.
+  # Kept local rather than folded into bundle-android-ci.yaml: the GPS
+  # simulation and instruction-video recording below are Wisp-specific — see
+  # instrumented_android.yml. Runs here too (not just from Release Android)
+  # so a broken instrumented test fails the PR that broke it instead of the
+  # next release (see #93).
   instrumented:
     uses: ./.github/workflows/instrumented_android.yml

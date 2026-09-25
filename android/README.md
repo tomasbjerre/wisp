@@ -189,33 +189,37 @@ command.
 
 ## Play Store release
 
-Releasing is two manual clicks, in order:
+Releasing is one manual click — publishing a draft release — plus whatever
+Android-specific automation that triggers:
 
 1. [`.github/workflows/release.yml`](../.github/workflows/release.yml)
-   (`workflow_dispatch`) — implementation-agnostic, and lives at the repo
-   root rather than here because it isn't Android-specific:
-   - Determines the next version from [Conventional
-     Commits](../AGENTS.md) since the last tag
-     ([git-changelog-command-line](https://github.com/tomasbjerre/git-changelog-command-line)).
-   - Prepends a section to `../CHANGELOG.md`, commits it, and tags the
-     release (`vX.Y.Z`).
-   - Publishes a GitHub Release with notes generated from the same commits
-     ([git-changelog-github-release](https://github.com/tomasbjerre/git-changelog-github-release)).
-2. [`.github/workflows/release_android.yml`](../.github/workflows/release_android.yml)
-   (`workflow_dispatch`) — builds and ships the Android app for whatever
-   tag `release.yml` just created (it doesn't create a tag or touch the
-   changelog itself):
-   - Uses the latest tag in the repo as the version.
-   - Captures fresh screenshots on an emulator and commits them.
-   - Records a short screen capture of the same emulator run walking
-     through Home → a past session's Detail → starting and stopping a new
-     session ([`InstructionVideoTest`](app/src/androidTest/java/com/github/tomasbjerre/wisp/InstructionVideoTest.kt)),
-     and attaches it to the GitHub Release as `instruction-video.mp4`.
-   - Builds a signed App Bundle and APK, uploads the bundle to the Play
-     Console's **internal** track
+   keeps a **draft** GitHub Release up to date with a changelog rendered
+   from [Conventional Commits](../AGENTS.md) on every push to `main` — it
+   never tags or publishes anything itself. This, and the shared actions
+   it uses, live in [`tomasbjerre/.github`](https://github.com/tomasbjerre/.github),
+   shared with `tomasbjerre/keepsheet` and any future Android app in this
+   org.
+2. Publishing that draft — by hand in the GitHub UI, `gh release edit
+   --draft=false`, or the org-wide scheduled
+   [`publish-draft-releases.yaml`](https://github.com/tomasbjerre/.github/blob/master/.github/workflows/publish-draft-releases.yaml)
+   (runs monthly across every `tomasbjerre` repo) — creates the real tag
+   (`vX.Y.Z`) and fires a `release: published` event.
+3. [`.github/workflows/release_android.yml`](../.github/workflows/release_android.yml)
+   listens for that event and:
+   - Runs [`instrumented_android.yml`](../.github/workflows/instrumented_android.yml)
+     (local to this repo — the GPS simulation and instruction-video
+     recording below are Wisp-specific) to capture fresh screenshots and a
+     short screen recording walking through Home → a past session's
+     Detail → starting and stopping a new session
+     ([`InstructionVideoTest`](app/src/androidTest/java/com/github/tomasbjerre/wisp/InstructionVideoTest.kt)).
+   - Calls the shared
+     [`bundle-android-release.yaml`](https://github.com/tomasbjerre/.github/blob/master/.github/workflows/bundle-android-release.yaml)
+     workflow, which installs those screenshots into the Play listing and
+     `../docs/screenshots/`, commits them, builds a signed App Bundle and
+     APK, uploads the bundle to the Play Console's **internal** track
      ([Gradle Play Publisher](https://github.com/Triple-T/gradle-play-publisher)),
-     and attaches both (plus the video above) to the GitHub Release for
-     that tag.
+     attaches the build outputs and instruction video to the GitHub
+     Release, and updates `../CHANGELOG.md`.
 
 Promoting a release from internal → production is a manual step in the
 [Play Console](https://play.google.com/console) — intentionally not
