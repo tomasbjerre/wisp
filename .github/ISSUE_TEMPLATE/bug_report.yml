@@ -15,6 +15,9 @@ body:
 
         Using these names below helps pinpoint the issue faster.
 
+  # Keep this option list (and the markdown explainer above) in sync with
+  # the screens defined in specs/ui-flows.md — see the note at the top of
+  # that file.
   - type: dropdown
     id: screen
     attributes:
