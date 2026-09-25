@@ -1,6 +1,7 @@
 # UI Flows
 
-Wisp has three screens. No settings screen, no onboarding wizard, no
+Wisp has three main screens — Home, Tracking, Detail — plus a Km splits
+view reached from Detail. No settings screen, no onboarding wizard, no
 account/login — simplicity is a feature.
 
 ## 1. Home
@@ -92,14 +93,38 @@ screen while recording.
   duration, average speed, max speed, steps per minute (see
   [Tracking](tracking.md#step-count) — omitted entirely when the session
   has no step count).
-- Below the summary stats, a list of km splits (see
-  [Tracking](tracking.md#km-splits)) — one row per completed kilometer,
-  its split time. Omitted entirely for a session under 1 km.
+- Below the summary stats, a **Km splits (N)** link — N being the number
+  of complete kilometers — opening the [Km splits](#4-km-splits) view.
+  The splits themselves aren't listed here: this panel shares the screen
+  with the map, and a list long enough to be useful would take the map's
+  room. Omitted entirely for a session under 1 km.
 - **Back**, **Export Image** (see
   [Export](export.md#single-activity-as-an-image)), **Export CSV** (see
   [Export](export.md#single-activity-as-csv)), and **Delete** controls,
   in that order, below the map.
 - Delete has a confirmation step before it actually deletes.
+
+## 4. Km splits
+
+Reached from Detail's Km splits link, for analyzing a finished session
+kilometer by kilometer (see [Tracking](tracking.md#km-splits) for how
+splits are computed).
+
+- A title and a back control returning to Detail (system back does the
+  same).
+- The **fastest** and **slowest** complete kilometer, each with its split
+  time — only when there are at least two complete kilometers to compare.
+- A table, one row per complete kilometer in order, numbered from 1:
+  - the split time,
+  - the average speed over that kilometer,
+  - a bar whose length is that speed relative to the fastest row's — so
+    faster and slower stretches stand out at a glance, by length rather
+    than by color (see [Accessibility](accessibility.md)).
+- After those, the partial km (if any), labeled with its distance (e.g.
+  `+0.40`) and visually set apart from the full kilometers, since its
+  time covers a shorter distance than theirs; its speed and bar are
+  directly comparable.
+- Long sessions scroll within the table.
 
 ## Feedback and support
 
@@ -107,8 +132,8 @@ It must be clear to a user how to report feedback, problems, or feature
 requests, and how to find technical details (like the app version) that
 issue reports ask for. Wisp has no in-app support flow or settings screen
 of its own, so this is a single icon on Home, kept out of the way of the
-Start button and history list, opening an **Information** view — not a
-fourth full screen/navigation destination, since there's nothing here
+Start button and history list, opening an **Information** view — not
+another full screen/navigation destination, since there's nothing here
 that needs one; a dialog over Home is enough. It shows:
 
 - The app's version and the device model/Android version, so a user
@@ -123,7 +148,7 @@ that needs one; a dialog over Home is enough. It shows:
 ## Navigation
 
 ```
-Home ──(tap Start)──▶ Tracking ──(tap Stop)──▶ Detail
+Home ──(tap Start)──▶ Tracking ──(tap Stop)──▶ Detail ──(tap Km splits)──▶ Km splits
   │                                                ▲
   └──────────────────(tap a history row)───────────┘
 ```

@@ -226,19 +226,25 @@ jobs:
           sudo apt-get update && sudo apt-get install -y imagemagick
           mkdir -p app/src/main/play/listings/en-US/graphics/phone-screenshots
           rm -f app/src/main/play/listings/en-US/graphics/phone-screenshots/*.jpg
-          for f in app/src/main/play/listings/en-US/graphics/phone-screenshots-raw/*.png; do
-            name=$(basename "$f" .png)
-            convert "$f" -strip -quality 87 "app/src/main/play/listings/en-US/graphics/phone-screenshots/$name.jpg"
-          done
-          rm -rf app/src/main/play/listings/en-US/graphics/phone-screenshots-raw
-          mkdir -p ../docs/screenshots
           # No `rm -f ../docs/screenshots/*.jpg` first: docs/screenshots also holds
           # one-off screenshots outside this numbered set (e.g.
           # information-dialog.jpg, illustrating a dialog ScreenshotTest doesn't
           # capture) — wiping the whole directory before copying deleted those every
-          # release. Copying over just overwrites same-named files, which is all this
+          # release. Writing over just overwrites same-named files, which is all this
           # step is actually responsible for.
-          cp app/src/main/play/listings/en-US/graphics/phone-screenshots/*.jpg ../docs/screenshots/
+          mkdir -p ../docs/screenshots
+          for f in app/src/main/play/listings/en-US/graphics/phone-screenshots-raw/*.png; do
+            name=$(basename "$f" .png)
+            convert "$f" -strip -quality 87 "../docs/screenshots/$name.jpg"
+            # Only the numbered captures (1-…, 2-…) go to the Play listing: Play caps it
+            # at 8 phone screenshots ("You can only upload 8 phoneScreenshots"), so
+            # ScreenshotTest names any extra capture without a number prefix (e.g.
+            # detail-km-splits) to keep it in docs/screenshots only.
+            case "$name" in
+              [0-9]-*) cp "../docs/screenshots/$name.jpg" app/src/main/play/listings/en-US/graphics/phone-screenshots/ ;;
+            esac
+          done
+          rm -rf app/src/main/play/listings/en-US/graphics/phone-screenshots-raw
 
       - name: Write this release's notes (Play)
         run: |
