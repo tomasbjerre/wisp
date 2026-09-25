@@ -22,7 +22,7 @@ jobs:
           java-version: "17"
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           # The action's default "tools" package no longer exists in the SDK repo.
           packages: platform-tools
