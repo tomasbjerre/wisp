@@ -194,9 +194,13 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Use the latest tag as the version
+        # --match 'v*': git-changelog-github-release (see release.yml) also leaves a
+        # bare "$VERSION" tag (no "v") on the commit just before each "chore(changelog)"
+        # one — without this, PREVIOUS_TAG resolved to *this* release's bare tag, one
+        # commit back, and the Play release notes listed nothing but the changelog commit.
         run: |
-          RELEASE_TAG=$(git describe --tags --abbrev=0)
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${RELEASE_TAG}^" 2>/dev/null || true)
+          RELEASE_TAG=$(git describe --tags --abbrev=0 --match 'v*')
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 --match 'v*' "${RELEASE_TAG}^" 2>/dev/null || true)
           echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
           echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> "$GITHUB_ENV"
           echo "VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"

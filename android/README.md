@@ -114,6 +114,11 @@ against a connected device/emulator with:
 adb pull /sdcard/wisp-screenshots .
 ```
 
+Each instrumented test runs through the Android Test Orchestrator with
+`clearPackageData`, so it starts from an empty database rather than whatever
+the tests before it seeded or recorded. Tests that open "the newest history
+row" (`onFirst()`) rely on this to get their own seeded session (see #93).
+
 The `release_android` workflow runs this automatically on every release (see
 below), re-encodes each capture as a JPEG (`screencap` only writes PNG,
 and an uncompressed PNG of a satellite map capture runs several MB —

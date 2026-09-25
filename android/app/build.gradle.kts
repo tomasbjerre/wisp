@@ -50,6 +50,13 @@ android {
         // -Pversion=<latest tag> — see .github/workflows/release_android.yml.
         versionName = project.version.toString()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Every instrumented test starts from a wiped app (empty database), instead of
+        // inheriting whatever the tests before it in the same `connectedDebugAndroidTest`
+        // run left behind — see testOptions.execution below and #93: KmSplitsViewTest
+        // opened the newest history row expecting its own seeded run, but got the session
+        // InstructionVideoTest had just recorded, and ScreenshotTest's "1-home-empty"
+        // wasn't empty.
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
     }
 
     signingConfigs {
@@ -100,6 +107,9 @@ android {
 
     testOptions {
         unitTests.all { it.useJUnitPlatform() }
+        // Runs each instrumented test in its own instrumentation, which is what makes
+        // clearPackageData (see defaultConfig above) apply between tests.
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
     }
 }
 
@@ -161,6 +171,7 @@ dependencies {
     // for the Play Store listing and README — see android/README.md#screenshots.
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestUtil("androidx.test:orchestrator:1.6.1")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.4.0")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.12.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
