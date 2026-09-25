@@ -1,23 +1,31 @@
 name: Release Android
 
-# Manual trigger, run after "Release" has tagged a version (see release.yml). Builds
-# and publishes the Android app for the latest tag in the repo — it doesn't create a
-# tag or touch CHANGELOG.md itself.
+# Runs after "Release" has tagged a version (see release.yml) — automatically, via the
+# workflow_run trigger below, whenever that workflow completes successfully; also
+# runnable by hand (workflow_dispatch) to retry/republish a tag without re-cutting a
+# release. Builds and publishes the Android app for the latest tag in the repo — it
+# doesn't create a tag or touch CHANGELOG.md itself.
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
 
 defaults:
   run:
     working-directory: android
 
 jobs:
-  # Emulator run: screenshots, instruction video and every instrumented test — shared
-  # with pull-request CI, see instrumented_android.yml.
+  # Guard against workflow_run firing when "Release" failed (e.g. it decided there was
+  # nothing to release) — a manual workflow_dispatch run always has no
+  # `workflow_run` context, so it isn't affected by this check.
   screenshots:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     uses: ./.github/workflows/instrumented_android.yml
 
   release:
     needs: screenshots
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -148,7 +156,48 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-        run: ./gradlew -Pversion="$VERSION" assembleRelease bundleRelease publishReleaseBundle publishListing
+        run: |
+          set +e
+          ./gradlew -Pversion="$VERSION" assembleRelease bundleRelease publishReleaseBundle publishListing \
+            2>&1 | tee gradle-publish.log
+          GRADLE_EXIT_CODE=${PIPESTATUS[0]}
+          set -e
+
+          if [ "$GRADLE_EXIT_CODE" -eq 0 ]; then
+            exit 0
+          fi
+
+          # Gradle Play Publisher's commitEditForComDotGithubDotTomasbjerreDotWisp task
+          # finalizes the Play "edit" that publishReleaseBundle/publishListing staged
+          # changes into — and Play rejects that commit until the app has a first
+          # public version, which is a one-time manual step in Play Console (see
+          # android/README.md#play-store-release), not something this workflow can do.
+          # Every other task (the signed APK/bundle build, and staging the bundle and
+          # listing into the edit) still succeeds, so treat *only* this known, expected
+          # failure as non-fatal here — anything else should still fail the build.
+          FAILED_TASKS=$(grep -oE '^> Task :\S+ FAILED$' gradle-publish.log \
+            | sed -E 's/^> Task (:\S+) FAILED$/\1/' | sort -u)
+          UNEXPECTED_FAILURES=$(printf '%s\n' "$FAILED_TASKS" | grep -vE ':commitEditForComDotGithubDotTomasbjerreDotWisp$' || true)
+
+          if [ -n "$FAILED_TASKS" ] && [ -z "$UNEXPECTED_FAILURES" ]; then
+            echo "::warning::commitEditForComDotGithubDotTomasbjerreDotWisp failed as expected — see job log for details."
+            echo "########################################################################"
+            echo "# commitEditForComDotGithubDotTomasbjerreDotWisp FAILED (expected)"
+            echo "#"
+            echo "# This Gradle Play Publisher task will keep failing until the first"
+            echo "# public version of Wisp is published to Google Play — a one-time"
+            echo "# manual step in Play Console (see android/README.md#play-store-release)."
+            echo "# Once that's done, this task will start succeeding automatically."
+            echo "#"
+            echo "# The signed APK/bundle build and the Play bundle/listing upload"
+            echo "# otherwise completed. Treating this build as green and continuing."
+            echo "########################################################################"
+            exit 0
+          fi
+
+          echo "Gradle failed on unexpected task(s), not just commitEditForComDotGithubDotTomasbjerreDotWisp:"
+          printf '%s\n' "$FAILED_TASKS"
+          exit "$GRADLE_EXIT_CODE"
 
       # if: always() so the video (and whatever of the APK/bundle actually got built)
       # still lands on the GitHub Release even if the Play publish step above failed —
