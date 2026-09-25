@@ -4,6 +4,12 @@ Wisp has three main screens — Home, Tracking, Detail — plus a Km splits
 view reached from Detail. No settings screen, no onboarding wizard, no
 account/login — simplicity is a feature.
 
+Whenever a screen/view listed here is added, renamed, or removed, update
+the "which screen" explainer and dropdown in
+[`.github/ISSUE_TEMPLATE/`](../.github/ISSUE_TEMPLATE/) (feature_request,
+bug_report, support) to match — those exist so issue reporters can name
+the right screen, and go stale silently otherwise.
+
 ## 1. Home
 
 The app's entry point.
