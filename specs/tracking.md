@@ -167,6 +167,16 @@ that session's Detail screen.
   split", never the fastest/slowest). Under 10 m — e.g. the few steps
   taken while reaching for Stop — there's no partial km at all.
 - A session under 1 km has no splits to show.
+- **Steps per split**: each split (and the partial km) also has the
+  number of steps taken over it — the difference between the running
+  step counts recorded on the points (see
+  [Data Model](data-model.md#trackpoint)) at its start and end, with the
+  count at a kilometer boundary interpolated within the segment that
+  crosses it, the same way the split's time is. Paused steps are already
+  excluded from that running count (see [Step count](#step-count)).
+  A session whose points never recorded any steps (no step sensor or
+  permission, or recorded before points carried step counts) has no
+  steps per split at all — omitted, not shown as 0.
 
 ## What must survive interruption
 

@@ -28,4 +28,6 @@ data class TrackPoint(
     val accuracyMeters: Float,
     val speedMps: Float?,
     val segmentStart: Boolean,
+    /** The session's running step count when this point was recorded — see specs/data-model.md#trackpoint. */
+    val steps: Long = 0,
 )

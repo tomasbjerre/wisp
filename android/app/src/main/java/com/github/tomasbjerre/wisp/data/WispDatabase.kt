@@ -21,7 +21,19 @@ internal val MIGRATION_2_3 =
         }
     }
 
-@Database(entities = [Session::class, TrackPoint::class], version = 3, exportSchema = false)
+/**
+ * Adds TrackPoint.steps (see specs/tracking.md#km-splits). Existing points get 0 — the
+ * same as a device with no step sensor — so older sessions simply have no steps per km,
+ * while keeping every session and point they already had.
+ */
+internal val MIGRATION_3_4 =
+    object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE track_points ADD COLUMN steps INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
+@Database(entities = [Session::class, TrackPoint::class], version = 4, exportSchema = false)
 abstract class WispDatabase : RoomDatabase() {
     abstract fun sessionDao(): SessionDao
 
@@ -31,7 +43,7 @@ abstract class WispDatabase : RoomDatabase() {
         fun build(context: Context): WispDatabase =
             Room
                 .databaseBuilder(context.applicationContext, WispDatabase::class.java, "wisp.db")
-                .addMigrations(MIGRATION_2_3)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
                 // Safety net only, not the primary path — see
                 // specs/data-model.md#data-integrity-on-start. Every schema change that has
                 // actually shipped to real users has an explicit Migration above; this only

@@ -28,6 +28,7 @@ class SessionRepository(
         accuracyMeters: Float,
         speedMps: Float?,
         segmentStart: Boolean,
+        steps: Long = 0,
     ) {
         trackPointDao.insert(
             TrackPoint(
@@ -39,6 +40,7 @@ class SessionRepository(
                 accuracyMeters = accuracyMeters,
                 speedMps = speedMps,
                 segmentStart = segmentStart,
+                steps = steps,
             ),
         )
     }

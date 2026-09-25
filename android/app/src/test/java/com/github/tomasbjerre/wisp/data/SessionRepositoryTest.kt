@@ -49,6 +49,17 @@ class SessionRepositoryTest {
         }
 
     @Test
+    fun `each point keeps the running step count it was recorded with`() =
+        runTest {
+            // See specs/data-model.md#trackpoint — what steps per km are computed from.
+            val sessionId = repository.startSession(startedAt = 1_000)
+            repository.appendPoint(sessionId, 0, 1_000, 59.0, 18.0, 5f, null, segmentStart = true, steps = 0)
+            repository.appendPoint(sessionId, 1, 2_000, 59.001, 18.0, 5f, null, segmentStart = false, steps = 140)
+
+            assertThat(repository.getPoints(sessionId).map { it.steps }).containsExactly(0L, 140L)
+        }
+
+    @Test
     fun `sessions are listed most recent first`() =
         runTest {
             val older = repository.startSession(startedAt = 1_000)
