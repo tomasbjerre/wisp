@@ -148,14 +148,14 @@ jobs:
             adb pull /sdcard/wisp-screenshots screenshots-raw
 
       - name: Upload screenshots
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: screenshots
           path: android/screenshots-raw
           retention-days: 1
 
       - name: Upload instruction video
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: instruction-video
           path: android/instruction-video.mp4
