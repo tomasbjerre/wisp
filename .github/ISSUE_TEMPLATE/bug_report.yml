@@ -6,10 +6,13 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting a bug. Wisp has three screens — **Home**
-        (the list of past activities and the Start button), **Tracking**
-        (the live map and stats shown while recording), and **Detail**
-        (the map and stats for one past or just-finished activity).
+        Thanks for reporting a bug. Wisp has four screens:
+
+        - **Home** — the list of past activities and the Start button.
+        - **Tracking** — the live map and stats shown while recording.
+        - **Detail** — the map and stats for one past or just-finished activity.
+        - **Km splits** — the per-kilometer breakdown, reached from Detail.
+
         Using these names below helps pinpoint the issue faster.
 
   - type: dropdown
@@ -20,6 +23,7 @@ body:
         - Home (activity list / Start button)
         - Tracking (live recording)
         - Detail (a past or just-finished activity)
+        - Km splits (per-kilometer breakdown, from Detail)
         - Not tied to a specific screen
 
   - type: textarea
