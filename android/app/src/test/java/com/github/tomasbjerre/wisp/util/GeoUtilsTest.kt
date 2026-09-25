@@ -142,6 +142,64 @@ class GeoUtilsTest {
         assertThat(GeoUtils.kmSplitsSeconds(points)).containsExactly(300L, 300L)
     }
 
+    @Test
+    fun `the trailing partial km after the last complete one is reported with its own distance and time`() {
+        // Same 300.5s/km, 2.5km session as above: the 500m left after km 2 took ~150s.
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
+                pointAtDistance(seq = 1, t = 751_250, distanceMeters = 2_500.0, segmentStart = false),
+            )
+        val partial = GeoUtils.kmSplits(points).partial
+
+        assertThat(partial).isNotNull
+        assertThat(partial!!.distanceMeters).isCloseTo(500.0, within(0.01))
+        assertThat(partial.durationSeconds).isEqualTo(150L)
+    }
+
+    @Test
+    fun `a session under 1km is all partial km`() {
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
+                pointAtDistance(seq = 1, t = 200_000, distanceMeters = 500.0, segmentStart = false),
+            )
+        val splits = GeoUtils.kmSplits(points)
+
+        assertThat(splits.completeSeconds).isEmpty()
+        assertThat(splits.partial!!.distanceMeters).isCloseTo(500.0, within(0.01))
+        assertThat(splits.partial!!.durationSeconds).isEqualTo(200L)
+    }
+
+    @Test
+    fun `a few meters past the last complete km is not a partial km`() {
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
+                pointAtDistance(seq = 1, t = 301_000, distanceMeters = 1_005.0, segmentStart = false),
+            )
+        val splits = GeoUtils.kmSplits(points)
+
+        assertThat(splits.completeSeconds).hasSize(1)
+        assertThat(splits.partial).isNull()
+    }
+
+    @Test
+    fun `a pause does not inflate the partial km's time`() {
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
+                pointAtDistance(seq = 1, t = 300_500, distanceMeters = 1_000.0, segmentStart = false),
+                // Paused here for an hour, resuming at the same spot.
+                pointAtDistance(seq = 2, t = 3_900_500, distanceMeters = 1_000.0, segmentStart = true),
+                pointAtDistance(seq = 3, t = 4_050_750, distanceMeters = 1_500.0, segmentStart = false),
+            )
+        val partial = GeoUtils.kmSplits(points).partial!!
+
+        assertThat(partial.distanceMeters).isCloseTo(500.0, within(0.01))
+        assertThat(partial.durationSeconds).isEqualTo(150L)
+    }
+
     /** A point [distanceMeters] north of a fixed origin, along one meridian (exact — see haversineMeters). */
     private fun pointAtDistance(
         seq: Int,

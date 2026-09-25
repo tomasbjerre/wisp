@@ -53,7 +53,9 @@ class ScreenshotTest {
 
         val app = instrumentation.targetContext.applicationContext as WispApplication
         runBlocking {
-            seedSession(app, daysAgo = 1, durationSeconds = 1_620, speedMps = 3.2)
+            // Varying pace, so Detail's km splits (see captureKmSplits) have something to
+            // compare.
+            seedSessionWithVaryingPace(app, daysAgo = 1)
             seedSession(app, daysAgo = 4, durationSeconds = 3_120, speedMps = 4.0)
         }
         composeRule.waitForIdle()
@@ -67,6 +69,7 @@ class ScreenshotTest {
         screenshot("7-detail")
 
         captureDeleteConfirm()
+        captureKmSplits()
 
         // Back to Home, then into a live Tracking session — see
         // specs/ui-flows.md#2-tracking-active-recording.
@@ -92,6 +95,21 @@ class ScreenshotTest {
         // Cancel, not confirm — this session is still needed for the Detail capture
         // above to make sense, and Home's history capture already ran.
         composeRule.onNodeWithText("Cancel").performClick()
+        composeRule.waitForIdle()
+    }
+
+    /**
+     * See specs/ui-flows.md#4-km-splits. Unnumbered on purpose: the release workflow only
+     * puts the numbered captures in the Play listing (capped at 8 phone screenshots),
+     * the rest go to docs/screenshots only.
+     */
+    private fun captureKmSplits() {
+        composeRule.onNodeWithText("Km splits", substring = true).performClick()
+        composeRule.waitUntil(timeoutMillis = LOCATE_TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Fastest", substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        screenshot("detail-km-splits")
+        device.pressBack()
         composeRule.waitForIdle()
     }
 

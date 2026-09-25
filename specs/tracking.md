@@ -146,8 +146,8 @@ that session's Detail screen.
 ## Km splits
 
 - A **split** is the time it took to cover one complete kilometer of a
-  session — shown on [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session)
-  (the full list) and live on
+  session — shown in full on the [Km splits](ui-flows.md#4-km-splits)
+  view (reached from Detail) and live on
   [Tracking](ui-flows.md#2-tracking-active-recording) (only the most
   recently completed one) so a user can see which parts of the activity
   were faster or slower.
@@ -158,8 +158,14 @@ that session's Detail screen.
 - Paused time and distance are excluded the same way they are from the
   session totals (see [Distance calculation](#distance-calculation)): a
   pause never counts toward completing a split.
-- Only complete kilometers are listed — a session that ends partway
-  through one (e.g. 3.4 km) shows 3 splits, not a fractional 4th one.
+- Only complete kilometers count as splits — a session that ends partway
+  through one (e.g. 3.4 km) has 3 splits, not a fractional 4th one.
+- The stretch after the last complete kilometer (the 0.4 km above) is
+  the **partial km**: its own distance and time, shown after the splits
+  on the [Km splits](ui-flows.md#4-km-splits) view but never counted as a
+  split itself (not in Detail's split count, not as the live "latest
+  split", never the fastest/slowest). Under 10 m — e.g. the few steps
+  taken while reaching for Stop — there's no partial km at all.
 - A session under 1 km has no splits to show.
 
 ## What must survive interruption

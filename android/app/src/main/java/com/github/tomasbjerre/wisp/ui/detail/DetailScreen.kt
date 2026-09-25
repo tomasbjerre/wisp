@@ -3,17 +3,18 @@ package com.github.tomasbjerre.wisp.ui.detail
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -52,6 +53,7 @@ fun DetailScreen(
     sessionId: Long,
     onDeleted: () -> Unit,
     onBack: () -> Unit,
+    onOpenKmSplits: () -> Unit,
 ) {
     val viewModel: DetailViewModel =
         viewModel(factory = viewModelFactory { initializer { DetailViewModel(repository, sessionId) } })
@@ -85,7 +87,8 @@ fun DetailScreen(
 
             SessionSummaryPanel(
                 session = session,
-                kmSplitsSeconds = kmSplitsSeconds,
+                kmSplitCount = kmSplitsSeconds.size,
+                onOpenKmSplits = onOpenKmSplits,
                 onBack = onBack,
                 onExportImage = {
                     val map = mapView
@@ -118,7 +121,8 @@ fun DetailScreen(
 @Composable
 private fun SessionSummaryPanel(
     session: Session?,
-    kmSplitsSeconds: List<Long>,
+    kmSplitCount: Int,
+    onOpenKmSplits: () -> Unit,
     onBack: () -> Unit,
     onExportImage: () -> Unit,
     onExportCsv: () -> Unit,
@@ -136,9 +140,18 @@ private fun SessionSummaryPanel(
             val stepsPerMinute = Formatting.stepsPerMinute(session.steps, session.durationSeconds)
             Text(stepsPerMinute, style = MaterialTheme.typography.bodyLarge)
         }
-        // See specs/tracking.md#km-splits. Omitted entirely under 1 km, not just empty.
-        if (kmSplitsSeconds.isNotEmpty()) {
-            KmSplitsList(kmSplitsSeconds, modifier = Modifier.padding(top = 8.dp))
+        // See specs/ui-flows.md#4-km-splits: the splits themselves live on their own
+        // view (#86) — a list squeezed in here left room for only a few rows, and took
+        // that room from the map. Omitted entirely under 1 km, not just disabled.
+        if (kmSplitCount > 0) {
+            TextButton(
+                onClick = onOpenKmSplits,
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier.padding(top = 4.dp),
+            ) {
+                Text("Km splits ($kmSplitCount)")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+            }
         }
         // Two rows of two, not one row of four (see #60) — four equal-weight buttons in
         // one row left barely enough width each for "Export Image"/"Export CSV" to fit
@@ -167,24 +180,6 @@ private fun SessionSummaryPanel(
                     Text("Delete")
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun KmSplitsList(
-    kmSplitsSeconds: List<Long>,
-    modifier: Modifier = Modifier,
-) {
-    // Bounded height + LazyColumn: a short run's few splits render with no scrolling at
-    // all, while a long one (marathon-length) scrolls within this panel instead of
-    // pushing the Back/Export/Delete row off the bottom of the screen.
-    LazyColumn(modifier = modifier.fillMaxWidth().heightIn(max = 160.dp)) {
-        items(kmSplitsSeconds.size) { index ->
-            Text(
-                "Km ${index + 1}: ${Formatting.duration(kmSplitsSeconds[index])}",
-                style = MaterialTheme.typography.bodyMedium,
-            )
         }
     }
 }

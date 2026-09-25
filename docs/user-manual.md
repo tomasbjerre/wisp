@@ -6,7 +6,8 @@ place; if you're reviewing a pull request, this document should already
 reflect whatever screen or control it touched — see
 [`../AGENTS.md`](../AGENTS.md).
 
-Wisp has three screens: **Home**, **Tracking**, and **Detail**. For the
+Wisp has three main screens: **Home**, **Tracking**, and **Detail** —
+plus a [Km splits](#km-splits) view you can open from Detail. For the
 precise, implementation-independent contract behind everything described
 here, see [`../specs/`](../specs/README.md) — this manual is the
 user-facing companion to that, not a replacement for it.
@@ -116,8 +117,9 @@ just-finished:
 - **Map** — the full route, with a marker at the start and end.
 - **Summary stats** — date/time, nearest city, distance, duration,
   average and max speed, and (when available) steps/minute.
-- **Km splits** — how long each completed kilometer took, one row per
-  split. Shown only once you've covered at least 1 km.
+- **Km splits (N)** — opens the [Km splits](#km-splits) view, N being
+  the number of complete kilometers. Shown only once you've covered at
+  least 1 km.
 - **Back** — returns to wherever you came from (Home, or straight here
   after finishing a recording).
 - **Export Image** — shares a snapshot of the route map and stats as an
@@ -133,6 +135,27 @@ just-finished:
   first, since this can't be undone:
 
   <img src="screenshots/8-detail-delete-confirm.jpg" alt="Delete confirmation dialog on the Detail screen" width="300">
+
+## Km splits
+
+Opened with the **Km splits** link on Detail, for analyzing an activity
+kilometer by kilometer:
+
+<img src="screenshots/detail-km-splits.jpg" alt="Km splits view with a row and bar per kilometer" width="300">
+
+- **Fastest / Slowest** — which kilometer was quickest and which was
+  slowest, with their times. Shown once there are at least two complete
+  kilometers to compare.
+- **One row per kilometer** — its number, how long it took, your average
+  speed over it, and a bar: the longer the bar, the faster that
+  kilometer, so the quick and slow stretches of the activity stand out
+  at a glance.
+- **The last partial kilometer** — the bit after your last complete
+  kilometer (e.g. `+0.40` for the last 400 m), dimmed since its time
+  covers a shorter distance than the others. Its speed and bar still
+  compare directly.
+- **Back** — the arrow in the top-left (or your phone's back gesture)
+  returns to Detail.
 
 ## That's everything
 

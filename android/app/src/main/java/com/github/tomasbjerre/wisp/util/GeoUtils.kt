@@ -88,17 +88,36 @@ object GeoUtils {
 
     private const val SPLIT_DISTANCE_METERS = 1_000.0
 
+    // See specs/tracking.md#km-splits: a leftover shorter than this after the last
+    // complete km (e.g. the few meters walked while reaching for Stop) isn't worth a row.
+    private const val MIN_PARTIAL_SPLIT_METERS = 10.0
+
+    /** The trailing, less-than-1-km stretch after a session's last complete kilometer. */
+    data class PartialSplit(
+        val distanceMeters: Double,
+        val durationSeconds: Long,
+    )
+
+    data class KmSplits(
+        val completeSeconds: List<Long>,
+        val partial: PartialSplit?,
+    )
+
+    /** See [kmSplits] — just the complete kilometers. */
+    fun kmSplitsSeconds(points: List<TrackPoint>): List<Long> = kmSplits(points).completeSeconds
+
     /**
      * See specs/tracking.md#km-splits: the time it took to cover each complete
-     * kilometer, one entry per split, in recorded order. A split's duration is
-     * interpolated linearly within whichever recorded segment crosses that
-     * kilometer boundary (segments are a few meters at most — see
+     * kilometer, one entry per split, in recorded order, plus the trailing partial
+     * kilometer after the last one (null if under [MIN_PARTIAL_SPLIT_METERS]). A
+     * split's duration is interpolated linearly within whichever recorded segment
+     * crosses that kilometer boundary (segments are a few meters at most — see
      * [com.github.tomasbjerre.wisp.location.TrackRecorder] — so linear
      * interpolation is indistinguishable from the true crossing point). Like
      * [summarize], a segmentStart point's incoming pair is skipped entirely, so
      * paused time/distance never counts toward a split.
      */
-    fun kmSplitsSeconds(points: List<TrackPoint>): List<Long> {
+    fun kmSplits(points: List<TrackPoint>): KmSplits {
         val splits = mutableListOf<Long>()
         var cumulativeDistance = 0.0
         var cumulativeDurationMillis = 0.0
@@ -127,6 +146,14 @@ object GeoUtils {
             cumulativeDistance = segmentEndDistance
             cumulativeDurationMillis += segmentDurationMillis
         }
-        return splits
+
+        val partialDistance = cumulativeDistance - splits.size * SPLIT_DISTANCE_METERS
+        val partial =
+            if (partialDistance >= MIN_PARTIAL_SPLIT_METERS) {
+                PartialSplit(partialDistance, ((cumulativeDurationMillis - durationAtLastSplitMillis) / 1000).toLong())
+            } else {
+                null
+            }
+        return KmSplits(splits, partial)
     }
 }
