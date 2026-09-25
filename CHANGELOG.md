@@ -1,3 +1,15 @@
+## v0.6.0 (2026-09-25)
+
+ - feat(android): add a Km splits view reachable from Detail (#86) (#90) ([859b9cd81faa9aa](https://github.com/tomasbjerre/wisp/commit/859b9cd81faa9aa))
+ - chore(deps): update actions/cache action to v6 (#92) ([d9ce6ea1bf128d9](https://github.com/tomasbjerre/wisp/commit/d9ce6ea1bf128d9))
+ - feat(android): timestamp exported file names (#87) (#88) ([37c094d073fe6de](https://github.com/tomasbjerre/wisp/commit/37c094d073fe6de))
+ - fix(android): keep the map from drawing over the panel next to it (#85) (#89) ([4e59d080ec1b0ee](https://github.com/tomasbjerre/wisp/commit/4e59d080ec1b0ee))
+ - chore(android): update screenshots and play listing ([c238035d301a92b](https://github.com/tomasbjerre/wisp/commit/c238035d301a92b))
+ - fix(ci): stop the geo-fix loop with an explicit line, not a trap (#84) ([f0cc95e29fd882d](https://github.com/tomasbjerre/wisp/commit/f0cc95e29fd882d))
+ - fix(ci): clear stale on-device screenshots and stop wiping one-offs (#83) ([93d672ad9c82759](https://github.com/tomasbjerre/wisp/commit/93d672ad9c82759))
+ - fix(ci): use a sentinel file, not kill, to stop the geo-fix loop (#82) ([45645799becb8fd](https://github.com/tomasbjerre/wisp/commit/45645799becb8fd))
+ - chore(android): update screenshots and play listing ([1644c6ee8da6c79](https://github.com/tomasbjerre/wisp/commit/1644c6ee8da6c79))
+ - fix(android): stop TrackingBackButtonTest assuming Home starts empty (#79) ([8a8e29f863190ba](https://github.com/tomasbjerre/wisp/commit/8a8e29f863190ba))
 ## v0.5.0 (2026-09-24)
 
  - fix(android): regenerate the screenshot gallery for #55's fix (#78) ([412c04ed7dcc404](https://github.com/tomasbjerre/wisp/commit/412c04ed7dcc404))
