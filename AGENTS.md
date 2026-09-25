@@ -49,6 +49,14 @@ or implements a feature (i.e. anything that would get a `fix`/`feat`
 commit type per the commit conventions). Purely mechanical chores (e.g.
 `chore`/`ci`/`docs` one-liners) can still go straight to `main` if asked.
 
+- Enable auto-merge on the PR right after opening it —
+  `gh pr merge --auto --squash` (squash is this repo's default merge
+  method; `main`'s ruleset only requires the `build` status check to
+  pass, no manual review, so this is what lets a PR land on its own once
+  CI is green instead of sitting there needing a manual merge click).
+  Skip this only if asked to hold off, or if the change needs a human
+  look before merging (e.g. something you're unsure about, or the user
+  said to wait).
 - If the change is user-visible (touches a Home/Tracking/Detail screen —
   see `specs/ui-flows.md`), the PR description must include a screenshot
   of the affected screen. Capture it with the local Android emulator (see
