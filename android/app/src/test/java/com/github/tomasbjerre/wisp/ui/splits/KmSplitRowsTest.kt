@@ -30,16 +30,6 @@ class KmSplitRowsTest {
     }
 
     @Test
-    fun `bars are relative to the fastest row, which gets a full bar`() {
-        val splits = GeoUtils.KmSplits(listOf(400L, 200L), null)
-
-        val rows = KmSplitRows.rows(splits)
-
-        assertThat(rows[1].relativeSpeed).isEqualTo(1f)
-        assertThat(rows[0].relativeSpeed).isCloseTo(0.5f, within(0.001f))
-    }
-
-    @Test
     fun `each row carries its own steps, the partial km included`() {
         val splits =
             GeoUtils.KmSplits(

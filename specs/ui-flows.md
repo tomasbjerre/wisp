@@ -124,19 +124,16 @@ splits are computed).
   same).
 - The **fastest** and **slowest** complete kilometer, each with its split
   time — only when there are at least two complete kilometers to compare.
-- A table, one row per complete kilometer in order, numbered from 1:
-  - the split time,
-  - the average speed over that kilometer,
-  - the number of steps taken over that kilometer (see
-    [Tracking](tracking.md#km-splits)) — the whole column is omitted
-    when the session has no steps per split,
-  - a bar whose length is that speed relative to the fastest row's — so
-    faster and slower stretches stand out at a glance, by length rather
-    than by color (see [Accessibility](accessibility.md)).
+- A table, one row per complete kilometer in order, numbered from 1: the
+  split time, the average speed over that kilometer, and the number of
+  steps taken over that kilometer (see [Tracking](tracking.md#km-splits))
+  — the whole Steps column is omitted when the session has no steps per
+  split. Just these four columns (Km, Time, Speed, Steps) — no other
+  decoration on the row.
 - After those, the partial km (if any), labeled with its distance (e.g.
   `+0.40`) and visually set apart from the full kilometers, since its
-  time (and steps) cover a shorter distance than theirs; its speed and
-  bar are directly comparable.
+  time (and steps) cover a shorter distance than theirs; its speed is
+  directly comparable.
 - Long sessions scroll within the table.
 
 ## Feedback and support

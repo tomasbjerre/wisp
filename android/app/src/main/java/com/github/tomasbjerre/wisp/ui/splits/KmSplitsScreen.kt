@@ -1,17 +1,14 @@
 package com.github.tomasbjerre.wisp.ui.splits
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -88,7 +84,6 @@ fun KmSplitsScreen(
                     } else {
                         null
                     },
-                bar = {},
             )
             HorizontalDivider()
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
@@ -116,17 +111,6 @@ private fun SplitRow(
             } else {
                 null
             },
-        bar = {
-            // Length, not color, carries the comparison — see specs/accessibility.md.
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth(row.relativeSpeed)
-                        .height(BAR_HEIGHT)
-                        .clip(RoundedCornerShape(BAR_HEIGHT / 2))
-                        .background(MaterialTheme.colorScheme.primary),
-            )
-        },
     )
 }
 
@@ -136,7 +120,6 @@ private fun SplitRowLayout(
     time: @Composable () -> Unit,
     speed: @Composable () -> Unit,
     steps: (@Composable () -> Unit)?,
-    bar: @Composable () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -146,18 +129,13 @@ private fun SplitRowLayout(
         Box(modifier = Modifier.width(TIME_COLUMN_WIDTH), contentAlignment = Alignment.CenterEnd) { time() }
         Box(modifier = Modifier.width(SPEED_COLUMN_WIDTH), contentAlignment = Alignment.CenterEnd) { speed() }
         if (steps != null) {
-            Box(modifier = Modifier.width(STEPS_COLUMN_WIDTH), contentAlignment = Alignment.CenterEnd) { steps() }
+            Box(modifier = Modifier.weight(1f).padding(start = 16.dp), contentAlignment = Alignment.CenterEnd) {
+                steps()
+            }
         }
-        Box(
-            modifier = Modifier.weight(1f).padding(start = 16.dp),
-            contentAlignment = Alignment.CenterStart,
-        ) { bar() }
     }
 }
 
-// Sized to leave the bar room even with the Steps column on a narrow (360 dp) phone.
 private val KM_COLUMN_WIDTH = 48.dp
 private val TIME_COLUMN_WIDTH = 56.dp
 private val SPEED_COLUMN_WIDTH = 88.dp
-private val STEPS_COLUMN_WIDTH = 64.dp
-private val BAR_HEIGHT = 12.dp
