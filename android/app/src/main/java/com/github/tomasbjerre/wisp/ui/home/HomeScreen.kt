@@ -48,6 +48,7 @@ import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.TrackPoint
 import com.github.tomasbjerre.wisp.export.CsvExporter
 import com.github.tomasbjerre.wisp.export.CsvShareIntent
+import com.github.tomasbjerre.wisp.export.ExportFileNames
 import com.github.tomasbjerre.wisp.export.TrackPointCsvExporter
 import com.github.tomasbjerre.wisp.ui.Formatting
 import com.github.tomasbjerre.wisp.ui.TestTags
@@ -141,7 +142,8 @@ private fun HomeTopBar(
                     coroutineScope.launch {
                         val sessionsCsv = CsvExporter.toCsv(sessions)
                         val trackPointsCsv = TrackPointCsvExporter.toCsv(loadPointsBySession())
-                        context.startActivity(CsvShareIntent.build(context, sessionsCsv, trackPointsCsv))
+                        val fileNames = ExportFileNames.historyCsv(System.currentTimeMillis())
+                        context.startActivity(CsvShareIntent.build(context, sessionsCsv, trackPointsCsv, fileNames))
                     }
                 },
                 enabled = sessions.isNotEmpty(),

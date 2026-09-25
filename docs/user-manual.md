@@ -26,6 +26,11 @@ This is what you see when you open Wisp. It has:
   screen.
 - **Delete** — the trash icon on each row deletes that activity directly
   from Home, without having to open it first. You'll be asked to confirm.
+- **Export CSV** — the share icon in the top-right exports your whole
+  history as two CSV files (one row per activity, and one with every
+  recorded GPS point) through Android's share sheet. The file names carry
+  the time of the export, e.g. `wisp-history-2026-09-25_07-18-03.csv`, so
+  the newest (most complete) export is easy to spot among older ones.
 - **Information** — the ⓘ icon in the top-right opens a small dialog with
   Wisp's version and your device model/Android version (handy if you're
   about to report a bug — issue reports ask for both, in the same
@@ -121,7 +126,9 @@ just-finished:
 - **Export CSV** — shares the activity's data as two CSV files (one row
   summarizing the activity, one with every recorded GPS point), also
   through the share sheet. Useful for importing into a spreadsheet or
-  another tool.
+  another tool. Both files — and the Export Image file — are named after
+  the activity's start time, e.g. `wisp-activity-2026-09-25_06-51-12.csv`,
+  so exports of different activities never get mixed up.
 - **Delete** — removes the activity permanently. Asks you to confirm
   first, since this can't be undone:
 
