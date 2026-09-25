@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
  * Grants its own location permissions via [android.app.UiAutomation] rather than
  * tapping through the system permission dialog, so the video shows the actual
  * Tracking screen instead of a permission prompt. The CI workflow fixes the
- * emulator's location before this test runs (see release_android.yml) so
+ * emulator's location before this test runs (see instrumented_android.yml) so
  * Tracking has a real position to show rather than hanging on "Finding your
  * location…" (see specs/tracking.md#start-gating).
  */

@@ -60,3 +60,9 @@ jobs:
           path: |
             android/app/build/reports
           retention-days: 14
+
+  # The same emulator run Release Android does (see instrumented_android.yml), so a
+  # broken instrumented test fails the PR that broke it instead of the next release —
+  # see #93, where one only surfaced as a failed v0.6.0 release.
+  instrumented:
+    uses: ./.github/workflows/instrumented_android.yml
