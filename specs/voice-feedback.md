@@ -13,8 +13,10 @@ why this is configurable at all, unlike almost everything else in Wisp.
 - Four independent switches choose what's included in each announcement
   (below), all on by default the first time voice feedback is turned on:
   - **Kilometers completed** — the running count of complete kilometers.
-  - **Average speed** — over the kilometer that was just completed.
-  - **Steps** — taken over the kilometer that was just completed (see
+  - **Average speed per kilometer** — labeled to make clear this is the
+    kilometer that was just completed, not an overall average.
+  - **Steps per kilometer** — labeled to make clear this is the
+    kilometer that was just completed, not a running total (see
     [Tracking](tracking.md#step-count)). Never included when the session
     has no step count at all, regardless of this switch — there's
     nothing to say.

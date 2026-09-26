@@ -26,4 +26,7 @@ data class TrackingUiState(
     // See specs/tracking.md#km-splits. Only the most recently completed split — the
     // full list is Detail's job, live Tracking only ever needs "how was that last km".
     val latestKmSplitSeconds: Long? = null,
+    // See specs/tracking.md#km-splits. Null until a second complete km exists to compare
+    // against — same threshold as Detail/Km splits' fastest/slowest.
+    val fastestKmSplitSeconds: Long? = null,
 )

@@ -70,4 +70,25 @@ class KmSplitRowsTest {
     fun `fewer than two complete km has nothing to compare`() {
         assertThat(KmSplitRows.extremes(GeoUtils.KmSplits(listOf(300L), GeoUtils.PartialSplit(500.0, 100L)))).isNull()
     }
+
+    @Test
+    fun `fastest seconds is the lowest complete km duration`() {
+        assertThat(KmSplitRows.fastestSeconds(listOf(310L, 290L, 330L))).isEqualTo(290L)
+    }
+
+    @Test
+    fun `fastest seconds is null with fewer than two complete km`() {
+        assertThat(KmSplitRows.fastestSeconds(listOf(300L))).isNull()
+        assertThat(KmSplitRows.fastestSeconds(emptyList())).isNull()
+    }
+
+    @Test
+    fun `average seconds rounds the mean of every complete km`() {
+        assertThat(KmSplitRows.averageSeconds(listOf(300L, 250L, 260L))).isEqualTo(270L)
+    }
+
+    @Test
+    fun `average seconds is null with no complete km at all`() {
+        assertThat(KmSplitRows.averageSeconds(emptyList())).isNull()
+    }
 }

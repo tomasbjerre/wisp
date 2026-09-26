@@ -70,12 +70,13 @@ screen while recording.
 - A live stats panel below the map (not laid over it — see
   [Accessibility](accessibility.md#text-contrast)): current speed,
   elapsed distance, elapsed time — all zero while waiting for movement.
-  Also steps per minute (see [Tracking](tracking.md#step-count)) and the
-  most recently completed kilometer split (see
-  [Tracking](tracking.md#km-splits)) — each omitted until there's one to
-  show, same as Detail. Unlike Detail, only the latest split is shown,
-  not the full list — there's no room for a growing list on this screen,
-  and "how was that last km" is what's actually useful mid-run.
+  Also steps per minute (see [Tracking](tracking.md#step-count)), the
+  most recently completed kilometer split, and the fastest complete km
+  so far (see [Tracking](tracking.md#km-splits)) — each omitted until
+  there's one to show, same as Detail. Unlike Detail, only the latest
+  and fastest splits are shown, not the full list — there's no room for
+  a growing list on this screen, and "how was that last km, and is it
+  my best one" is what's actually useful mid-run.
 - A **Pause**/**Continue** control (labeled Continue while paused) and a
   **Stop** control, both visible together at all times once recording has
   actually started — recording or paused, it's always exactly these two
@@ -106,7 +107,8 @@ full contract.
   same).
 - A **Voice feedback** master switch.
 - Four switches choosing what each announcement includes: **Kilometers
-  completed**, **Average speed**, **Steps**, **Elapsed time**.
+  completed**, **Average speed per kilometer**, **Steps per kilometer**,
+  **Elapsed time**.
 - Every switch reflects and immediately persists its current setting —
   no separate Save action.
 
@@ -121,7 +123,10 @@ full contract.
   city if known (see [Data Model](data-model.md#session)), distance,
   duration, average speed, max speed, steps per minute (see
   [Tracking](tracking.md#step-count) — omitted entirely when the session
-  has no step count).
+  has no step count), and average time per kilometer plus the fastest
+  one's own time (see [Tracking](tracking.md#km-splits) — average
+  omitted with no complete km at all, fastest omitted with fewer than
+  two).
 - Below the summary stats, a **Km splits (N)** link — N being the number
   of complete kilometers — opening the [Km splits](#4-km-splits) view.
   The splits themselves aren't listed here: this panel shares the screen

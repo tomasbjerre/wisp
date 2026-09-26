@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.github.tomasbjerre.wisp.MainActivity
 import com.github.tomasbjerre.wisp.R
 import com.github.tomasbjerre.wisp.WispApplication
+import com.github.tomasbjerre.wisp.ui.splits.KmSplitRows
 import com.github.tomasbjerre.wisp.util.GeoUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -236,6 +237,7 @@ class TrackingService : LifecycleService() {
                     route = points.map { p -> LatLon(p.latitude, p.longitude) },
                     steps = stepRecorder.steps,
                     latestKmSplitSeconds = splits.completeSeconds.lastOrNull(),
+                    fastestKmSplitSeconds = KmSplitRows.fastestSeconds(splits.completeSeconds),
                 )
             }
             announceNewlyCompletedKm(splits)

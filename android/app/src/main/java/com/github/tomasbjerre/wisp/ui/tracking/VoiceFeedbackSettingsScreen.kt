@@ -67,14 +67,14 @@ fun VoiceFeedbackSettingsScreen(
                 testTag = TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_SWITCH,
             )
             SettingSwitchRow(
-                label = "Average speed",
+                label = "Average speed per kilometer",
                 checked = settings.announceSpeed,
                 enabled = settings.enabled,
                 onCheckedChange = preferences::setAnnounceSpeed,
                 testTag = TestTags.VOICE_FEEDBACK_ANNOUNCE_SPEED_SWITCH,
             )
             SettingSwitchRow(
-                label = "Steps",
+                label = "Steps per kilometer",
                 checked = settings.announceSteps,
                 enabled = settings.enabled,
                 onCheckedChange = preferences::setAnnounceSteps,

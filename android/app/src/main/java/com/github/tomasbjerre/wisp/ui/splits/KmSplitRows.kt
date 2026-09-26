@@ -1,6 +1,7 @@
 package com.github.tomasbjerre.wisp.ui.splits
 
 import com.github.tomasbjerre.wisp.util.GeoUtils
+import kotlin.math.roundToLong
 
 /** One row of the Km splits view — see specs/ui-flows.md#4-km-splits. */
 data class KmSplitRow(
@@ -60,6 +61,26 @@ object KmSplitRows {
         val slowest = seconds.indices.maxBy { seconds[it] }
         return KmSplitExtremes(fastest + 1, seconds[fastest], slowest + 1, seconds[slowest])
     }
+
+    /**
+     * The fastest complete kilometer's own time — same "fewer than two complete
+     * kilometers, nothing to compare" rule as [extremes], just without needing the
+     * partial km around to prove it's excluded. Used where only the km number, not
+     * which km it was, is shown (live on Tracking, and in Detail's summary — see
+     * specs/tracking.md#km-splits).
+     */
+    fun fastestSeconds(completeSeconds: List<Long>): Long? {
+        if (completeSeconds.size < 2) return null
+        return completeSeconds.min()
+    }
+
+    /**
+     * The average time per complete kilometer — null with no complete kilometers at
+     * all. Unlike [fastestSeconds], one complete km is enough to average (there's
+     * nothing to compare it against, but it's still a real per-km time).
+     */
+    fun averageSeconds(completeSeconds: List<Long>): Long? =
+        if (completeSeconds.isEmpty()) null else completeSeconds.average().roundToLong()
 
     private fun speedMps(
         meters: Double,

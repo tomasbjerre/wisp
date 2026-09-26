@@ -189,6 +189,11 @@ private fun TrackingStatsPanel(
             state.latestKmSplitSeconds?.let { seconds ->
                 Text("Last km: ${Formatting.duration(seconds)}", style = MaterialTheme.typography.bodyLarge)
             }
+            // See specs/tracking.md#km-splits: null until a second complete km exists to
+            // compare against, same threshold as Detail/Km splits' fastest/slowest.
+            state.fastestKmSplitSeconds?.let { seconds ->
+                Text("Fastest km: ${Formatting.duration(seconds)}", style = MaterialTheme.typography.bodyLarge)
+            }
             TrackingControls(isPaused = state.isPaused, isWaitingForMovement = state.isWaitingForMovement)
         }
     }
