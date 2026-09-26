@@ -33,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.github.tomasbjerre.wisp.data.UnitPreferences
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.location.TrackingUiState
 import com.github.tomasbjerre.wisp.ui.Formatting
@@ -43,6 +45,7 @@ import com.github.tomasbjerre.wisp.ui.common.RouteMap
 /** See specs/ui-flows.md#2-tracking-active-recording. */
 @Composable
 fun TrackingScreen(
+    unitPreferences: UnitPreferences,
     onStopped: (sessionId: Long) -> Unit,
     onCancelled: () -> Unit,
     onOpenVoiceFeedbackSettings: () -> Unit,
@@ -50,6 +53,7 @@ fun TrackingScreen(
     val context = LocalContext.current
     val permissions = rememberLocationPermissionState()
     val state by TrackingService.state.collectAsStateWithLifecycle()
+    val unit by unitPreferences.unit.collectAsStateWithLifecycle()
 
     // See specs/ui-flows.md#2-tracking-active-recording: back behaves exactly like
     // tapping Stop (below), not like leaving the screen — without this, system/gesture
@@ -135,7 +139,7 @@ fun TrackingScreen(
                 }
             }
         }
-        TrackingStatsPanel(state = state, permissions = permissions)
+        TrackingStatsPanel(state = state, permissions = permissions, unit = unit)
     }
 }
 
@@ -143,6 +147,7 @@ fun TrackingScreen(
 private fun TrackingStatsPanel(
     state: TrackingUiState,
     permissions: LocationPermissionState,
+    unit: UnitSystem,
 ) {
     Surface(tonalElevation = 4.dp) {
         // navigationBarsPadding: MainActivity draws edge-to-edge, so without this
@@ -173,9 +178,9 @@ private fun TrackingStatsPanel(
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
-            Text(Formatting.speedKmh(state.currentSpeedMps), style = MaterialTheme.typography.displaySmall)
+            Text(Formatting.speed(state.currentSpeedMps, unit), style = MaterialTheme.typography.displaySmall)
             Text(
-                "${Formatting.distance(state.distanceMeters)} · ${Formatting.duration(state.elapsedSeconds)}",
+                "${Formatting.distance(state.distanceMeters, unit)} · ${Formatting.duration(state.elapsedSeconds)}",
                 style = MaterialTheme.typography.bodyLarge,
             )
             // See specs/tracking.md#step-count: omitted entirely with no step count, same
@@ -190,12 +195,18 @@ private fun TrackingStatsPanel(
             // Detail shows — there's no room for a growing list on this screen, and
             // "how was that last km" is what's actually useful mid-run.
             state.latestKmSplitSeconds?.let { seconds ->
-                Text("Last km: ${Formatting.duration(seconds)}", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    "Last ${unit.distanceWordSingular}: ${Formatting.duration(seconds)}",
+                    style = MaterialTheme.typography.bodyLarge,
+                )
             }
-            // See specs/tracking.md#km-splits: null until a second complete km exists to
-            // compare against, same threshold as Detail/Km splits' fastest/slowest.
+            // See specs/tracking.md#km-splits: null until a second complete split exists
+            // to compare against, same threshold as Detail/Km splits' fastest/slowest.
             state.fastestKmSplitSeconds?.let { seconds ->
-                Text("Fastest km: ${Formatting.duration(seconds)}", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    "Fastest ${unit.distanceWordSingular}: ${Formatting.duration(seconds)}",
+                    style = MaterialTheme.typography.bodyLarge,
+                )
             }
             TrackingControls(isPaused = state.isPaused, isWaitingForMovement = state.isWaitingForMovement)
         }

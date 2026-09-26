@@ -145,25 +145,29 @@ that session's Detail screen.
 
 ## Km splits
 
-- A **split** is the time it took to cover one complete kilometer of a
-  session — shown in full on the [Km splits](ui-flows.md#4-km-splits)
-  view (reached from Detail) and live on
+- A **split** is the time it took to cover one complete distance unit of
+  a session, per [Units](units.md) — a kilometer under metric, a **mile**
+  under imperial — shown in full on the [Km splits](ui-flows.md#4-km-splits)
+  view (reached from Detail; its title, "Fastest"/"Slowest" labels, and
+  per-row unit all read "mile" under imperial) and live on
   [Tracking](ui-flows.md#2-tracking-active-recording) (only the most
   recently completed one) so a user can see which parts of the activity
-  were faster or slower.
-- The **fastest** complete km's own time is also shown live on
+  were faster or slower. Changing the unit setting changes where a split
+  boundary itself falls (whole-mile splits, not km splits re-expressed as
+  "0.62 mi"), recomputed fresh from the same recorded points — see
+  [Units](units.md).
+- The **fastest** complete split's own time is also shown live on
   [Tracking](ui-flows.md#2-tracking-active-recording), next to the
-  latest split — null (nothing shown) until a second complete km exists
-  to compare against, the same threshold as the Km splits view's
+  latest split — null (nothing shown) until a second complete split
+  exists to compare against, the same threshold as the Km splits view's
   fastest/slowest (below).
 - [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session)'s
-  summary also shows the session's **average time per kilometer**
-  (across every complete km) and, once there are at least two to
+  summary also shows the session's **average time per split**
+  (across every complete one) and, once there are at least two to
   compare, the **fastest** one's own time — the same values the Km
-  splits view lets someone read kilometer by kilometer, surfaced
-  without having to open it. Omitted entirely with no complete km at
-  all (average) or fewer than two (fastest), same as the live Tracking
-  case above.
+  splits view lets someone read split by split, surfaced without having
+  to open it. Omitted entirely with no complete split at all (average)
+  or fewer than two (fastest), same as the live Tracking case above.
 - Computed from the session's recorded points on demand (not stored
   alongside the session, unlike distance/duration/speed) — points are
   already loaded to draw the route on Detail, and already held in memory
@@ -171,20 +175,23 @@ that session's Detail screen.
 - Paused time and distance are excluded the same way they are from the
   session totals (see [Distance calculation](#distance-calculation)): a
   pause never counts toward completing a split.
-- Only complete kilometers count as splits — a session that ends partway
-  through one (e.g. 3.4 km) has 3 splits, not a fractional 4th one.
-- The stretch after the last complete kilometer (the 0.4 km above) is
-  the **partial km**: its own distance and time, shown after the splits
+- Only complete units count as splits — a session that ends partway
+  through one (e.g. 3.4 km under metric) has 3 splits, not a fractional
+  4th one.
+- The stretch after the last complete split (the 0.4 km above) is the
+  **partial split**: its own distance and time, shown after the splits
   on the [Km splits](ui-flows.md#4-km-splits) view but never counted as a
   split itself (not in Detail's split count, not as the live "latest
   split", never the fastest/slowest). Under 10 m — e.g. the few steps
-  taken while reaching for Stop — there's no partial km at all.
-- A session under 1 km has no splits to show.
-- **Steps per split**: each split (and the partial km) also has the
+  taken while reaching for Stop — there's no partial split at all,
+  regardless of unit.
+- A session under one full unit (1 km metric, 1 mile imperial) has no
+  splits to show.
+- **Steps per split**: each split (and the partial one) also has the
   number of steps taken over it — the difference between the running
   step counts recorded on the points (see
   [Data Model](data-model.md#trackpoint)) at its start and end, with the
-  count at a kilometer boundary interpolated within the segment that
+  count at a split boundary interpolated within the segment that
   crosses it, the same way the split's time is. Paused steps are already
   excluded from that running count (see [Step count](#step-count)).
   A session whose points never recorded any steps (no step sensor or

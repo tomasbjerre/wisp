@@ -40,10 +40,13 @@ spec document rather than bent into the existing ones.
 Simplicity beats configurability. When a decision could be a user-facing
 setting or a fixed sane default, prefer the fixed default.
 
-[Voice feedback](voice-feedback.md) is a deliberate, narrow exception:
-which spoken cues (if any) someone wants read aloud while recording has
-no single sane default — silence is the fixed default it starts from,
-but *which* cues to add is inherently a personal choice, not one Wisp
-can guess correctly for everyone. This is not a precedent for settings
-in general; new configurability elsewhere should still default to "no",
-per this principle.
+[Voice feedback](voice-feedback.md) and [Units](units.md) are deliberate,
+narrow exceptions: which spoken cues (if any) someone wants read aloud
+while recording, and whether they think in kilometers or miles, both have
+no single sane default that's correct for everyone — voice feedback
+starts from its fixed default (silence) and units from the more common
+one (metric), but *which* cues to add, or which unit system reads
+naturally, is inherently a personal/regional choice Wisp can't guess
+correctly across every user. This is not a precedent for settings in
+general; new configurability elsewhere should still default to "no", per
+this principle.

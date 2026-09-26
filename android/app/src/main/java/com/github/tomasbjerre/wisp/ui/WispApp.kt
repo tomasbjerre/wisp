@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.github.tomasbjerre.wisp.data.SessionRepository
+import com.github.tomasbjerre.wisp.data.UnitPreferences
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
 import com.github.tomasbjerre.wisp.ui.detail.DetailScreen
 import com.github.tomasbjerre.wisp.ui.home.HomeScreen
@@ -30,6 +31,7 @@ private const val ARG_SESSION_ID = "sessionId"
 fun WispApp(
     repository: SessionRepository,
     voiceFeedbackPreferences: VoiceFeedbackPreferences,
+    unitPreferences: UnitPreferences,
 ) {
     val navController = rememberNavController()
 
@@ -49,12 +51,14 @@ fun WispApp(
         composable(ROUTE_HOME) {
             HomeScreen(
                 repository = repository,
+                unitPreferences = unitPreferences,
                 onStart = { navController.navigate(ROUTE_TRACKING) },
                 onOpenSession = { id -> navController.navigate("detail/$id") },
             )
         }
         composable(ROUTE_TRACKING) {
             TrackingScreen(
+                unitPreferences = unitPreferences,
                 onStopped = { sessionId ->
                     navController.navigate("detail/$sessionId") {
                         popUpTo(ROUTE_HOME)
@@ -70,14 +74,15 @@ fun WispApp(
                 onBack = { navController.popBackStack() },
             )
         }
-        detailDestination(navController, repository)
-        kmSplitsDestination(navController, repository)
+        detailDestination(navController, repository, unitPreferences)
+        kmSplitsDestination(navController, repository, unitPreferences)
     }
 }
 
 private fun NavGraphBuilder.detailDestination(
     navController: NavController,
     repository: SessionRepository,
+    unitPreferences: UnitPreferences,
 ) {
     composable(
         ROUTE_DETAIL,
@@ -88,6 +93,7 @@ private fun NavGraphBuilder.detailDestination(
             DetailScreen(
                 repository = repository,
                 sessionId = sessionId,
+                unitPreferences = unitPreferences,
                 onDeleted = {
                     navController.navigate(ROUTE_HOME) { popUpTo(ROUTE_HOME) { inclusive = true } }
                 },
@@ -101,6 +107,7 @@ private fun NavGraphBuilder.detailDestination(
 private fun NavGraphBuilder.kmSplitsDestination(
     navController: NavController,
     repository: SessionRepository,
+    unitPreferences: UnitPreferences,
 ) {
     composable(
         ROUTE_KM_SPLITS,
@@ -111,6 +118,7 @@ private fun NavGraphBuilder.kmSplitsDestination(
             KmSplitsScreen(
                 repository = repository,
                 sessionId = sessionId,
+                unitPreferences = unitPreferences,
                 onBack = { navController.popBackStack() },
             )
         }

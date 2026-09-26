@@ -1,5 +1,6 @@
 package com.github.tomasbjerre.wisp.location
 
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackSettings
 import com.github.tomasbjerre.wisp.util.GeoUtils
 import org.assertj.core.api.Assertions.assertThat
@@ -17,6 +18,7 @@ class VoiceFeedbackAnnouncementTest {
                 previousCompleteCount = 0,
                 elapsedSeconds = 300,
                 settings = VoiceFeedbackSettings(enabled = false),
+                unit = UnitSystem.METRIC,
             )
 
         assertThat(text).isNull()
@@ -32,6 +34,7 @@ class VoiceFeedbackAnnouncementTest {
                 previousCompleteCount = 2,
                 elapsedSeconds = 600,
                 settings = VoiceFeedbackSettings(enabled = true),
+                unit = UnitSystem.METRIC,
             )
 
         assertThat(text).isNull()
@@ -47,6 +50,7 @@ class VoiceFeedbackAnnouncementTest {
                 previousCompleteCount = 1,
                 elapsedSeconds = 600,
                 settings = VoiceFeedbackSettings(enabled = true),
+                unit = UnitSystem.METRIC,
             )
 
         assertThat(text).isNotNull()
@@ -63,6 +67,7 @@ class VoiceFeedbackAnnouncementTest {
                 previousCompleteCount = 1,
                 elapsedSeconds = 500,
                 settings = VoiceFeedbackSettings(enabled = true),
+                unit = UnitSystem.METRIC,
             )
 
         assertThat(text).isNull()
@@ -90,9 +95,38 @@ class VoiceFeedbackAnnouncementTest {
                         announceSteps = true,
                         announceElapsedTime = true,
                     ),
+                unit = UnitSystem.METRIC,
             )
 
         assertThat(text).isEqualTo("1 kilometer. 12.0 kilometers per hour. 963 steps. 5 minutes 5 seconds")
+    }
+
+    @Test
+    fun `says miles, not kilometers, under the imperial unit system`() {
+        val splits =
+            GeoUtils.KmSplits(
+                completeSeconds = listOf(300L),
+                partial = null,
+                completeSteps = listOf(963L),
+            )
+
+        val text =
+            VoiceFeedbackAnnouncement.forNewlyCompletedKm(
+                splits = splits,
+                previousCompleteCount = 0,
+                elapsedSeconds = 305,
+                settings =
+                    VoiceFeedbackSettings(
+                        enabled = true,
+                        announceKm = true,
+                        announceSpeed = true,
+                        announceSteps = true,
+                        announceElapsedTime = true,
+                    ),
+                unit = UnitSystem.IMPERIAL,
+            )
+
+        assertThat(text).isEqualTo("1 mile. 12.0 miles per hour. 963 steps. 5 minutes 5 seconds")
     }
 
     @Test
@@ -117,6 +151,7 @@ class VoiceFeedbackAnnouncementTest {
                         announceSteps = false,
                         announceElapsedTime = false,
                     ),
+                unit = UnitSystem.METRIC,
             )
 
         assertThat(text).isEqualTo("1 kilometer")
@@ -139,6 +174,7 @@ class VoiceFeedbackAnnouncementTest {
                         announceSteps = true,
                         announceElapsedTime = false,
                     ),
+                unit = UnitSystem.METRIC,
             )
 
         assertThat(text).isNull()
@@ -161,6 +197,7 @@ class VoiceFeedbackAnnouncementTest {
                         announceSteps = false,
                         announceElapsedTime = false,
                     ),
+                unit = UnitSystem.METRIC,
             )
 
         assertThat(text).isNull()
@@ -184,6 +221,7 @@ class VoiceFeedbackAnnouncementTest {
                         announceSteps = false,
                         announceElapsedTime = true,
                     ),
+                unit = UnitSystem.METRIC,
             )
 
         assertThat(text).isEqualTo("1 hour 2 minutes 3 seconds")

@@ -3,6 +3,7 @@ package com.github.tomasbjerre.wisp.ui.splits
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.tomasbjerre.wisp.data.SessionRepository
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.util.GeoUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,11 +14,12 @@ import kotlinx.coroutines.launch
 class KmSplitsViewModel(
     repository: SessionRepository,
     sessionId: Long,
+    unit: UnitSystem,
 ) : ViewModel() {
     private val _splits = MutableStateFlow(GeoUtils.KmSplits(emptyList(), null))
     val splits: StateFlow<GeoUtils.KmSplits> = _splits.asStateFlow()
 
     init {
-        viewModelScope.launch { _splits.value = GeoUtils.kmSplits(repository.getPoints(sessionId)) }
+        viewModelScope.launch { _splits.value = GeoUtils.kmSplits(repository.getPoints(sessionId), unit) }
     }
 }

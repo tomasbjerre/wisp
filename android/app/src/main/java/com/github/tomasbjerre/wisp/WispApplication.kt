@@ -3,6 +3,7 @@ package com.github.tomasbjerre.wisp
 import android.app.Application
 import android.content.Context
 import com.github.tomasbjerre.wisp.data.SessionRepository
+import com.github.tomasbjerre.wisp.data.UnitPreferences
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
 import com.github.tomasbjerre.wisp.data.WispDatabase
 import kotlinx.coroutines.CoroutineScope
@@ -19,12 +20,15 @@ class WispApplication : Application() {
         private set
     lateinit var voiceFeedbackPreferences: VoiceFeedbackPreferences
         private set
+    lateinit var unitPreferences: UnitPreferences
+        private set
 
     override fun onCreate() {
         super.onCreate()
         val database = WispDatabase.build(this)
         repository = SessionRepository(database.sessionDao(), database.trackPointDao())
         voiceFeedbackPreferences = VoiceFeedbackPreferences(this)
+        unitPreferences = UnitPreferences(this)
 
         val osmdroidPrefs = getSharedPreferences("osmdroid", Context.MODE_PRIVATE)
         Configuration.getInstance().load(this, osmdroidPrefs)
