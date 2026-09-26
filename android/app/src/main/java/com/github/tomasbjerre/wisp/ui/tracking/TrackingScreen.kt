@@ -65,8 +65,11 @@ fun TrackingScreen(
     // isRecording flip, otherwise stopping (isRecording -> false) would immediately
     // start a fresh session again right as we navigate away.
     var hasRequestedStart by remember { mutableStateOf(false) }
+    // Skipped when a session is already recording: navigating to voice feedback settings
+    // and back re-enters this screen with a fresh hasRequestedStart, and starting again
+    // would replace the running session with a new one.
     LaunchedEffect(permissions.hasForeground) {
-        if (permissions.hasForeground && !hasRequestedStart) {
+        if (permissions.hasForeground && !hasRequestedStart && !state.isRecording) {
             hasRequestedStart = true
             TrackingService.start(context)
         }
