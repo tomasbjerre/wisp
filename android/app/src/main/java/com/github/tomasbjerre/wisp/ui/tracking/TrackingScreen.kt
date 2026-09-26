@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.github.tomasbjerre.wisp.data.HeartRatePreferences
 import com.github.tomasbjerre.wisp.data.UnitPreferences
 import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.location.TrackingService
@@ -46,6 +47,7 @@ import com.github.tomasbjerre.wisp.ui.common.RouteMap
 @Composable
 fun TrackingScreen(
     unitPreferences: UnitPreferences,
+    heartRatePreferences: HeartRatePreferences,
     onStopped: (sessionId: Long) -> Unit,
     onCancelled: () -> Unit,
     onOpenVoiceFeedbackSettings: () -> Unit,
@@ -54,6 +56,7 @@ fun TrackingScreen(
     val permissions = rememberLocationPermissionState()
     val state by TrackingService.state.collectAsStateWithLifecycle()
     val unit by unitPreferences.unit.collectAsStateWithLifecycle()
+    val heartRateEnabled by heartRatePreferences.enabled.collectAsStateWithLifecycle()
 
     // See specs/ui-flows.md#2-tracking-active-recording: back behaves exactly like
     // tapping Stop (below), not like leaving the screen — without this, system/gesture
@@ -139,7 +142,7 @@ fun TrackingScreen(
                 }
             }
         }
-        TrackingStatsPanel(state = state, permissions = permissions, unit = unit)
+        TrackingStatsPanel(state = state, permissions = permissions, unit = unit, heartRateEnabled = heartRateEnabled)
     }
 }
 
@@ -148,6 +151,7 @@ private fun TrackingStatsPanel(
     state: TrackingUiState,
     permissions: LocationPermissionState,
     unit: UnitSystem,
+    heartRateEnabled: Boolean,
 ) {
     Surface(tonalElevation = 4.dp) {
         // navigationBarsPadding: MainActivity draws edge-to-edge, so without this
@@ -208,9 +212,20 @@ private fun TrackingStatsPanel(
                     style = MaterialTheme.typography.bodyLarge,
                 )
             }
+            // See specs/heart-rate.md#display: omitted with the setting off; a placeholder,
+            // not hidden, while on but without a current reading, so it's clear Wisp is
+            // still looking for a monitor.
+            if (heartRateEnabled) HeartRateLine(state)
             TrackingControls(isPaused = state.isPaused, isWaitingForMovement = state.isWaitingForMovement)
         }
     }
+}
+
+@Composable
+private fun HeartRateLine(state: TrackingUiState) {
+    val current = state.heartRateBpm?.let(Formatting::heartRate) ?: "—"
+    val max = state.maxHeartRateBpm?.let { " · Max ${Formatting.heartRate(it)}" } ?: ""
+    Text("Heart rate: $current$max", style = MaterialTheme.typography.bodyLarge)
 }
 
 @Composable

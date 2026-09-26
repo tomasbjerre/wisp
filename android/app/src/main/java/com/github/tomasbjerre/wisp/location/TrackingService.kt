@@ -37,6 +37,9 @@ class TrackingService : LifecycleService() {
     private val repository by lazy { (application as WispApplication).repository }
     private val voiceFeedbackPreferences by lazy { (application as WispApplication).voiceFeedbackPreferences }
     private val unitPreferences by lazy { (application as WispApplication).unitPreferences }
+    private val heartRatePreferences by lazy { (application as WispApplication).heartRatePreferences }
+    private val heartRateMonitor by lazy { HeartRateMonitor(this) }
+    private var heartRateRecorder = HeartRateRecorder()
     private val locationTracker by lazy { LocationTracker(this) }
     private val geocodingService by lazy { GeocodingService(this) }
     private val stepCounterTracker by lazy { StepCounterTracker(this) }
@@ -81,6 +84,7 @@ class TrackingService : LifecycleService() {
         recorder = TrackRecorder()
         movementGate = MovementGate()
         stepRecorder = StepRecorder()
+        heartRateRecorder = HeartRateRecorder()
         stationaryGate = StationaryGate()
         voiceFeedbackSpeaker = VoiceFeedbackSpeaker(this)
         announcedCompleteKmCount = 0
@@ -101,6 +105,8 @@ class TrackingService : LifecycleService() {
         locationTracker.stop()
         recorder.pause()
         stepRecorder.pause()
+        heartRateRecorder.pause()
+        heartRateMonitor.stop()
         pauseStartedElapsedRealtime = SystemClock.elapsedRealtime()
         stopTicker()
         _state.update { it.copy(isPaused = true) }
@@ -112,6 +118,8 @@ class TrackingService : LifecycleService() {
         _state.update { it.copy(isPaused = false) }
         locationTracker.start(::onLocation)
         stepRecorder.resume()
+        heartRateRecorder.resume()
+        startHeartRateMonitor()
         // Fresh idle clock (see specs/tracking.md#auto-pause) — otherwise time spent
         // paused would count toward the next auto-pause's idle threshold.
         stationaryGate = StationaryGate()
@@ -126,7 +134,14 @@ class TrackingService : LifecycleService() {
                 while (isActive) {
                     val elapsedMillis =
                         SystemClock.elapsedRealtime() - recordingStartElapsedRealtime - pausedAccumulatedMillis
-                    _state.update { it.copy(elapsedSeconds = elapsedMillis / 1_000) }
+                    _state.update {
+                        it.copy(
+                            elapsedSeconds = elapsedMillis / 1_000,
+                            // Also refreshed here so a lost monitor clears the display — see
+                            // specs/heart-rate.md#recording.
+                            heartRateBpm = currentHeartRate(),
+                        )
+                    }
                     updateNotification()
                     delay(1_000)
                 }
@@ -141,6 +156,7 @@ class TrackingService : LifecycleService() {
     private fun stop() {
         locationTracker.stop()
         stepCounterTracker.stop()
+        heartRateMonitor.stop()
         stopTicker()
         voiceFeedbackSpeaker?.shutdown()
         voiceFeedbackSpeaker = null
@@ -150,12 +166,18 @@ class TrackingService : LifecycleService() {
         // whose Detail screen would just be a permanent blank map.
         val neverMoved = _state.value.isWaitingForMovement
         val steps = stepRecorder.steps
+        val maxHeartRateBpm = heartRateRecorder.maxBpm
         lifecycleScope.launch {
             if (id != null) {
                 if (neverMoved) {
                     repository.deleteSessionById(id)
                 } else {
-                    repository.finishSession(id, System.currentTimeMillis(), steps = steps)
+                    repository.finishSession(
+                        id,
+                        System.currentTimeMillis(),
+                        steps = steps,
+                        maxHeartRateBpm = maxHeartRateBpm,
+                    )
                 }
             }
             _state.update {
@@ -227,6 +249,7 @@ class TrackingService : LifecycleService() {
                 // See specs/tracking.md#km-splits: the running count, so steps can later be
                 // split per km.
                 steps = stepRecorder.steps,
+                heartRateBpm = currentHeartRate(),
             )
             val points = repository.getPoints(id)
             val summary = GeoUtils.summarize(points)
@@ -283,8 +306,20 @@ class TrackingService : LifecycleService() {
         // See specs/tracking.md#step-count: gated the same as the timer/track, so steps
         // taken before movement is confirmed don't count.
         stepCounterTracker.start(stepRecorder::onStepCounterChanged)
+        startHeartRateMonitor()
         return false
     }
+
+    /** See specs/heart-rate.md#connecting: only when the user has turned the setting on. */
+    private fun startHeartRateMonitor() {
+        if (!heartRatePreferences.enabled.value) return
+        heartRateMonitor.start { bpm ->
+            heartRateRecorder.onReading(bpm, SystemClock.elapsedRealtime())
+            _state.update { it.copy(heartRateBpm = currentHeartRate(), maxHeartRateBpm = heartRateRecorder.maxBpm) }
+        }
+    }
+
+    private fun currentHeartRate(): Int? = heartRateRecorder.currentBpm(SystemClock.elapsedRealtime())
 
     private fun ensureNotificationChannel() {
         val manager = getSystemService(NotificationManager::class.java)

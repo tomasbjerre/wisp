@@ -142,6 +142,11 @@ suspend fun seedRealSession(
             speedMps = row.speedMps,
             segmentStart = index == 0,
             steps = steps.roundToLong(),
+            // Synthesized like steps: a heart rate warming up steadily over the activity,
+            // ending on REAL_SESSION_MAX_HEART_RATE — the session's max is derived from it.
+            heartRateBpm =
+                REAL_SESSION_MIN_HEART_RATE +
+                    (REAL_SESSION_MAX_HEART_RATE - REAL_SESSION_MIN_HEART_RATE) * index / (rows.size - 1),
         )
     }
 
@@ -169,3 +174,7 @@ private const val BASE_LONGITUDE = 18.0686
 // matching real-activity-track-points.csv's track points (issue #121).
 private const val ASSET_NAME = "real-activity-track-points.csv"
 private const val REAL_SESSION_TOTAL_STEPS = 8_501L
+
+/** Synthesized heart rate range for [seedRealSession] — see the comment where it is used. */
+const val REAL_SESSION_MIN_HEART_RATE = 110
+const val REAL_SESSION_MAX_HEART_RATE = 165

@@ -2,6 +2,7 @@ package com.github.tomasbjerre.wisp
 
 import android.app.Application
 import android.content.Context
+import com.github.tomasbjerre.wisp.data.HeartRatePreferences
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.UnitPreferences
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
@@ -21,6 +22,7 @@ class WispApplication : Application() {
     lateinit var voiceFeedbackPreferences: VoiceFeedbackPreferences
         private set
     lateinit var unitPreferences: UnitPreferences
+    lateinit var heartRatePreferences: HeartRatePreferences
         private set
 
     override fun onCreate() {
@@ -29,6 +31,7 @@ class WispApplication : Application() {
         repository = SessionRepository(database.sessionDao(), database.trackPointDao())
         voiceFeedbackPreferences = VoiceFeedbackPreferences(this)
         unitPreferences = UnitPreferences(this)
+        heartRatePreferences = HeartRatePreferences(this)
 
         val osmdroidPrefs = getSharedPreferences("osmdroid", Context.MODE_PRIVATE)
         Configuration.getInstance().load(this, osmdroidPrefs)

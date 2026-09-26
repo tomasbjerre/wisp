@@ -30,4 +30,6 @@ data class TrackPoint(
     val segmentStart: Boolean,
     /** The session's running step count when this point was recorded — see specs/data-model.md#trackpoint. */
     val steps: Long = 0,
+    /** The current heart rate when recorded — see specs/heart-rate.md#recording. Null if there was none. */
+    val heartRateBpm: Int? = null,
 )

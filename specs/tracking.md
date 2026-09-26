@@ -143,6 +143,13 @@ that session's Detail screen.
   recording-time minutes (excluding paused time, like average speed).
   Omitted entirely when the session's step count is 0.
 
+## Heart rate
+
+Optionally recorded from a BLE heart rate monitor — see
+[Heart rate](heart-rate.md). Like steps, it's gated by
+[start gating](#start-gating) and excluded while paused, and it's
+best-effort: with no monitor or permission, recording is unaffected.
+
 ## Km splits
 
 - A **split** is the time it took to cover one complete distance unit of

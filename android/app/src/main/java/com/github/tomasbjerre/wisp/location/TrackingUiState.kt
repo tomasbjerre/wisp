@@ -29,4 +29,8 @@ data class TrackingUiState(
     // See specs/tracking.md#km-splits. Null until a second complete km exists to compare
     // against — same threshold as Detail/Km splits' fastest/slowest.
     val fastestKmSplitSeconds: Long? = null,
+    // See specs/heart-rate.md#recording. Null when the setting is off, or there's no
+    // current reading (nothing received yet, or the last one went stale).
+    val heartRateBpm: Int? = null,
+    val maxHeartRateBpm: Int? = null,
 )

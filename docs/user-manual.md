@@ -28,6 +28,14 @@ This is what you see when you open Wisp. It has:
   re-expressed in miles). Metric by default. CSV exports always stay in
   metric regardless of this setting — see the user manual's Detail
   section below.
+- **Heart rate monitor** — a switch, off by default. Turn it on to record
+  your heart rate from a Bluetooth heart rate monitor (a chest strap, arm
+  band, or watch that broadcasts heart rate using the standard Bluetooth
+  Heart Rate profile). Android will ask for permission to use nearby
+  devices the first time; if you decline, the switch stays off. Wisp
+  looks for a monitor when a recording starts moving, and keeps looking if
+  the connection drops. With no monitor in range, recording works as
+  usual — that activity just has no heart rate.
 - **Your history** — every past activity, most recent first, each row
   showing its date, nearest city (when known), distance, duration, and
   average speed. Tap a row to open that activity's [Detail](#detail)
@@ -93,6 +101,10 @@ A few more things on this screen:
   completed a second one) your fastest kilometer so far. (Not every
   phone has a step-count sensor — if yours doesn't, or the permission
   wasn't granted, the steps line simply doesn't appear.)
+- **Heart rate** — with the Heart rate monitor switch on (see
+  [Home](#home)), shows your current heart rate and your maximum so far,
+  e.g. `Heart rate: 142 bpm · Max 168 bpm`. It shows a dash while Wisp is
+  still looking for a monitor or hasn't heard from it for a few seconds.
 - **Pause / Continue** — pauses recording without ending the activity;
   tap Continue to resume. Wisp also pauses automatically if you stop
   moving for a while (about 15 seconds) — same button, same behavior,
@@ -143,7 +155,8 @@ just-finished:
   <img src="screenshots/detail-satellite.jpg" alt="Detail screen with the satellite map view" width="300">
 
 - **Summary stats** — date/time, nearest city, distance, duration,
-  average and max speed, (when available) steps/minute, and (once
+  average and max speed, (when available) steps/minute, max heart rate
+  (when a heart rate was recorded), and (once
   you've completed at least one kilometer) your average time per
   kilometer, plus your fastest one once you've completed a second.
 - **Km splits (N)** — opens the [Km splits](#km-splits) view, N being

@@ -40,7 +40,8 @@ spec document rather than bent into the existing ones.
 Simplicity beats configurability. When a decision could be a user-facing
 setting or a fixed sane default, prefer the fixed default.
 
-[Voice feedback](voice-feedback.md) and [Units](units.md) are deliberate,
+[Voice feedback](voice-feedback.md), [Units](units.md) and
+[Heart rate](heart-rate.md) are deliberate,
 narrow exceptions: which spoken cues (if any) someone wants read aloud
 while recording, and whether they think in kilometers or miles, both have
 no single sane default that's correct for everyone — voice feedback
