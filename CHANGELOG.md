@@ -1,3 +1,34 @@
+## 0.8.0 (2026-09-26)
+
+### Features
+
+-  record heart rate from a BLE heart rate monitor (#127) ([a708e](https://github.com/tomasbjerre/wisp/commit/a708e882b848fdb) Tomas Bjerre)  
+-  **android**  add a Metric/Imperial unit setting on Home (#124) ([26e6f](https://github.com/tomasbjerre/wisp/commit/26e6f40700fbb62) Tomas Bjerre)  
+-  **android**  show average and fastest km time on Tracking/Detail (#122) ([37088](https://github.com/tomasbjerre/wisp/commit/370887bdb710dd4) Tomas Bjerre)  
+-  voice feedback ([3af10](https://github.com/tomasbjerre/wisp/commit/3af1083cc0d6e48) Tomas Bjerre)  [#116](https://github.com/tomasbjerre/wisp/issues/116)  
+-  **android**  remove the relative-speed bar from Km splits rows (#115) ([aff91](https://github.com/tomasbjerre/wisp/commit/aff91eec0e604da) Tomas Bjerre)  
+-  **android**  add satellite toggle to Detail, reorder its buttons (#114) ([b7078](https://github.com/tomasbjerre/wisp/commit/b7078400fe72144) Tomas Bjerre)  
+-  **ci**  auto-trigger Release Android after a successful Release (#99) ([17f17](https://github.com/tomasbjerre/wisp/commit/17f176f589212a7) Tomas Bjerre)  
+
+### Bug Fixes
+
+-  **android**  don't restart tracking when returning from voice settings (#126) ([48199](https://github.com/tomasbjerre/wisp/commit/48199fb2d892e87) Tomas Bjerre)  
+
+### Dependency updates
+
+- upgrade to Gradle 9, AGP 9, and compileSdk 37 (#117) ([916a2](https://github.com/tomasbjerre/wisp/commit/916a2730053fb25) Tomas Bjerre)  
+- update gradle/actions action to v6 (#108) ([720b0](https://github.com/tomasbjerre/wisp/commit/720b03219e80e5b) renovate[bot])  
+- update android-actions/setup-android action to v4 (#105) ([91c23](https://github.com/tomasbjerre/wisp/commit/91c2301510c6801) renovate[bot])  
+- update actions/setup-java action to v6 (#100) ([814fc](https://github.com/tomasbjerre/wisp/commit/814fc7c00ed1fda) renovate[bot])  
+- update actions/upload-artifact action to v7 (#101) ([8a883](https://github.com/tomasbjerre/wisp/commit/8a8838355354fba) renovate[bot])  
+- update plugin org.jetbrains.kotlin.android to v2.4.20 (#81) ([793fe](https://github.com/tomasbjerre/wisp/commit/793fe7eb017b509) renovate[bot])  
+- update plugin com.google.devtools.ksp to v2.3.12 (#80) ([cee51](https://github.com/tomasbjerre/wisp/commit/cee51d65644de7c) renovate[bot])  
+- update actions/checkout action to v7 (#97) ([0a417](https://github.com/tomasbjerre/wisp/commit/0a417ca48c807e9) renovate[bot])  
+- update plugin org.jetbrains.kotlin.plugin.compose to v2.4.20 (#91) ([d9224](https://github.com/tomasbjerre/wisp/commit/d9224e869fcbad5) renovate[bot])  
+- update actions/download-artifact action to v8 (#98) ([7a7bb](https://github.com/tomasbjerre/wisp/commit/7a7bb2612a51eb8) renovate[bot])  
+### Other changes
+
+
 ## v0.7.0 (2026-09-25)
 
  - feat(android): show steps per km in the Km splits view (#95) (#96) ([fb48232f724eb6c](https://github.com/tomasbjerre/wisp/commit/fb48232f724eb6c))
