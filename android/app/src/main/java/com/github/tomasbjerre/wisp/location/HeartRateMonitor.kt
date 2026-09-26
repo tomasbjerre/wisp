@@ -176,6 +176,15 @@ class HeartRateMonitor(
     private fun isGranted(p: String) = ContextCompat.checkSelfPermission(context, p) == GRANTED
 
     companion object {
+        /**
+         * Whether this phone can talk to a monitor right now: it has Bluetooth Low Energy and
+         * it's turned on — see specs/heart-rate.md#setting. Says nothing about whether a
+         * monitor is actually in range.
+         */
+        fun isAvailable(context: Context): Boolean =
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE) &&
+                context.getSystemService(BluetoothManager::class.java)?.adapter?.isEnabled == true
+
         val HEART_RATE_SERVICE: UUID = UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb")
         val HEART_RATE_MEASUREMENT: UUID = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb")
         private val CLIENT_CONFIG: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")

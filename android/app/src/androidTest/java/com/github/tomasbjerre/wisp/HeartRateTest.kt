@@ -1,13 +1,10 @@
 package com.github.tomasbjerre.wisp
 
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsOff
-import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -18,8 +15,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Verifies specs/heart-rate.md#setting and #display: the Home switch is off by default,
- * and a session with heart rate shows its maximum on Detail. Connecting to an actual
+ * Verifies specs/heart-rate.md#setting and #display: the switch isn't on Home (it lives on
+ * Tracking, which needs a GPS fix to get past locating), and a session with heart rate shows its maximum on Detail. Connecting to an actual
  * monitor needs hardware — [com.github.tomasbjerre.wisp.location.HeartRateMeasurementTest]
  * and HeartRateRecorderTest cover what it feeds.
  */
@@ -29,10 +26,9 @@ class HeartRateTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun homeOffersTheHeartRateSwitchOffByDefault() {
+    fun homeDoesNotOfferTheHeartRateSwitch() {
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Heart rate monitor").assertIsDisplayed()
-        composeRule.onNode(isToggleable()).assertIsOff()
+        composeRule.onAllNodesWithTag(TestTags.HEART_RATE_SWITCH).assertCountEquals(0)
     }
 
     @Test

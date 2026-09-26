@@ -27,8 +27,6 @@ The app's entry point.
   removed without opening it first.
 - An empty state ("No activities yet — tap Start to record your first
   route.") when there is no history.
-- A **Heart rate monitor** switch, off by default, below the unit
-  setting (see [Heart rate](heart-rate.md#setting)).
 - An **Export CSV** action (see [Export](export.md)), disabled or hidden
   when there's no history yet.
 - If there's an interrupted session recovered on launch (see
@@ -81,6 +79,10 @@ screen while recording.
   my best one" is what's actually useful mid-run.
   Also the current and maximum heart rate when the heart rate monitor
   setting is on (see [Heart rate](heart-rate.md#display)).
+- A **Heart rate monitor** switch, off by default, in the stats panel
+  above the controls, visible while waiting for movement as well as while
+  recording; disabled when no monitor is available (see
+  [Heart rate](heart-rate.md#setting)).
 - A **Pause**/**Continue** control (labeled Continue while paused) and a
   **Stop** control, both visible together at all times once recording has
   actually started — recording or paused, it's always exactly these two
