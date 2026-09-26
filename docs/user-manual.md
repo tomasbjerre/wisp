@@ -36,6 +36,8 @@ This is what you see when you open Wisp. It has:
   looks for a monitor when a recording starts moving, and keeps looking if
   the connection drops. With no monitor in range, recording works as
   usual — that activity just has no heart rate.
+
+  <img src="screenshots/home-heart-rate.jpg" alt="Home screen with the Heart rate monitor switch" width="300">
 - **Your history** — every past activity, most recent first, each row
   showing its date, nearest city (when known), distance, duration, and
   average speed. Tap a row to open that activity's [Detail](#detail)
@@ -159,6 +161,8 @@ just-finished:
   (when a heart rate was recorded), and (once
   you've completed at least one kilometer) your average time per
   kilometer, plus your fastest one once you've completed a second.
+  <img src="screenshots/detail-heart-rate.jpg" alt="Detail screen showing max heart rate" width="300">
+
 - **Km splits (N)** — opens the [Km splits](#km-splits) view, N being
   the number of complete kilometers. Shown only once you've covered at
   least 1 km.
