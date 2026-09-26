@@ -1,7 +1,10 @@
 package com.github.tomasbjerre.wisp.ui.home
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -42,10 +46,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.github.tomasbjerre.wisp.data.HeartRatePreferences
 import com.github.tomasbjerre.wisp.data.Session
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.TrackPoint
@@ -55,6 +61,7 @@ import com.github.tomasbjerre.wisp.export.CsvExporter
 import com.github.tomasbjerre.wisp.export.CsvShareIntent
 import com.github.tomasbjerre.wisp.export.ExportFileNames
 import com.github.tomasbjerre.wisp.export.TrackPointCsvExporter
+import com.github.tomasbjerre.wisp.location.HeartRateMonitor
 import com.github.tomasbjerre.wisp.ui.Formatting
 import com.github.tomasbjerre.wisp.ui.TestTags
 import kotlinx.coroutines.launch
@@ -72,6 +79,7 @@ private const val USER_MANUAL_URL = "https://github.com/tomasbjerre/wisp/blob/ma
 fun HomeScreen(
     repository: SessionRepository,
     unitPreferences: UnitPreferences,
+    heartRatePreferences: HeartRatePreferences,
     onStart: () -> Unit,
     onOpenSession: (Long) -> Unit,
 ) {
@@ -79,6 +87,7 @@ fun HomeScreen(
         viewModel(factory = viewModelFactory { initializer { HomeViewModel(repository) } })
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val unit by unitPreferences.unit.collectAsStateWithLifecycle()
+    val heartRateEnabled by heartRatePreferences.enabled.collectAsStateWithLifecycle()
     var pendingDelete by remember { mutableStateOf<Session?>(null) }
     var showInfo by remember { mutableStateOf(false) }
 
@@ -102,6 +111,9 @@ fun HomeScreen(
                 onUnitChange = unitPreferences::setUnit,
                 modifier = Modifier.padding(top = 16.dp),
             )
+
+            // See specs/heart-rate.md#setting.
+            HeartRateSwitch(enabled = heartRateEnabled, onEnabledChange = heartRatePreferences::setEnabled)
 
             if (sessions.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -225,6 +237,42 @@ private fun UnitSystemToggle(
                 Text(if (option == UnitSystem.METRIC) "Metric" else "Imperial")
             }
         }
+    }
+}
+
+/**
+ * See specs/heart-rate.md#setting. Turning it on first asks for the Bluetooth access it
+ * needs (Android 12+ only — earlier versions have it at install time); declined leaves it off.
+ */
+@Composable
+private fun HeartRateSwitch(
+    enabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+) {
+    val context = LocalContext.current
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+            if (result.values.all { it }) onEnabledChange(true)
+        }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("Heart rate monitor", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+        Switch(
+            checked = enabled,
+            onCheckedChange = { wanted ->
+                val missing =
+                    if (wanted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        HeartRateMonitor.REQUIRED_PERMISSIONS_S.filter {
+                            ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+                        }
+                    } else {
+                        emptyList()
+                    }
+                if (missing.isEmpty()) onEnabledChange(wanted) else launcher.launch(missing.toTypedArray())
+            },
+        )
     }
 }
 

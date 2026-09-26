@@ -196,6 +196,10 @@ private fun SessionSummaryPanel(
             val stepsPerMinute = Formatting.stepsPerMinute(session.steps, session.durationSeconds)
             Text(stepsPerMinute, style = MaterialTheme.typography.bodyLarge)
         }
+        // See specs/heart-rate.md#display. Omitted entirely with no reading, like steps.
+        session?.maxHeartRateBpm?.let {
+            Text("Max heart rate: ${Formatting.heartRate(it)}", style = MaterialTheme.typography.bodyLarge)
+        }
         // See specs/tracking.md#km-splits. Omitted entirely with no complete km at all,
         // same reasoning as the steps line above.
         paceLine(kmSplitsSeconds, unit)?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }

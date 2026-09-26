@@ -33,7 +33,20 @@ internal val MIGRATION_3_4 =
         }
     }
 
-@Database(entities = [Session::class, TrackPoint::class], version = 4, exportSchema = false)
+/**
+ * Adds Session.maxHeartRateBpm and TrackPoint.heartRateBpm (see specs/heart-rate.md).
+ * Both nullable with no default, so existing sessions and points simply have no heart
+ * rate — the same as a session recorded with the setting off.
+ */
+internal val MIGRATION_4_5 =
+    object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE sessions ADD COLUMN maxHeartRateBpm INTEGER")
+            db.execSQL("ALTER TABLE track_points ADD COLUMN heartRateBpm INTEGER")
+        }
+    }
+
+@Database(entities = [Session::class, TrackPoint::class], version = 5, exportSchema = false)
 abstract class WispDatabase : RoomDatabase() {
     abstract fun sessionDao(): SessionDao
 
@@ -43,7 +56,7 @@ abstract class WispDatabase : RoomDatabase() {
         fun build(context: Context): WispDatabase =
             Room
                 .databaseBuilder(context.applicationContext, WispDatabase::class.java, "wisp.db")
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 // Safety net only, not the primary path — see
                 // specs/data-model.md#data-integrity-on-start. Every schema change that has
                 // actually shipped to real users has an explicit Migration above; this only

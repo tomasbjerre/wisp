@@ -60,6 +60,93 @@ class SessionRepositoryTest {
         }
 
     @Test
+    fun `each point keeps the heart rate it was recorded with, or none`() =
+        runTest {
+            // See specs/data-model.md#trackpoint and specs/heart-rate.md#recording.
+            val sessionId = repository.startSession(startedAt = 1_000)
+            repository.appendPoint(sessionId, 0, 1_000, 59.0, 18.0, 5f, null, segmentStart = true)
+            repository.appendPoint(
+                sessionId,
+                1,
+                2_000,
+                59.001,
+                18.0,
+                5f,
+                null,
+                segmentStart = false,
+                heartRateBpm = 142,
+            )
+
+            assertThat(repository.getPoints(sessionId).map { it.heartRateBpm }).containsExactly(null, 142)
+        }
+
+    @Test
+    fun `finishing a session persists the live maximum heart rate`() =
+        runTest {
+            val sessionId = repository.startSession(startedAt = 1_000)
+            repository.appendPoint(
+                sessionId,
+                0,
+                1_000,
+                59.0,
+                18.0,
+                5f,
+                null,
+                segmentStart = true,
+                heartRateBpm = 120,
+            )
+
+            repository.finishSession(sessionId, endedAt = 2_000, maxHeartRateBpm = 171)
+
+            assertThat(repository.observeSession(sessionId).first()!!.maxHeartRateBpm).isEqualTo(171)
+        }
+
+    @Test
+    fun `a session finished without a live maximum takes it from its points`() =
+        runTest {
+            // Recovery after an interruption — see specs/heart-rate.md#recording.
+            val sessionId = repository.startSession(startedAt = 1_000)
+            repository.appendPoint(
+                sessionId,
+                0,
+                1_000,
+                59.0,
+                18.0,
+                5f,
+                null,
+                segmentStart = true,
+                heartRateBpm = 120,
+            )
+            repository.appendPoint(
+                sessionId,
+                1,
+                2_000,
+                59.001,
+                18.0,
+                5f,
+                null,
+                segmentStart = false,
+                heartRateBpm = 160,
+            )
+            repository.appendPoint(sessionId, 2, 3_000, 59.002, 18.0, 5f, null, segmentStart = false)
+
+            repository.finishSession(sessionId, endedAt = 3_000)
+
+            assertThat(repository.observeSession(sessionId).first()!!.maxHeartRateBpm).isEqualTo(160)
+        }
+
+    @Test
+    fun `a session with no heart rate at all has no maximum`() =
+        runTest {
+            val sessionId = repository.startSession(startedAt = 1_000)
+            repository.appendPoint(sessionId, 0, 1_000, 59.0, 18.0, 5f, null, segmentStart = true)
+
+            repository.finishSession(sessionId, endedAt = 2_000)
+
+            assertThat(repository.observeSession(sessionId).first()!!.maxHeartRateBpm).isNull()
+        }
+
+    @Test
     fun `sessions are listed most recent first`() =
         runTest {
             val older = repository.startSession(startedAt = 1_000)

@@ -31,3 +31,4 @@ source of truth for behavior.
 - [Voice feedback](voice-feedback.md) — optional spoken announcements
   during a live recording
 - [Units](units.md) — the metric/imperial display setting
+- [Heart rate](heart-rate.md) — optional recording from a BLE heart rate monitor

@@ -18,6 +18,7 @@ class MainActivity : ComponentActivity() {
                     repository = app.repository,
                     voiceFeedbackPreferences = app.voiceFeedbackPreferences,
                     unitPreferences = app.unitPreferences,
+                    heartRatePreferences = app.heartRatePreferences,
                 )
             }
         }

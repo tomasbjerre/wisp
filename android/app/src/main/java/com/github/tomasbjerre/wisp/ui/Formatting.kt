@@ -49,6 +49,9 @@ object Formatting {
         return "%.0f steps/min".format(perMinute)
     }
 
+    /** See specs/heart-rate.md#display. */
+    fun heartRate(bpm: Int): String = "$bpm bpm"
+
     fun duration(seconds: Long): String {
         val h = seconds / 3600
         val m = (seconds % 3600) / 60

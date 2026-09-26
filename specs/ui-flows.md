@@ -27,6 +27,8 @@ The app's entry point.
   removed without opening it first.
 - An empty state ("No activities yet — tap Start to record your first
   route.") when there is no history.
+- A **Heart rate monitor** switch, off by default, below the unit
+  setting (see [Heart rate](heart-rate.md#setting)).
 - An **Export CSV** action (see [Export](export.md)), disabled or hidden
   when there's no history yet.
 - If there's an interrupted session recovered on launch (see
@@ -77,6 +79,8 @@ screen while recording.
   and fastest splits are shown, not the full list — there's no room for
   a growing list on this screen, and "how was that last km, and is it
   my best one" is what's actually useful mid-run.
+  Also the current and maximum heart rate when the heart rate monitor
+  setting is on (see [Heart rate](heart-rate.md#display)).
 - A **Pause**/**Continue** control (labeled Continue while paused) and a
   **Stop** control, both visible together at all times once recording has
   actually started — recording or paused, it's always exactly these two
@@ -126,7 +130,8 @@ full contract.
   has no step count), and average time per kilometer plus the fastest
   one's own time (see [Tracking](tracking.md#km-splits) — average
   omitted with no complete km at all, fastest omitted with fewer than
-  two).
+  two), and max heart rate (see [Heart rate](heart-rate.md#display) —
+  omitted when the session has none).
 - Below the summary stats, a **Km splits (N)** link — N being the number
   of complete kilometers — opening the [Km splits](#4-km-splits) view.
   The splits themselves aren't listed here: this panel shares the screen

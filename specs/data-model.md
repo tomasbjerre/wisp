@@ -19,6 +19,7 @@ One recorded activity.
 | `maxSpeedMps` | number | highest recorded current-speed sample |
 | `nearestCity` | text, nullable | name of the city/place nearest the session's start point; null until resolved, or if it couldn't be resolved (see [Permissions & Privacy](permissions-and-privacy.md#data-handling)) |
 | `steps` | integer | total steps counted during the session, excluding paused time (see [Tracking](tracking.md#step-count)); 0 if no step sensor/permission was available, or the session was recovered after an interruption |
+| `maxHeartRateBpm` | integer, nullable | highest heart rate reading during the session, excluding paused time (see [Heart rate](heart-rate.md#recording)); null if no reading was ever received |
 
 `distanceMeters`, `durationSeconds`, `averageSpeedMps`, and `maxSpeedMps`
 are derived from the session's points but should be stored (not
@@ -47,6 +48,7 @@ One accepted GPS fix belonging to a session.
 | `speedMps` | number, nullable | instantaneous speed at this point, if the platform provided one |
 | `segmentStart` | boolean | true if this is the first point of a session, or the first point after a resume |
 | `steps` | integer | the session's step count so far when this point was recorded (see [Tracking](tracking.md#step-count)) — a running total, so the steps between any two points are the difference between theirs; 0 on every point if no step sensor/permission was available, or the point predates this field |
+| `heartRateBpm` | integer, nullable | the current heart rate when this point was recorded (see [Heart rate](heart-rate.md#recording)); null if there was none, or the point predates this field |
 
 Points recorded while a session is paused are never created — see
 [Tracking](tracking.md). `segmentStart` marks where a pause broke the track,
@@ -69,6 +71,15 @@ migrations to worry about beyond "missing means the fixed default below".
 | `announceSpeed` | boolean | `true` |
 | `announceSteps` | boolean | `true` |
 | `announceElapsedTime` | boolean | `true` |
+
+## Heart rate setting
+
+See [Heart rate](heart-rate.md#setting). Stored like the voice feedback
+settings above: a single flag, no identifier, no relations.
+
+| Field | Type | Default |
+|---|---|---|
+| `enabled` | boolean | `false` |
 
 ## Required queries
 

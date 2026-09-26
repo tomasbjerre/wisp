@@ -19,6 +19,8 @@ class SessionRepository(
 
     suspend fun startSession(startedAt: Long): Long = sessionDao.insert(Session(startedAt = startedAt))
 
+    // One column per recorded field, mirroring TrackPoint itself.
+    @Suppress("LongParameterList")
     suspend fun appendPoint(
         sessionId: Long,
         sequence: Int,
@@ -29,6 +31,7 @@ class SessionRepository(
         speedMps: Float?,
         segmentStart: Boolean,
         steps: Long = 0,
+        heartRateBpm: Int? = null,
     ) {
         trackPointDao.insert(
             TrackPoint(
@@ -41,6 +44,7 @@ class SessionRepository(
                 speedMps = speedMps,
                 segmentStart = segmentStart,
                 steps = steps,
+                heartRateBpm = heartRateBpm,
             ),
         )
     }
@@ -48,15 +52,18 @@ class SessionRepository(
     /**
      * Recomputes and persists aggregate stats, then marks the session finished. [steps]
      * defaults to 0 — recovery (below) has no live sensor to read it from, see
-     * specs/tracking.md#step-count.
+     * specs/tracking.md#step-count. [maxHeartRateBpm] defaults to the highest heart rate
+     * among the session's own points for the same reason — see specs/heart-rate.md#recording.
      */
     suspend fun finishSession(
         sessionId: Long,
         endedAt: Long,
         steps: Long = 0,
+        maxHeartRateBpm: Int? = null,
     ) {
         val session = sessionDao.getById(sessionId) ?: return
-        val summary = GeoUtils.summarize(trackPointDao.getForSession(sessionId))
+        val points = trackPointDao.getForSession(sessionId)
+        val summary = GeoUtils.summarize(points)
         sessionDao.update(
             session.copy(
                 endedAt = endedAt,
@@ -65,6 +72,7 @@ class SessionRepository(
                 averageSpeedMps = summary.averageSpeedMps,
                 maxSpeedMps = summary.maxSpeedMps,
                 steps = steps,
+                maxHeartRateBpm = maxHeartRateBpm ?: points.mapNotNull { it.heartRateBpm }.maxOrNull(),
             ),
         )
     }

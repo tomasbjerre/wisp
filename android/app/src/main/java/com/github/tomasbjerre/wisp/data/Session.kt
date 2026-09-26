@@ -18,4 +18,6 @@ data class Session(
     val maxSpeedMps: Double = 0.0,
     val nearestCity: String? = null,
     val steps: Long = 0,
+    /** See specs/heart-rate.md#recording. Null when no heart rate reading was ever received. */
+    val maxHeartRateBpm: Int? = null,
 )

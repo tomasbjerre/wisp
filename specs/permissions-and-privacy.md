@@ -30,6 +30,12 @@
   simply 0 (see [Tracking](tracking.md#step-count)) — no explanation, no
   retry prompt, nothing blocking.
 
+- **Bluetooth** (nearby devices scan and connect, on versions of Android
+  that require them), to find and read a BLE heart rate monitor. Requested
+  only when the user turns on the Heart rate monitor setting (see
+  [Heart rate](heart-rate.md#setting)) — never at first launch. If
+  declined, the setting stays off and nothing else is affected.
+
 ## Denied or restricted permission
 
 - If location permission is denied, the Tracking screen must say so

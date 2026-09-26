@@ -73,7 +73,10 @@ class WispDatabaseMigrationTest {
     fun `MIGRATION_3_4 preserves existing points and adds steps defaulting to zero`() =
         runTest {
             val legacyDb = Room.databaseBuilder(context, LegacyDatabaseV3::class.java, DB_NAME).build()
-            val sessionId = legacyDb.dao().insertSession(Session(startedAt = 1_000, endedAt = 2_000, steps = 1_234))
+            val sessionId =
+                legacyDb.dao().insertSession(
+                    LegacySessionV3(startedAt = 1_000, endedAt = 2_000, steps = 1_234),
+                )
             legacyDb.dao().insertPoint(
                 LegacyTrackPointV3(
                     sessionId = sessionId,
@@ -102,6 +105,42 @@ class WispDatabaseMigrationTest {
             assertThat(point.speedMps).isEqualTo(2.5f)
             assertThat(point.segmentStart).isTrue()
             assertThat(point.steps).isZero()
+        }
+
+    @Test
+    fun `MIGRATION_4_5 preserves sessions and points and adds heart rate defaulting to none`() =
+        runTest {
+            val legacyDb = Room.databaseBuilder(context, LegacyDatabaseV4::class.java, DB_NAME).build()
+            val sessionId =
+                legacyDb.dao().insertSession(
+                    LegacySessionV3(startedAt = 1_000, endedAt = 2_000, steps = 99),
+                )
+            legacyDb.dao().insertPoint(
+                LegacyTrackPointV4(
+                    sessionId = sessionId,
+                    sequence = 0,
+                    timestamp = 1_000,
+                    latitude = 59.3293,
+                    longitude = 18.0686,
+                    accuracyMeters = 5f,
+                    speedMps = 2.5f,
+                    segmentStart = true,
+                    steps = 42,
+                ),
+            )
+            legacyDb.close()
+
+            val database = WispDatabase.build(context)
+            val session = database.sessionDao().getById(sessionId)
+            val points = database.trackPointDao().getForSession(sessionId)
+            database.close()
+
+            assertThat(session!!.steps).isEqualTo(99L)
+            assertThat(session.maxHeartRateBpm).isNull()
+            val point = points.single()
+            assertThat(point.steps).isEqualTo(42L)
+            assertThat(point.latitude).isEqualTo(59.3293)
+            assertThat(point.heartRateBpm).isNull()
         }
 
     private companion object {
@@ -161,13 +200,26 @@ internal abstract class LegacyDatabaseV2 : RoomDatabase() {
     abstract fun sessionDao(): LegacySessionV2Dao
 }
 
-// TrackPoint as it was at schema version 3 (before steps). Session is unchanged since
-// version 3, so the real entity stands in for it.
+// Session as it was at schema versions 3 and 4 (with steps, before heart rate).
+@Entity(tableName = "sessions")
+internal data class LegacySessionV3(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val startedAt: Long,
+    val endedAt: Long? = null,
+    val distanceMeters: Double = 0.0,
+    val durationSeconds: Long = 0,
+    val averageSpeedMps: Double = 0.0,
+    val maxSpeedMps: Double = 0.0,
+    val nearestCity: String? = null,
+    val steps: Long = 0,
+)
+
+// TrackPoint as it was at schema version 3 (before steps).
 @Entity(
     tableName = "track_points",
     foreignKeys = [
         ForeignKey(
-            entity = Session::class,
+            entity = LegacySessionV3::class,
             parentColumns = ["id"],
             childColumns = ["sessionId"],
             onDelete = ForeignKey.CASCADE,
@@ -190,14 +242,55 @@ internal data class LegacyTrackPointV3(
 @Dao
 internal interface LegacyV3Dao {
     @Insert
-    suspend fun insertSession(session: Session): Long
+    suspend fun insertSession(session: LegacySessionV3): Long
 
     @Insert
     suspend fun insertPoint(point: LegacyTrackPointV3): Long
 }
 
 // Mirrors WispDatabase exactly as it was at schema version 3.
-@Database(entities = [Session::class, LegacyTrackPointV3::class], version = 3, exportSchema = false)
+@Database(entities = [LegacySessionV3::class, LegacyTrackPointV3::class], version = 3, exportSchema = false)
 internal abstract class LegacyDatabaseV3 : RoomDatabase() {
     abstract fun dao(): LegacyV3Dao
+}
+
+// TrackPoint as it was at schema version 4 (with steps, before heart rate).
+@Entity(
+    tableName = "track_points",
+    foreignKeys = [
+        ForeignKey(
+            entity = LegacySessionV3::class,
+            parentColumns = ["id"],
+            childColumns = ["sessionId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sessionId")],
+)
+internal data class LegacyTrackPointV4(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val sessionId: Long,
+    val sequence: Int,
+    val timestamp: Long,
+    val latitude: Double,
+    val longitude: Double,
+    val accuracyMeters: Float,
+    val speedMps: Float?,
+    val segmentStart: Boolean,
+    val steps: Long = 0,
+)
+
+@Dao
+internal interface LegacyV4Dao {
+    @Insert
+    suspend fun insertSession(session: LegacySessionV3): Long
+
+    @Insert
+    suspend fun insertPoint(point: LegacyTrackPointV4): Long
+}
+
+// Mirrors WispDatabase exactly as it was at schema version 4.
+@Database(entities = [LegacySessionV3::class, LegacyTrackPointV4::class], version = 4, exportSchema = false)
+internal abstract class LegacyDatabaseV4 : RoomDatabase() {
+    abstract fun dao(): LegacyV4Dao
 }

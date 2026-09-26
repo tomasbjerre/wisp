@@ -22,6 +22,11 @@ which is the source of truth for Wisp's data-handling behavior.
   decline the permission it needs on versions of Android that require
   one — either way, recording still works, that session just has no step
   count.
+- **Heart rate**, only if you turn on the Heart rate monitor setting, from
+  a Bluetooth heart rate monitor you own, only while a recording is
+  active. This needs Bluetooth access, which Wisp asks for only when you
+  turn the setting on. Without a monitor or the permission, recording
+  still works, that session just has no heart rate.
 
 ## Where your data goes
 
