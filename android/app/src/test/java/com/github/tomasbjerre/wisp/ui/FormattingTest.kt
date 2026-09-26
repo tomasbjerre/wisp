@@ -39,8 +39,8 @@ class FormattingTest {
 
     @Test
     fun `pace appends the unit's own abbreviation`() {
-        assertThat(Formatting.pace(337, UnitSystem.METRIC)).isEqualTo("5:37/km")
-        assertThat(Formatting.pace(337, UnitSystem.IMPERIAL)).isEqualTo("5:37/mi")
+        assertThat(Formatting.pace(337, UnitSystem.METRIC)).isEqualTo("5:37 min/km")
+        assertThat(Formatting.pace(337, UnitSystem.IMPERIAL)).isEqualTo("5:37 min/mi")
     }
 
     @Test
