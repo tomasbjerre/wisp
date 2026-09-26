@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import com.github.tomasbjerre.wisp.data.Session
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.ui.Formatting
 import org.osmdroid.views.MapView
 
@@ -26,10 +27,11 @@ object ActivityImageExporter {
     fun compose(
         mapView: MapView,
         session: Session,
+        unit: UnitSystem,
     ): Bitmap {
         val density = mapView.resources.displayMetrics.density
         val mapBitmap = captureMap(mapView)
-        val panelBitmap = statsPanel(mapBitmap.width, density, session)
+        val panelBitmap = statsPanel(mapBitmap.width, density, session, unit)
 
         val result =
             Bitmap.createBitmap(mapBitmap.width, mapBitmap.height + panelBitmap.height, Bitmap.Config.ARGB_8888)
@@ -50,6 +52,7 @@ object ActivityImageExporter {
         width: Int,
         density: Float,
         session: Session,
+        unit: UnitSystem,
     ): Bitmap {
         val padding = PANEL_PADDING_DP * density
         val lineSpacing = LINE_SPACING_DP * density
@@ -58,9 +61,10 @@ object ActivityImageExporter {
 
         val dateLine = Formatting.dateTime(session.startedAt)
         val statsLine =
-            "${Formatting.distance(session.distanceMeters)} · ${Formatting.duration(session.durationSeconds)}"
+            "${Formatting.distance(session.distanceMeters, unit)} · ${Formatting.duration(session.durationSeconds)}"
         val speedLine =
-            "Avg ${Formatting.speedKmh(session.averageSpeedMps)} · Max ${Formatting.speedKmh(session.maxSpeedMps)}"
+            "Avg ${Formatting.speed(session.averageSpeedMps, unit)} · " +
+                "Max ${Formatting.speed(session.maxSpeedMps, unit)}"
 
         val height = (padding * 2 + titlePaint.textSize + lineSpacing * 2 + bodyPaint.textSize * 2).toInt()
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)

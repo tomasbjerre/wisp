@@ -31,29 +31,37 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.tomasbjerre.wisp.data.SessionRepository
+import com.github.tomasbjerre.wisp.data.UnitPreferences
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.ui.Formatting
 
-/** See specs/ui-flows.md#4-km-splits. */
+/** See specs/ui-flows.md#4-km-splits. Titled "Mile splits" under imperial — see specs/units.md. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KmSplitsScreen(
     repository: SessionRepository,
     sessionId: Long,
+    unitPreferences: UnitPreferences,
     onBack: () -> Unit,
 ) {
+    val unit by unitPreferences.unit.collectAsStateWithLifecycle()
     val viewModel: KmSplitsViewModel =
-        viewModel(factory = viewModelFactory { initializer { KmSplitsViewModel(repository, sessionId) } })
+        viewModel(
+            factory = viewModelFactory { initializer { KmSplitsViewModel(repository, sessionId, unit) } },
+        )
     val splits by viewModel.splits.collectAsStateWithLifecycle()
-    val rows = KmSplitRows.rows(splits)
+    val rows = KmSplitRows.rows(splits, unit)
     val extremes = KmSplitRows.extremes(splits)
     // See specs/ui-flows.md#4-km-splits: the whole column goes when there are no steps
     // per split, rather than a column of blanks or zeros.
     val showSteps = rows.any { it.steps != null }
+    val unitWord = unit.distanceAbbreviation
+    val unitColumnLabel = if (unit == UnitSystem.METRIC) "Km" else "Mi"
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Km splits") },
+                title = { Text(if (unit == UnitSystem.METRIC) "Km splits" else "Mile splits") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -65,17 +73,17 @@ fun KmSplitsScreen(
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)) {
             if (extremes != null) {
                 Text(
-                    "Fastest: km ${extremes.fastestKm} · ${Formatting.duration(extremes.fastestSeconds)}",
+                    "Fastest: $unitWord ${extremes.fastestKm} · ${Formatting.duration(extremes.fastestSeconds)}",
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
-                    "Slowest: km ${extremes.slowestKm} · ${Formatting.duration(extremes.slowestSeconds)}",
+                    "Slowest: $unitWord ${extremes.slowestKm} · ${Formatting.duration(extremes.slowestSeconds)}",
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(bottom = 16.dp),
                 )
             }
             SplitRowLayout(
-                km = { Text("Km", fontWeight = FontWeight.Bold) },
+                km = { Text(unitColumnLabel, fontWeight = FontWeight.Bold) },
                 time = { Text("Time", fontWeight = FontWeight.Bold, textAlign = TextAlign.End) },
                 speed = { Text("Speed", fontWeight = FontWeight.Bold, textAlign = TextAlign.End) },
                 steps =
@@ -87,7 +95,7 @@ fun KmSplitsScreen(
             )
             HorizontalDivider()
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(rows) { row -> SplitRow(row, showSteps) }
+                items(rows) { row -> SplitRow(row, showSteps, unit) }
             }
         }
     }
@@ -97,6 +105,7 @@ fun KmSplitsScreen(
 private fun SplitRow(
     row: KmSplitRow,
     showSteps: Boolean,
+    unit: UnitSystem,
 ) {
     // The partial km is set apart in a dimmer color: it's a shorter distance than
     // every other row, so its time isn't directly comparable to theirs (its speed is).
@@ -104,7 +113,7 @@ private fun SplitRow(
     SplitRowLayout(
         km = { Text(row.label, color = color) },
         time = { Text(Formatting.duration(row.durationSeconds), color = color, textAlign = TextAlign.End) },
-        speed = { Text(Formatting.speedKmh(row.speedMps), color = color, textAlign = TextAlign.End) },
+        speed = { Text(Formatting.speed(row.speedMps, unit), color = color, textAlign = TextAlign.End) },
         steps =
             if (showSteps) {
                 { Text(row.steps?.toString() ?: "", color = color, textAlign = TextAlign.End) }

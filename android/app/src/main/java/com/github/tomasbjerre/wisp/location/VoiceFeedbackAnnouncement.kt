@@ -1,5 +1,6 @@
 package com.github.tomasbjerre.wisp.location
 
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackSettings
 import com.github.tomasbjerre.wisp.util.GeoUtils
 
@@ -21,34 +22,43 @@ object VoiceFeedbackAnnouncement {
         previousCompleteCount: Int,
         elapsedSeconds: Long,
         settings: VoiceFeedbackSettings,
+        unit: UnitSystem,
     ): String? {
         if (!settings.enabled) return null
         val completeCount = splits.completeSeconds.size
         if (completeCount <= previousCompleteCount) return null
         val index = completeCount - 1
         return phrase(
-            km = completeCount,
-            lastKmDurationSeconds = splits.completeSeconds[index],
-            lastKmSteps = splits.completeSteps?.getOrNull(index),
+            splitNumber = completeCount,
+            lastSplitDurationSeconds = splits.completeSeconds[index],
+            lastSplitSteps = splits.completeSteps?.getOrNull(index),
             elapsedSeconds = elapsedSeconds,
             settings = settings,
+            unit = unit,
         ).ifBlank { null }
     }
 
     private fun phrase(
-        km: Int,
-        lastKmDurationSeconds: Long,
-        lastKmSteps: Long?,
+        splitNumber: Int,
+        lastSplitDurationSeconds: Long,
+        lastSplitSteps: Long?,
         elapsedSeconds: Long,
         settings: VoiceFeedbackSettings,
+        unit: UnitSystem,
     ): String {
         val parts = mutableListOf<String>()
-        if (settings.announceKm) parts += if (km == 1) "1 kilometer" else "$km kilometers"
-        if (settings.announceSpeed && lastKmDurationSeconds > 0) {
-            val kmh = SECONDS_PER_HOUR / lastKmDurationSeconds
-            parts += "%.1f kilometers per hour".format(kmh)
+        if (settings.announceKm) {
+            parts +=
+                if (splitNumber == 1) "1 ${unit.distanceWordSingular}" else "$splitNumber ${unit.distanceWordPlural}"
         }
-        if (settings.announceSteps && lastKmSteps != null) parts += "$lastKmSteps steps"
+        if (settings.announceSpeed && lastSplitDurationSeconds > 0) {
+            // See specs/units.md: a split already covers whichever unit's own distance
+            // (a mile under imperial, not a km converted to one), so seconds-per-hour
+            // over it is already units-per-hour in the right unit — no conversion needed.
+            val perHour = SECONDS_PER_HOUR / lastSplitDurationSeconds
+            parts += "%.1f ${unit.speedWords}".format(perHour)
+        }
+        if (settings.announceSteps && lastSplitSteps != null) parts += "$lastSplitSteps steps"
         if (settings.announceElapsedTime) parts += elapsedTimePhrase(elapsedSeconds)
         return parts.joinToString(". ")
     }

@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 class TrackingService : LifecycleService() {
     private val repository by lazy { (application as WispApplication).repository }
     private val voiceFeedbackPreferences by lazy { (application as WispApplication).voiceFeedbackPreferences }
+    private val unitPreferences by lazy { (application as WispApplication).unitPreferences }
     private val locationTracker by lazy { LocationTracker(this) }
     private val geocodingService by lazy { GeocodingService(this) }
     private val stepCounterTracker by lazy { StepCounterTracker(this) }
@@ -229,7 +230,7 @@ class TrackingService : LifecycleService() {
             )
             val points = repository.getPoints(id)
             val summary = GeoUtils.summarize(points)
-            val splits = GeoUtils.kmSplits(points)
+            val splits = GeoUtils.kmSplits(points, unitPreferences.unit.value)
             _state.update {
                 it.copy(
                     distanceMeters = summary.distanceMeters,
@@ -254,6 +255,7 @@ class TrackingService : LifecycleService() {
                 previousCompleteCount = announcedCompleteKmCount,
                 elapsedSeconds = _state.value.elapsedSeconds,
                 settings = voiceFeedbackPreferences.settings.value,
+                unit = unitPreferences.unit.value,
             )
         announcedCompleteKmCount = splits.completeSeconds.size
         if (text != null) voiceFeedbackSpeaker?.speak(text)

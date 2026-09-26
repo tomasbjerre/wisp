@@ -1,5 +1,6 @@
 package com.github.tomasbjerre.wisp.ui.splits
 
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.util.GeoUtils
 import kotlin.math.roundToLong
 
@@ -23,15 +24,17 @@ data class KmSplitExtremes(
 )
 
 object KmSplitRows {
-    private const val METERS_PER_KM = 1_000.0
-
-    fun rows(splits: GeoUtils.KmSplits): List<KmSplitRow> {
+    fun rows(
+        splits: GeoUtils.KmSplits,
+        unit: UnitSystem,
+    ): List<KmSplitRow> {
+        val splitDistanceMeters = unit.splitDistanceMeters
         val complete =
             splits.completeSeconds.mapIndexed { index, seconds ->
                 KmSplitRow(
                     label = "${index + 1}",
                     durationSeconds = seconds,
-                    speedMps = speedMps(METERS_PER_KM, seconds),
+                    speedMps = speedMps(splitDistanceMeters, seconds),
                     steps = splits.completeSteps?.getOrNull(index),
                     isPartial = false,
                 )
@@ -39,7 +42,7 @@ object KmSplitRows {
         val partial =
             splits.partial?.let {
                 KmSplitRow(
-                    label = "+%.2f".format(it.distanceMeters / METERS_PER_KM),
+                    label = "+%.2f".format(it.distanceMeters / splitDistanceMeters),
                     durationSeconds = it.durationSeconds,
                     speedMps = speedMps(it.distanceMeters, it.durationSeconds),
                     steps = it.steps,

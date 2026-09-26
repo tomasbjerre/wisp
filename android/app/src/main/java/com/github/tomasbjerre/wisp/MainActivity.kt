@@ -14,7 +14,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             WispTheme {
                 val app = application as WispApplication
-                WispApp(repository = app.repository, voiceFeedbackPreferences = app.voiceFeedbackPreferences)
+                WispApp(
+                    repository = app.repository,
+                    voiceFeedbackPreferences = app.voiceFeedbackPreferences,
+                    unitPreferences = app.unitPreferences,
+                )
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.github.tomasbjerre.wisp.util
 
 import com.github.tomasbjerre.wisp.data.TrackPoint
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
@@ -111,7 +112,7 @@ class GeoUtilsTest {
                 pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
                 pointAtDistance(seq = 1, t = 200_000, distanceMeters = 500.0, segmentStart = false),
             )
-        assertThat(GeoUtils.kmSplitsSeconds(points)).isEmpty()
+        assertThat(GeoUtils.kmSplitsSeconds(points, UnitSystem.METRIC)).isEmpty()
     }
 
     @Test
@@ -124,7 +125,26 @@ class GeoUtilsTest {
                 pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
                 pointAtDistance(seq = 1, t = 751_250, distanceMeters = 2_500.0, segmentStart = false),
             )
-        assertThat(GeoUtils.kmSplitsSeconds(points)).containsExactly(300L, 300L)
+        assertThat(GeoUtils.kmSplitsSeconds(points, UnitSystem.METRIC)).containsExactly(300L, 300L)
+    }
+
+    @Test
+    fun `imperial splits into equal per-mile durations, not per-km`() {
+        // See specs/units.md: a split boundary itself moves to 1_609.34m under
+        // imperial — not the same km-length splits merely relabeled. 200.5s/mile
+        // pace (not an exact 200s, same margin-past-the-boundary reasoning as the
+        // metric test above), 2 miles total: two full mile splits, nothing left over.
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
+                pointAtDistance(
+                    seq = 1,
+                    t = 401_000,
+                    distanceMeters = 2 * UnitSystem.METERS_PER_MILE,
+                    segmentStart = false,
+                ),
+            )
+        assertThat(GeoUtils.kmSplitsSeconds(points, UnitSystem.IMPERIAL)).containsExactly(200L, 200L)
     }
 
     @Test
@@ -139,7 +159,7 @@ class GeoUtilsTest {
                 pointAtDistance(seq = 2, t = 3_900_500, distanceMeters = 1_000.0, segmentStart = true),
                 pointAtDistance(seq = 3, t = 4_201_000, distanceMeters = 2_000.0, segmentStart = false),
             )
-        assertThat(GeoUtils.kmSplitsSeconds(points)).containsExactly(300L, 300L)
+        assertThat(GeoUtils.kmSplitsSeconds(points, UnitSystem.METRIC)).containsExactly(300L, 300L)
     }
 
     @Test
@@ -150,7 +170,7 @@ class GeoUtilsTest {
                 pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
                 pointAtDistance(seq = 1, t = 751_250, distanceMeters = 2_500.0, segmentStart = false),
             )
-        val partial = GeoUtils.kmSplits(points).partial
+        val partial = GeoUtils.kmSplits(points, UnitSystem.METRIC).partial
 
         assertThat(partial).isNotNull
         assertThat(partial!!.distanceMeters).isCloseTo(500.0, within(0.01))
@@ -164,7 +184,7 @@ class GeoUtilsTest {
                 pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
                 pointAtDistance(seq = 1, t = 200_000, distanceMeters = 500.0, segmentStart = false),
             )
-        val splits = GeoUtils.kmSplits(points)
+        val splits = GeoUtils.kmSplits(points, UnitSystem.METRIC)
 
         assertThat(splits.completeSeconds).isEmpty()
         assertThat(splits.partial!!.distanceMeters).isCloseTo(500.0, within(0.01))
@@ -178,7 +198,7 @@ class GeoUtilsTest {
                 pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
                 pointAtDistance(seq = 1, t = 301_000, distanceMeters = 1_005.0, segmentStart = false),
             )
-        val splits = GeoUtils.kmSplits(points)
+        val splits = GeoUtils.kmSplits(points, UnitSystem.METRIC)
 
         assertThat(splits.completeSeconds).hasSize(1)
         assertThat(splits.partial).isNull()
@@ -194,7 +214,7 @@ class GeoUtilsTest {
                 pointAtDistance(seq = 2, t = 3_900_500, distanceMeters = 1_000.0, segmentStart = true),
                 pointAtDistance(seq = 3, t = 4_050_750, distanceMeters = 1_500.0, segmentStart = false),
             )
-        val partial = GeoUtils.kmSplits(points).partial!!
+        val partial = GeoUtils.kmSplits(points, UnitSystem.METRIC).partial!!
 
         assertThat(partial.distanceMeters).isCloseTo(500.0, within(0.01))
         assertThat(partial.durationSeconds).isEqualTo(150L)
@@ -210,7 +230,7 @@ class GeoUtilsTest {
                 pointAtDistance(seq = 2, t = 661_000, distanceMeters = 2_000.0, segmentStart = false, steps = 2_400),
             )
 
-        assertThat(GeoUtils.kmSplits(points).completeSteps).containsExactly(1_100L, 1_300L)
+        assertThat(GeoUtils.kmSplits(points, UnitSystem.METRIC).completeSteps).containsExactly(1_100L, 1_300L)
     }
 
     @Test
@@ -221,7 +241,7 @@ class GeoUtilsTest {
                 pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true, steps = 0),
                 pointAtDistance(seq = 1, t = 751_250, distanceMeters = 2_500.0, segmentStart = false, steps = 3_000),
             )
-        val splits = GeoUtils.kmSplits(points)
+        val splits = GeoUtils.kmSplits(points, UnitSystem.METRIC)
 
         assertThat(splits.completeSteps).containsExactly(1_200L, 1_200L)
         assertThat(splits.partial!!.steps).isEqualTo(600L)
@@ -240,7 +260,7 @@ class GeoUtilsTest {
                 pointAtDistance(seq = 3, t = 4_201_000, distanceMeters = 2_000.0, segmentStart = false, steps = 2_100),
             )
 
-        assertThat(GeoUtils.kmSplits(points).completeSteps).containsExactly(1_000L, 1_100L)
+        assertThat(GeoUtils.kmSplits(points, UnitSystem.METRIC).completeSteps).containsExactly(1_000L, 1_100L)
     }
 
     @Test
@@ -250,7 +270,7 @@ class GeoUtilsTest {
                 pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
                 pointAtDistance(seq = 1, t = 751_250, distanceMeters = 2_500.0, segmentStart = false),
             )
-        val splits = GeoUtils.kmSplits(points)
+        val splits = GeoUtils.kmSplits(points, UnitSystem.METRIC)
 
         assertThat(splits.completeSeconds).hasSize(2)
         assertThat(splits.completeSteps).isNull()

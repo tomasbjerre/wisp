@@ -37,6 +37,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.tomasbjerre.wisp.data.Session
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.TrackPoint
+import com.github.tomasbjerre.wisp.data.UnitPreferences
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.export.ActivityImageExporter
 import com.github.tomasbjerre.wisp.export.CsvExporter
 import com.github.tomasbjerre.wisp.export.CsvShareIntent
@@ -57,12 +59,16 @@ import org.osmdroid.views.MapView
 fun DetailScreen(
     repository: SessionRepository,
     sessionId: Long,
+    unitPreferences: UnitPreferences,
     onDeleted: () -> Unit,
     onBack: () -> Unit,
     onOpenKmSplits: () -> Unit,
 ) {
+    val unit by unitPreferences.unit.collectAsStateWithLifecycle()
     val viewModel: DetailViewModel =
-        viewModel(factory = viewModelFactory { initializer { DetailViewModel(repository, sessionId) } })
+        viewModel(
+            factory = viewModelFactory { initializer { DetailViewModel(repository, sessionId, unit) } },
+        )
     val session by viewModel.session.collectAsStateWithLifecycle()
     val route by viewModel.route.collectAsStateWithLifecycle()
     val kmSplitsSeconds by viewModel.kmSplitsSeconds.collectAsStateWithLifecycle()
@@ -99,12 +105,13 @@ fun DetailScreen(
             SessionSummaryPanel(
                 session = session,
                 kmSplitsSeconds = kmSplitsSeconds,
+                unit = unit,
                 onOpenKmSplits = onOpenKmSplits,
                 onBack = onBack,
                 onExportImage = {
                     val map = mapView
                     val current = session
-                    if (map != null && current != null) exportSessionAsImage(context, map, current)
+                    if (map != null && current != null) exportSessionAsImage(context, map, current, unit)
                 },
                 // See specs/export.md#single-activity-as-csv: same two-file format as the
                 // full history export, scoped to just this one session.
@@ -170,6 +177,7 @@ private fun DetailMap(
 private fun SessionSummaryPanel(
     session: Session?,
     kmSplitsSeconds: List<Long>,
+    unit: UnitSystem,
     onOpenKmSplits: () -> Unit,
     onBack: () -> Unit,
     onExportImage: () -> Unit,
@@ -180,8 +188,8 @@ private fun SessionSummaryPanel(
         // Both lines always render, even before `session` loads (it's null for a frame or
         // two while its Flow's first value is still in flight) — otherwise the button row
         // below visibly jumps down once the text pops in. See specs/ui-flows.md#3-detail.
-        Text(distanceAndDurationLine(session), style = MaterialTheme.typography.titleLarge)
-        Text(speedsLine(session), style = MaterialTheme.typography.bodyLarge)
+        Text(distanceAndDurationLine(session, unit), style = MaterialTheme.typography.titleLarge)
+        Text(speedsLine(session, unit), style = MaterialTheme.typography.bodyLarge)
         // See specs/tracking.md#step-count. Omitted entirely with no step count, not just
         // empty — most sessions on most devices will never have one.
         if (session != null && session.steps > 0) {
@@ -190,7 +198,7 @@ private fun SessionSummaryPanel(
         }
         // See specs/tracking.md#km-splits. Omitted entirely with no complete km at all,
         // same reasoning as the steps line above.
-        paceLine(kmSplitsSeconds)?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
+        paceLine(kmSplitsSeconds, unit)?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
         // See specs/ui-flows.md#4-km-splits: the splits themselves live on their own
         // view (#86) — a list squeezed in here left room for only a few rows, and took
         // that room from the map. Omitted entirely under 1 km, not just disabled.
@@ -200,7 +208,7 @@ private fun SessionSummaryPanel(
                 contentPadding = PaddingValues(0.dp),
                 modifier = Modifier.padding(top = 4.dp),
             ) {
-                Text("Km splits (${kmSplitsSeconds.size})")
+                Text("${splitsLabel(unit)} (${kmSplitsSeconds.size})")
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
             }
         }
@@ -243,8 +251,9 @@ private fun exportSessionAsImage(
     context: Context,
     mapView: MapView,
     session: Session,
+    unit: UnitSystem,
 ) {
-    val image = ActivityImageExporter.compose(mapView, session)
+    val image = ActivityImageExporter.compose(mapView, session, unit)
     context.startActivity(ImageShareIntent.build(context, image, ExportFileNames.activityImage(session.startedAt)))
 }
 
@@ -266,16 +275,32 @@ private fun exportSessionAsCsv(
     )
 }
 
-private fun distanceAndDurationLine(session: Session?): String =
-    session?.let { "${Formatting.distance(it.distanceMeters)} · ${Formatting.duration(it.durationSeconds)}" } ?: ""
+private fun distanceAndDurationLine(
+    session: Session?,
+    unit: UnitSystem,
+): String =
+    session?.let {
+        "${Formatting.distance(it.distanceMeters, unit)} · ${Formatting.duration(it.durationSeconds)}"
+    } ?: ""
 
-private fun speedsLine(session: Session?): String =
-    session?.let { "Avg ${Formatting.speedKmh(it.averageSpeedMps)} · Max ${Formatting.speedKmh(it.maxSpeedMps)}" } ?: ""
+private fun speedsLine(
+    session: Session?,
+    unit: UnitSystem,
+): String =
+    session?.let {
+        "Avg ${Formatting.speed(it.averageSpeedMps, unit)} · Max ${Formatting.speed(it.maxSpeedMps, unit)}"
+    } ?: ""
 
-/** See specs/tracking.md#km-splits. Null with no complete km at all — nothing to say. */
-private fun paceLine(kmSplitsSeconds: List<Long>): String? {
+/** See specs/tracking.md#km-splits. Null with no complete split at all — nothing to say. */
+private fun paceLine(
+    kmSplitsSeconds: List<Long>,
+    unit: UnitSystem,
+): String? {
     val average = KmSplitRows.averageSeconds(kmSplitsSeconds) ?: return null
     val fastest = KmSplitRows.fastestSeconds(kmSplitsSeconds)
-    val fastestPart = fastest?.let { " · Fastest ${Formatting.duration(it)}/km" } ?: ""
-    return "Avg ${Formatting.duration(average)}/km$fastestPart"
+    val fastestPart = fastest?.let { " · Fastest ${Formatting.pace(it, unit)}" } ?: ""
+    return "Avg ${Formatting.pace(average, unit)}$fastestPart"
 }
+
+/** See specs/units.md: the Km splits view/link relabels to "Mile splits" under imperial. */
+private fun splitsLabel(unit: UnitSystem): String = if (unit == UnitSystem.METRIC) "Km splits" else "Mile splits"

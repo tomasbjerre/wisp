@@ -1,6 +1,7 @@
 package com.github.tomasbjerre.wisp.util
 
 import com.github.tomasbjerre.wisp.data.TrackPoint
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.export.TrackPointCsvParser
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
@@ -62,7 +63,7 @@ class GeoUtilsRealActivityTest {
 
     @Test
     fun `the real activity has km splits worth comparing, unlike a constant-pace synthetic route`() {
-        val splits = GeoUtils.kmSplitsSeconds(points)
+        val splits = GeoUtils.kmSplitsSeconds(points, UnitSystem.METRIC)
         assertThat(splits).hasSizeGreaterThanOrEqualTo(6)
         // A real walk isn't a perfectly even pace - not every split takes the same time.
         assertThat(splits.distinct().size).isGreaterThan(1)

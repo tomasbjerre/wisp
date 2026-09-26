@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.tomasbjerre.wisp.data.Session
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.TrackPoint
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.location.LatLon
 import com.github.tomasbjerre.wisp.util.GeoUtils
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 class DetailViewModel(
     private val repository: SessionRepository,
     private val sessionId: Long,
+    private val unit: UnitSystem,
 ) : ViewModel() {
     val session: StateFlow<Session?> =
         repository
@@ -41,7 +43,7 @@ class DetailViewModel(
             val points = repository.getPoints(sessionId)
             _points.value = points
             _route.value = points.map { it.toLatLon() }
-            _kmSplitsSeconds.value = GeoUtils.kmSplitsSeconds(points)
+            _kmSplitsSeconds.value = GeoUtils.kmSplitsSeconds(points, unit)
         }
     }
 

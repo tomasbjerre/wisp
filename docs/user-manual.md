@@ -21,6 +21,13 @@ This is what you see when you open Wisp. It has:
 - **Start** — the button at the top. Tap it to begin recording a new
   activity (run, ride, walk, anything). See [Tracking](#tracking) below
   for what happens next.
+- **Metric / Imperial** — switches every distance, speed, and pace Wisp
+  shows between kilometers/km per hour and miles/mph, everywhere it's
+  shown (Home, Tracking, Detail, Km splits — which becomes Mile splits
+  under imperial, with whole-mile splits rather than kilometers
+  re-expressed in miles). Metric by default. CSV exports always stay in
+  metric regardless of this setting — see the user manual's Detail
+  section below.
 - **Your history** — every past activity, most recent first, each row
   showing its date, nearest city (when known), distance, duration, and
   average speed. Tap a row to open that activity's [Detail](#detail)
@@ -147,10 +154,14 @@ just-finished:
   through the share sheet. Useful for importing into a spreadsheet or
   another tool. Both files — and the Export Image file — are named after
   the activity's start time, e.g. `wisp-activity-2026-09-25_06-51-12.csv`,
-  so exports of different activities never get mixed up.
+  so exports of different activities never get mixed up. Always in
+  metric, regardless of Home's Metric/Imperial setting — a predictable
+  unit for spreadsheets and other tools, whatever's on screen at the time.
 - **Export Image** — shares a snapshot of the route map and stats as an
   image, via Android's normal share sheet (save it, send it, post it —
-  your choice, same as sharing a photo from any other app).
+  your choice, same as sharing a photo from any other app). Follows
+  Home's Metric/Imperial setting, unlike Export CSV — it's a picture of
+  what's already on screen.
 - **Back** — returns to wherever you came from (Home, or straight here
   after finishing a recording).
 - **Delete** — removes the activity permanently. Asks you to confirm
@@ -160,8 +171,9 @@ just-finished:
 
 ## Km splits
 
-Opened with the **Km splits** link on Detail, for analyzing an activity
-kilometer by kilometer:
+Opened with the **Km splits** link on Detail (titled **Mile splits**
+under imperial), for analyzing an activity kilometer by kilometer — or
+mile by mile, with imperial selected on Home:
 
 <img src="screenshots/detail-km-splits.jpg" alt="Km splits view with a row per kilometer" width="300">
 

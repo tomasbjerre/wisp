@@ -1,5 +1,6 @@
 package com.github.tomasbjerre.wisp.ui.splits
 
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.util.GeoUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
@@ -11,7 +12,7 @@ class KmSplitRowsTest {
     fun `one row per complete km, numbered from 1, then the partial km`() {
         val splits = GeoUtils.KmSplits(listOf(300L, 250L), GeoUtils.PartialSplit(470.0, 150L))
 
-        val rows = KmSplitRows.rows(splits)
+        val rows = KmSplitRows.rows(splits, UnitSystem.METRIC)
 
         // Decimal separator follows the device locale, like every other distance in the app.
         assertThat(rows.map { it.label }).containsExactly("1", "2", "+" + "%.2f".format(0.47))
@@ -23,10 +24,28 @@ class KmSplitRowsTest {
     fun `a row's speed is its own distance over its own time`() {
         val splits = GeoUtils.KmSplits(listOf(250L), GeoUtils.PartialSplit(500.0, 200L))
 
-        val rows = KmSplitRows.rows(splits)
+        val rows = KmSplitRows.rows(splits, UnitSystem.METRIC)
 
         assertThat(rows[0].speedMps).isCloseTo(4.0, within(0.001))
         assertThat(rows[1].speedMps).isCloseTo(2.5, within(0.001))
+    }
+
+    @Test
+    fun `a row's speed under imperial divides by a mile, not a kilometer`() {
+        val splits = GeoUtils.KmSplits(listOf(400L), null)
+
+        val rows = KmSplitRows.rows(splits, UnitSystem.IMPERIAL)
+
+        assertThat(rows[0].speedMps).isCloseTo(UnitSystem.METERS_PER_MILE / 400.0, within(0.001))
+    }
+
+    @Test
+    fun `a partial row's label under imperial is a fraction of a mile, not a kilometer`() {
+        val splits = GeoUtils.KmSplits(emptyList(), GeoUtils.PartialSplit(804.67, 150L))
+
+        val rows = KmSplitRows.rows(splits, UnitSystem.IMPERIAL)
+
+        assertThat(rows[0].label).isEqualTo("+" + "%.2f".format(0.5))
     }
 
     @Test
@@ -38,19 +57,19 @@ class KmSplitRowsTest {
                 completeSteps = listOf(1_210L, 1_150L),
             )
 
-        assertThat(KmSplitRows.rows(splits).map { it.steps }).containsExactly(1_210L, 1_150L, 560L)
+        assertThat(KmSplitRows.rows(splits, UnitSystem.METRIC).map { it.steps }).containsExactly(1_210L, 1_150L, 560L)
     }
 
     @Test
     fun `no steps per split leaves every row's steps empty`() {
         val splits = GeoUtils.KmSplits(listOf(300L, 250L), GeoUtils.PartialSplit(470.0, 150L))
 
-        assertThat(KmSplitRows.rows(splits).map { it.steps }).containsOnlyNulls()
+        assertThat(KmSplitRows.rows(splits, UnitSystem.METRIC).map { it.steps }).containsOnlyNulls()
     }
 
     @Test
     fun `no splits at all is no rows`() {
-        assertThat(KmSplitRows.rows(GeoUtils.KmSplits(emptyList(), null))).isEmpty()
+        assertThat(KmSplitRows.rows(GeoUtils.KmSplits(emptyList(), null), UnitSystem.METRIC)).isEmpty()
     }
 
     @Test

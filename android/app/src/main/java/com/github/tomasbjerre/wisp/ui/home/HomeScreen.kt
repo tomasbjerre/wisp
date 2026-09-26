@@ -24,6 +24,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -46,6 +49,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.tomasbjerre.wisp.data.Session
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.TrackPoint
+import com.github.tomasbjerre.wisp.data.UnitPreferences
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.export.CsvExporter
 import com.github.tomasbjerre.wisp.export.CsvShareIntent
 import com.github.tomasbjerre.wisp.export.ExportFileNames
@@ -66,12 +71,14 @@ private const val USER_MANUAL_URL = "https://github.com/tomasbjerre/wisp/blob/ma
 @Composable
 fun HomeScreen(
     repository: SessionRepository,
+    unitPreferences: UnitPreferences,
     onStart: () -> Unit,
     onOpenSession: (Long) -> Unit,
 ) {
     val viewModel: HomeViewModel =
         viewModel(factory = viewModelFactory { initializer { HomeViewModel(repository) } })
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
+    val unit by unitPreferences.unit.collectAsStateWithLifecycle()
     var pendingDelete by remember { mutableStateOf<Session?>(null) }
     var showInfo by remember { mutableStateOf(false) }
 
@@ -89,6 +96,13 @@ fun HomeScreen(
                 Text("Start")
             }
 
+            // See specs/units.md and specs/ui-flows.md#1-home.
+            UnitSystemToggle(
+                unit = unit,
+                onUnitChange = unitPreferences::setUnit,
+                modifier = Modifier.padding(top = 16.dp),
+            )
+
             if (sessions.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
@@ -99,6 +113,7 @@ fun HomeScreen(
             } else {
                 SessionList(
                     sessions = sessions,
+                    unit = unit,
                     onOpenSession = onOpenSession,
                     onDeleteClick = { pendingDelete = it },
                 )
@@ -193,9 +208,30 @@ private fun appVersionName(context: Context): String =
 
 private fun deviceInfo(): String = "${Build.MODEL}, Android ${Build.VERSION.RELEASE}"
 
+/** See specs/units.md: a Metric/Imperial choice, the one setting Wisp has on Home. */
+@Composable
+private fun UnitSystemToggle(
+    unit: UnitSystem,
+    onUnitChange: (UnitSystem) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SingleChoiceSegmentedButtonRow(modifier = modifier.fillMaxWidth()) {
+        UnitSystem.entries.forEachIndexed { index, option ->
+            SegmentedButton(
+                selected = unit == option,
+                onClick = { onUnitChange(option) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = UnitSystem.entries.size),
+            ) {
+                Text(if (option == UnitSystem.METRIC) "Metric" else "Imperial")
+            }
+        }
+    }
+}
+
 @Composable
 private fun SessionList(
     sessions: List<Session>,
+    unit: UnitSystem,
     onOpenSession: (Long) -> Unit,
     onDeleteClick: (Session) -> Unit,
 ) {
@@ -207,6 +243,7 @@ private fun SessionList(
         items(sessions, key = { it.id }) { session ->
             SessionRow(
                 session,
+                unit = unit,
                 onClick = { onOpenSession(session.id) },
                 onDeleteClick = { onDeleteClick(session) },
             )
@@ -232,6 +269,7 @@ private fun DeleteConfirmDialog(
 @Composable
 private fun SessionRow(
     session: Session,
+    unit: UnitSystem,
     onClick: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
@@ -246,9 +284,9 @@ private fun SessionRow(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    "${Formatting.distance(session.distanceMeters)} · " +
+                    "${Formatting.distance(session.distanceMeters, unit)} · " +
                         "${Formatting.duration(session.durationSeconds)} · " +
-                        Formatting.speedKmh(session.averageSpeedMps),
+                        Formatting.speed(session.averageSpeedMps, unit),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }

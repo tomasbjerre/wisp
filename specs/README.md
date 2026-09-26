@@ -30,3 +30,4 @@ source of truth for behavior.
 - [Accessibility](accessibility.md) — map clarity and text contrast, everywhere
 - [Voice feedback](voice-feedback.md) — optional spoken announcements
   during a live recording
+- [Units](units.md) — the metric/imperial display setting
