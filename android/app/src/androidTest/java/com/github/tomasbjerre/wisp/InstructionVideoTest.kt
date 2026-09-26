@@ -43,7 +43,7 @@ class InstructionVideoTest {
 
         composeRule.waitForIdle()
         val app = instrumentation.targetContext.applicationContext as WispApplication
-        runBlocking { seedSession(app, daysAgo = 1, durationSeconds = 1_620, speedMps = 3.2) }
+        runBlocking { seedRealSession(app, daysAgo = 1) }
         composeRule.waitForIdle()
         Thread.sleep(PAUSE_MILLIS)
 

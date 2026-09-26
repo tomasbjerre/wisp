@@ -57,7 +57,9 @@ class ScreenshotTest {
             // A real recorded activity (issue #121) - varying pace, so Detail's km splits
             // (see captureKmSplits) have something to compare, and real GPS noise besides.
             seedRealSession(app, daysAgo = 1)
-            seedSession(app, daysAgo = 4, durationSeconds = 3_120, speedMps = 4.0)
+            // The first part of the same recording, as a shorter earlier activity, so the
+            // history isn't a real row next to an obviously synthetic one.
+            seedRealSession(app, daysAgo = 4, pointCount = SECOND_SESSION_POINTS)
         }
         composeRule.waitForIdle()
         screenshot("2-home-history")
@@ -208,6 +210,7 @@ class ScreenshotTest {
     private companion object {
         const val APP_PACKAGE = "com.github.tomasbjerre.wisp"
         const val SCREENSHOT_DIR = "/sdcard/wisp-screenshots"
+        const val SECOND_SESSION_POINTS = 600 // ~3.5 km of the real ~7.85 km recording
         const val MAP_TILE_SETTLE_MILLIS = 3_000L
         const val LOCATE_TIMEOUT_MILLIS = 15_000L
         const val RECORDING_TIMEOUT_MILLIS = 45_000L
