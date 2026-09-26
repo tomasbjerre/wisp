@@ -33,11 +33,11 @@ object Formatting {
     }
 
     /** A time-per-split value (see specs/tracking.md#km-splits) with its unit suffix,
-     * e.g. "5:37/km" or "9:03/mi". */
+     * e.g. "5:37 min/km" or "9:03 min/mi". */
     fun pace(
         seconds: Long,
         unit: UnitSystem,
-    ): String = "${duration(seconds)}/${unit.distanceAbbreviation}"
+    ): String = "${duration(seconds)} min/${unit.distanceAbbreviation}"
 
     /** See specs/tracking.md#step-count. Callers omit this entirely when steps is 0. */
     fun stepsPerMinute(
