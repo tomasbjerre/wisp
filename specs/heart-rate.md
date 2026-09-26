@@ -19,11 +19,27 @@ default**.
 ## Setting
 
 A single on/off switch, **Heart rate monitor**, on
-[Home](ui-flows.md#1-home), persisted across launches like the other
-settings (see [Data Model](data-model.md#heart-rate-setting)). Turning it
-on asks for the Bluetooth access it needs (see
+[Tracking](ui-flows.md#2-tracking-active-recording) — where the user
+starts a session, so that's where they decide whether this one uses a
+monitor. It is not on Home. It's persisted across launches like the other
+settings (see [Data Model](data-model.md#heart-rate-setting)), so it
+stays as the user left it for the next session. Turning it on asks for
+the Bluetooth access it needs (see
 [Permissions & Privacy](permissions-and-privacy.md#required-access));
 if that's declined the switch stays off.
+
+It can be flipped at any time during a session: turning it on while
+recording connects right away (subject to
+[Connecting](#connecting)), turning it off disconnects and the current
+heart rate is dropped from the display.
+
+A monitor is **available** when the phone has Bluetooth Low Energy and
+Bluetooth is turned on. (Whether a monitor is actually in range is not
+part of this — it can be out of range for a moment and come back, see
+[Connecting](#connecting).) When none is available the switch is shown
+disabled and off, and if the setting was on it is turned off, and stays
+off (persisted) until the user turns it on again once Bluetooth is
+available.
 
 ## Connecting
 

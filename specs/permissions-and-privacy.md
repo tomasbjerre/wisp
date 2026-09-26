@@ -32,7 +32,7 @@
 
 - **Bluetooth** (nearby devices scan and connect, on versions of Android
   that require them), to find and read a BLE heart rate monitor. Requested
-  only when the user turns on the Heart rate monitor setting (see
+  only when the user turns on the Heart rate monitor setting on Tracking (see
   [Heart rate](heart-rate.md#setting)) — never at first launch. If
   declined, the setting stays off and nothing else is affected.
 

@@ -1,6 +1,15 @@
 package com.github.tomasbjerre.wisp.ui.tracking
 
+import android.bluetooth.BluetoothAdapter
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +29,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,14 +42,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.tomasbjerre.wisp.data.HeartRatePreferences
 import com.github.tomasbjerre.wisp.data.UnitPreferences
 import com.github.tomasbjerre.wisp.data.UnitSystem
+import com.github.tomasbjerre.wisp.location.HeartRateMonitor
 import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.location.TrackingUiState
 import com.github.tomasbjerre.wisp.ui.Formatting
+import com.github.tomasbjerre.wisp.ui.TestTags
 import com.github.tomasbjerre.wisp.ui.common.MapType
 import com.github.tomasbjerre.wisp.ui.common.MapTypeToggle
 import com.github.tomasbjerre.wisp.ui.common.RouteMap
@@ -57,6 +72,13 @@ fun TrackingScreen(
     val state by TrackingService.state.collectAsStateWithLifecycle()
     val unit by unitPreferences.unit.collectAsStateWithLifecycle()
     val heartRateEnabled by heartRatePreferences.enabled.collectAsStateWithLifecycle()
+    val heartRateAvailable = rememberHeartRateAvailable()
+
+    // See specs/heart-rate.md#setting: with nothing to connect to, the setting is switched
+    // off (and persisted as off) rather than left on for a monitor that can't be reached.
+    LaunchedEffect(heartRateAvailable, heartRateEnabled) {
+        if (!heartRateAvailable && heartRateEnabled) heartRatePreferences.setEnabled(false)
+    }
 
     // See specs/ui-flows.md#2-tracking-active-recording: back behaves exactly like
     // tapping Stop (below), not like leaving the screen — without this, system/gesture
@@ -142,7 +164,14 @@ fun TrackingScreen(
                 }
             }
         }
-        TrackingStatsPanel(state = state, permissions = permissions, unit = unit, heartRateEnabled = heartRateEnabled)
+        TrackingStatsPanel(
+            state = state,
+            permissions = permissions,
+            unit = unit,
+            heartRateEnabled = heartRateEnabled,
+            heartRateAvailable = heartRateAvailable,
+            onHeartRateEnabledChange = heartRatePreferences::setEnabled,
+        )
     }
 }
 
@@ -152,6 +181,8 @@ private fun TrackingStatsPanel(
     permissions: LocationPermissionState,
     unit: UnitSystem,
     heartRateEnabled: Boolean,
+    heartRateAvailable: Boolean,
+    onHeartRateEnabledChange: (Boolean) -> Unit,
 ) {
     Surface(tonalElevation = 4.dp) {
         // navigationBarsPadding: MainActivity draws edge-to-edge, so without this
@@ -216,8 +247,84 @@ private fun TrackingStatsPanel(
             // not hidden, while on but without a current reading, so it's clear Wisp is
             // still looking for a monitor.
             if (heartRateEnabled) HeartRateLine(state)
+            HeartRateSwitch(
+                enabled = heartRateEnabled,
+                available = heartRateAvailable,
+                onEnabledChange = onHeartRateEnabledChange,
+            )
             TrackingControls(isPaused = state.isPaused, isWaitingForMovement = state.isWaitingForMovement)
         }
+    }
+}
+
+/** Whether Bluetooth can currently reach a monitor, kept current as it's turned on/off. */
+@Composable
+private fun rememberHeartRateAvailable(): Boolean {
+    val context = LocalContext.current
+    var available by remember { mutableStateOf(HeartRateMonitor.isAvailable(context)) }
+    DisposableEffect(context) {
+        val receiver =
+            object : BroadcastReceiver() {
+                override fun onReceive(
+                    context: Context,
+                    intent: Intent,
+                ) {
+                    available = HeartRateMonitor.isAvailable(context)
+                }
+            }
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+        available = HeartRateMonitor.isAvailable(context)
+        onDispose { context.unregisterReceiver(receiver) }
+    }
+    return available
+}
+
+/**
+ * See specs/heart-rate.md#setting. Turning it on first asks for the Bluetooth access it
+ * needs (Android 12+ only — earlier versions have it at install time); declined leaves it
+ * off. Disabled while there's no Bluetooth to reach a monitor with.
+ */
+@Composable
+private fun HeartRateSwitch(
+    enabled: Boolean,
+    available: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+) {
+    val context = LocalContext.current
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+            if (result.values.all { it }) onEnabledChange(true)
+        }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            if (available) "Heart rate monitor" else "Heart rate monitor (Bluetooth is off)",
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        Switch(
+            checked = enabled && available,
+            enabled = available,
+            modifier = Modifier.testTag(TestTags.HEART_RATE_SWITCH),
+            onCheckedChange = { wanted ->
+                val missing =
+                    if (wanted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        HeartRateMonitor.REQUIRED_PERMISSIONS_S.filter {
+                            ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+                        }
+                    } else {
+                        emptyList()
+                    }
+                if (missing.isEmpty()) onEnabledChange(wanted) else launcher.launch(missing.toTypedArray())
+            },
+        )
     }
 }
 

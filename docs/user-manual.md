@@ -28,16 +28,6 @@ This is what you see when you open Wisp. It has:
   re-expressed in miles). Metric by default. CSV exports always stay in
   metric regardless of this setting — see the user manual's Detail
   section below.
-- **Heart rate monitor** — a switch, off by default. Turn it on to record
-  your heart rate from a Bluetooth heart rate monitor (a chest strap, arm
-  band, or watch that broadcasts heart rate using the standard Bluetooth
-  Heart Rate profile). Android will ask for permission to use nearby
-  devices the first time; if you decline, the switch stays off. Wisp
-  looks for a monitor when a recording starts moving, and keeps looking if
-  the connection drops. With no monitor in range, recording works as
-  usual — that activity just has no heart rate.
-
-  <img src="screenshots/home-heart-rate.jpg" alt="Home screen with the Heart rate monitor switch" width="300">
 - **Your history** — every past activity, most recent first, each row
   showing its date, nearest city (when known), distance, duration, and
   average speed. Tap a row to open that activity's [Detail](#detail)
@@ -103,8 +93,18 @@ A few more things on this screen:
   completed a second one) your fastest kilometer so far. (Not every
   phone has a step-count sensor — if yours doesn't, or the permission
   wasn't granted, the steps line simply doesn't appear.)
-- **Heart rate** — with the Heart rate monitor switch on (see
-  [Home](#home)), shows your current heart rate and your maximum so far,
+- **Heart rate monitor** — a switch above the Pause / Stop buttons, off
+  by default, that stays as you left it the next time you record. Turn it
+  on to record your heart rate from a Bluetooth heart rate monitor (a
+  chest strap, arm band, or watch that broadcasts heart rate using the
+  standard Bluetooth Heart Rate profile). Android will ask for permission
+  to use nearby devices the first time; if you decline, the switch stays
+  off. You can flip it at any point in the recording. Wisp looks for a
+  monitor once you're moving, and keeps looking if the connection drops.
+  If Bluetooth is off the switch is greyed out and turned off. With no
+  monitor in range, recording works as usual — that activity just has no
+  heart rate.
+- **Heart rate** — with the Heart rate monitor switch on, shows your current heart rate and your maximum so far,
   e.g. `Heart rate: 142 bpm · Max 168 bpm`. It shows a dash while Wisp is
   still looking for a monitor or hasn't heard from it for a few seconds.
 - **Pause / Continue** — pauses recording without ending the activity;

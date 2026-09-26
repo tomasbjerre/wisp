@@ -22,6 +22,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -40,6 +41,7 @@ class TrackingService : LifecycleService() {
     private val heartRatePreferences by lazy { (application as WispApplication).heartRatePreferences }
     private val heartRateMonitor by lazy { HeartRateMonitor(this) }
     private var heartRateRecorder = HeartRateRecorder()
+    private var heartRateSettingJob: Job? = null
     private val locationTracker by lazy { LocationTracker(this) }
     private val geocodingService by lazy { GeocodingService(this) }
     private val stepCounterTracker by lazy { StepCounterTracker(this) }
@@ -85,6 +87,7 @@ class TrackingService : LifecycleService() {
         movementGate = MovementGate()
         stepRecorder = StepRecorder()
         heartRateRecorder = HeartRateRecorder()
+        observeHeartRateSetting()
         stationaryGate = StationaryGate()
         voiceFeedbackSpeaker = VoiceFeedbackSpeaker(this)
         announcedCompleteKmCount = 0
@@ -99,6 +102,23 @@ class TrackingService : LifecycleService() {
             // Ticker starts once movement is confirmed, not here — see onLocation and
             // specs/tracking.md#start-gating.
         }
+    }
+
+    /**
+     * See specs/heart-rate.md#setting: the switch lives on Tracking, so it can flip while a
+     * session is running — connect or disconnect right away when it does, provided the
+     * session is at a point where a monitor would be connected (see [startHeartRateMonitor]).
+     */
+    private fun observeHeartRateSetting() {
+        heartRateSettingJob?.cancel()
+        heartRateSettingJob =
+            lifecycleScope.launch {
+                heartRatePreferences.enabled.drop(1).collect { enabled ->
+                    val s = _state.value
+                    if (!s.isRecording || s.isPaused || s.isWaitingForMovement) return@collect
+                    if (enabled) startHeartRateMonitor() else stopHeartRateMonitor()
+                }
+            }
     }
 
     private fun pause() {
@@ -317,6 +337,11 @@ class TrackingService : LifecycleService() {
             heartRateRecorder.onReading(bpm, SystemClock.elapsedRealtime())
             _state.update { it.copy(heartRateBpm = currentHeartRate(), maxHeartRateBpm = heartRateRecorder.maxBpm) }
         }
+    }
+
+    private fun stopHeartRateMonitor() {
+        heartRateMonitor.stop()
+        _state.update { it.copy(heartRateBpm = null) }
     }
 
     private fun currentHeartRate(): Int? = heartRateRecorder.currentBpm(SystemClock.elapsedRealtime())

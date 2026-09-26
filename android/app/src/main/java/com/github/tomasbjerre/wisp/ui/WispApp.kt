@@ -54,7 +54,6 @@ fun WispApp(
             HomeScreen(
                 repository = repository,
                 unitPreferences = unitPreferences,
-                heartRatePreferences = heartRatePreferences,
                 onStart = { navController.navigate(ROUTE_TRACKING) },
                 onOpenSession = { id -> navController.navigate("detail/$id") },
             )
