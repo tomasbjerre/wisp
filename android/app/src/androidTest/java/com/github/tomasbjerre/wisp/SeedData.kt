@@ -109,6 +109,7 @@ suspend fun seedSessionWithVaryingPace(
 suspend fun seedRealSession(
     app: WispApplication,
     daysAgo: Int,
+    pointCount: Int = Int.MAX_VALUE,
 ) {
     val repository = app.repository
     val csv =
@@ -118,7 +119,9 @@ suspend fun seedRealSession(
             .open(ASSET_NAME)
             .bufferedReader()
             .use { it.readText() }
-    val rows = TrackPointCsvParser.parse(csv)
+    val allRows = TrackPointCsvParser.parse(csv)
+    // A shorter, still entirely real, activity: just the first [pointCount] points.
+    val rows = allRows.take(pointCount)
     check(rows.isNotEmpty()) { "$ASSET_NAME has no track points" }
 
     val firstTimestamp = rows.first().timestamp
@@ -128,7 +131,7 @@ suspend fun seedRealSession(
 
     // A steady cadence for this activity's total steps over its total time, so the
     // running count lands exactly on REAL_SESSION_TOTAL_STEPS by the last point.
-    val stepsPerMilli = REAL_SESSION_TOTAL_STEPS.toDouble() / durationMillis
+    val stepsPerMilli = REAL_SESSION_TOTAL_STEPS.toDouble() / (allRows.last().timestamp - firstTimestamp)
     var steps = 0.0
     rows.forEachIndexed { index, row ->
         if (index > 0) steps += stepsPerMilli * (row.timestamp - rows[index - 1].timestamp)
