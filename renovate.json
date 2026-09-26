@@ -78,42 +78,14 @@
       "recreateWhen": "never"
     },
     {
-      // The entire androidx.lifecycle groupId's 2.11.0 release requires
-      // compileSdk 37 and AGP 9.1.0+ — this project is on compileSdk 36 / AGP
-      // 8.13.2 (see android/app/build.gradle.kts and android/build.gradle.kts).
-      // These are "Immortal" PRs Renovate keeps recreating after being closed
-      // unmerged; CI fails every time with "requires ... compileSdk of at
-      // least 37" (PRs #18-21). Blocked here instead of closing them by hand
-      // each cycle. Re-enable once compileSdk/AGP are bumped.
-      "matchPackagePrefixes": ["androidx.lifecycle:"],
-      "enabled": false,
-      "recreateWhen": "never"
-    },
-    {
-      // Same compileSdk 37 / AGP 9.1.0+ requirement as the androidx.lifecycle
-      // block above — confirmed by the CI failure on PR #17
-      // ("androidx.core:core-ktx:1.19.0 requires ... compileSdk of at least
-      // 37"). Re-enable once compileSdk/AGP are bumped.
-      "matchPackageNames": ["androidx.core:core-ktx", "androidx.core:core"],
-      "enabled": false,
-      "recreateWhen": "never"
-    },
-    {
       // androidx.activity:activity-compose 1.13.0 fails CI on this project
       // with a dependency resolution conflict (androidx.concurrent:concurrent-futures
       // strict-version mismatch via androidx.test, PR #16), not merely a
       // version bump. Blocked as another Immortal PR Renovate keeps
-      // recreating after being closed unmerged.
+      // recreating after being closed unmerged. Unrelated to the compileSdk
+      // 37 / AGP 9 / Gradle 9 upgrade done alongside PRs #106/#107/#109/#110 —
+      // this one's still open.
       "matchPackageNames": ["androidx.activity:activity-compose"],
-      "enabled": false,
-      "recreateWhen": "never"
-    },
-    {
-      // Same compileSdk 37 / AGP 9.1.0+ requirement as the androidx.lifecycle
-      // block above — navigation-compose 2.10.1 pulls in androidx.lifecycle
-      // 2.11.0 transitively, confirmed by the CI failure on PR #28. Re-enable
-      // once compileSdk/AGP are bumped.
-      "matchPackageNames": ["androidx.navigation:navigation-compose"],
       "enabled": false,
       "recreateWhen": "never"
     },
