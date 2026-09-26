@@ -87,11 +87,11 @@ jobs:
             adb shell rm -rf /sdcard/wisp-screenshots
             # Fix a location up front so Tracking has a real position to show instead of
             # hanging on "Finding your location…" — see InstructionVideoTest.
-            adb emu geo fix 18.0686 59.3293
+            ./scripts/replay-real-track.sh --first-fix-only
             # ScreenshotTest's live-Tracking captures and InstructionVideoTest's
             # Pause/Continue segment need actual movement, not just a fixed point —
             # recording only starts once a fix implies at least walking pace (see
-            # specs/tracking.md#start-gating). Feed a slow walk north for the whole test
+            # specs/tracking.md#start-gating). Replay the real recorded walk from #121 for the whole test
             # run (~6.5 minutes, well past both tests' combined runtime) in the
             # background; stopped explicitly below, once it's no longer needed (a
             # sentinel file the loop polls for every iteration, not `kill "$!"` on its
@@ -111,7 +111,7 @@ jobs:
             # instead. An explicit line run after the last command that needs the walk
             # (below) is what actually works here, matching the RECORD_PID pattern.
             rm -f /tmp/wisp-walk-stop
-            (for i in $(seq 1 200); do [ -f /tmp/wisp-walk-stop ] && exit 0; adb emu geo fix 18.0686 "$(awk -v i="$i" 'BEGIN{printf "%.6f", 59.3293 + i*0.000045}')"; sleep 2; done) &
+            ./scripts/replay-real-track.sh 200 /tmp/wisp-walk-stop &
             # /sdcard's emulated storage can lag a few seconds behind sys.boot_completed
             # (already waited for by this point) on a freshly booted emulator — without
             # this, screenrecord has occasionally failed outright with "Unable to open
