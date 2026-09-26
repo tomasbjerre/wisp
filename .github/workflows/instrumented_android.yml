@@ -74,6 +74,7 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           working-directory: ./android
+          disable-animations: true
           script: |
             # The AVD is restored from a cached snapshot (see the AVD cache step above),
             # and /sdcard persists as part of that snapshot — without this, a screenshot
@@ -128,7 +129,9 @@ jobs:
             ./gradlew assembleDebug assembleDebugAndroidTest
             adb shell screenrecord --time-limit 180 /sdcard/wisp-instruction-video.mp4 &
             RECORD_PID=$!
-            ./gradlew connectedDebugAndroidTest
+            # The runner executes each line as its own command, so the retry is a
+            # single-line `||`: one retry absorbs an occasional emulator timing flake.
+            ./gradlew connectedDebugAndroidTest || ./gradlew connectedDebugAndroidTest
             # Stopped with SIGINT (not left to hit --time-limit) so screenrecord finalizes
             # the mp4 container's trailing moov atom instead of producing a file every
             # player rejects as corrupt. Must be sent to the *remote* screenrecord
