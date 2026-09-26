@@ -1,8 +1,11 @@
 # UI Flows
 
 Wisp has three main screens — Home, Tracking, Detail — plus a Km splits
-view reached from Detail. No settings screen, no onboarding wizard, no
-account/login — simplicity is a feature.
+view reached from Detail, and a Voice feedback settings view reached
+from Tracking (see [Voice feedback](voice-feedback.md), and
+[Overview](overview.md#design-principle) for why this one narrow
+exception exists). No onboarding wizard, no account/login — simplicity
+is a feature.
 
 Whenever a screen/view listed here is added, renamed, or removed, update
 the "which screen" explainer and dropdown in
@@ -61,6 +64,9 @@ screen while recording.
   only lasts for this viewing of the screen — it isn't remembered between
   recordings. The same control, with the same behavior, is offered on
   Detail's map (below).
+- A settings control over another corner of the map opens
+  [Voice feedback settings](#2a-voice-feedback-settings) — see
+  [Voice feedback](voice-feedback.md).
 - A live stats panel below the map (not laid over it — see
   [Accessibility](accessibility.md#text-contrast)): current speed,
   elapsed distance, elapsed time — all zero while waiting for movement.
@@ -89,6 +95,20 @@ screen while recording.
   offers a way to fix it (see
   [Permissions & Privacy](permissions-and-privacy.md#required-access)) —
   advisory, not blocking: recording still works either way.
+
+## 2a. Voice feedback settings
+
+Opened from the settings control on [Tracking](#2-tracking-active-recording)'s
+map, over that screen. See [Voice feedback](voice-feedback.md) for the
+full contract.
+
+- A title and a back control returning to Tracking (system back does the
+  same).
+- A **Voice feedback** master switch.
+- Four switches choosing what each announcement includes: **Kilometers
+  completed**, **Average speed**, **Steps**, **Elapsed time**.
+- Every switch reflects and immediately persists its current setting —
+  no separate Save action.
 
 ## 3. Detail (a past or just-finished session)
 
@@ -159,6 +179,10 @@ that needs one; a dialog over Home is enough. It shows:
 
 ```
 Home ──(tap Start)──▶ Tracking ──(tap Stop)──▶ Detail ──(tap Km splits)──▶ Km splits
-  │                                                ▲
-  └──────────────────(tap a history row)───────────┘
+  │                       │  ▲                    ▲
+  │                       │  │                     │
+  │        (tap settings) ▼  │ (back)               │
+  │             Voice feedback settings              │
+  │                                                 ▲
+  └──────────────────(tap a history row)────────────┘
 ```

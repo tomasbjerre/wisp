@@ -3,26 +3,34 @@ package com.github.tomasbjerre.wisp.ui
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.github.tomasbjerre.wisp.data.SessionRepository
+import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
 import com.github.tomasbjerre.wisp.ui.detail.DetailScreen
 import com.github.tomasbjerre.wisp.ui.home.HomeScreen
 import com.github.tomasbjerre.wisp.ui.splits.KmSplitsScreen
 import com.github.tomasbjerre.wisp.ui.tracking.TrackingScreen
+import com.github.tomasbjerre.wisp.ui.tracking.VoiceFeedbackSettingsScreen
 
 private const val ROUTE_HOME = "home"
 private const val ROUTE_TRACKING = "tracking"
+private const val ROUTE_VOICE_FEEDBACK_SETTINGS = "tracking/voice-feedback"
 private const val ROUTE_DETAIL = "detail/{sessionId}"
 private const val ROUTE_KM_SPLITS = "detail/{sessionId}/splits"
 private const val ARG_SESSION_ID = "sessionId"
 
 /** See specs/ui-flows.md#navigation. */
 @Composable
-fun WispApp(repository: SessionRepository) {
+fun WispApp(
+    repository: SessionRepository,
+    voiceFeedbackPreferences: VoiceFeedbackPreferences,
+) {
     val navController = rememberNavController()
 
     // Every screen's map/panel boundary sits at a different height (see
@@ -53,37 +61,58 @@ fun WispApp(repository: SessionRepository) {
                     }
                 },
                 onCancelled = { navController.popBackStack() },
+                onOpenVoiceFeedbackSettings = { navController.navigate(ROUTE_VOICE_FEEDBACK_SETTINGS) },
             )
         }
-        composable(
-            ROUTE_DETAIL,
-            arguments = listOf(navArgument(ARG_SESSION_ID) { type = NavType.LongType }),
-        ) { backStackEntry ->
-            val sessionId = backStackEntry.arguments?.getLong(ARG_SESSION_ID)
-            if (sessionId != null) {
-                DetailScreen(
-                    repository = repository,
-                    sessionId = sessionId,
-                    onDeleted = {
-                        navController.navigate(ROUTE_HOME) { popUpTo(ROUTE_HOME) { inclusive = true } }
-                    },
-                    onBack = { navController.popBackStack() },
-                    onOpenKmSplits = { navController.navigate("detail/$sessionId/splits") },
-                )
-            }
+        composable(ROUTE_VOICE_FEEDBACK_SETTINGS) {
+            VoiceFeedbackSettingsScreen(
+                preferences = voiceFeedbackPreferences,
+                onBack = { navController.popBackStack() },
+            )
         }
-        composable(
-            ROUTE_KM_SPLITS,
-            arguments = listOf(navArgument(ARG_SESSION_ID) { type = NavType.LongType }),
-        ) { backStackEntry ->
-            val sessionId = backStackEntry.arguments?.getLong(ARG_SESSION_ID)
-            if (sessionId != null) {
-                KmSplitsScreen(
-                    repository = repository,
-                    sessionId = sessionId,
-                    onBack = { navController.popBackStack() },
-                )
-            }
+        detailDestination(navController, repository)
+        kmSplitsDestination(navController, repository)
+    }
+}
+
+private fun NavGraphBuilder.detailDestination(
+    navController: NavController,
+    repository: SessionRepository,
+) {
+    composable(
+        ROUTE_DETAIL,
+        arguments = listOf(navArgument(ARG_SESSION_ID) { type = NavType.LongType }),
+    ) { backStackEntry ->
+        val sessionId = backStackEntry.arguments?.getLong(ARG_SESSION_ID)
+        if (sessionId != null) {
+            DetailScreen(
+                repository = repository,
+                sessionId = sessionId,
+                onDeleted = {
+                    navController.navigate(ROUTE_HOME) { popUpTo(ROUTE_HOME) { inclusive = true } }
+                },
+                onBack = { navController.popBackStack() },
+                onOpenKmSplits = { navController.navigate("detail/$sessionId/splits") },
+            )
+        }
+    }
+}
+
+private fun NavGraphBuilder.kmSplitsDestination(
+    navController: NavController,
+    repository: SessionRepository,
+) {
+    composable(
+        ROUTE_KM_SPLITS,
+        arguments = listOf(navArgument(ARG_SESSION_ID) { type = NavType.LongType }),
+    ) { backStackEntry ->
+        val sessionId = backStackEntry.arguments?.getLong(ARG_SESSION_ID)
+        if (sessionId != null) {
+            KmSplitsScreen(
+                repository = repository,
+                sessionId = sessionId,
+                onBack = { navController.popBackStack() },
+            )
         }
     }
 }

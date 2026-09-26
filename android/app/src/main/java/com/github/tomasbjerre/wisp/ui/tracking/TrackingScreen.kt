@@ -10,8 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -40,6 +45,7 @@ import com.github.tomasbjerre.wisp.ui.common.RouteMap
 fun TrackingScreen(
     onStopped: (sessionId: Long) -> Unit,
     onCancelled: () -> Unit,
+    onOpenVoiceFeedbackSettings: () -> Unit,
 ) {
     val context = LocalContext.current
     val permissions = rememberLocationPermissionState()
@@ -115,6 +121,16 @@ fun TrackingScreen(
                 // — easy to miss or to hit the notification shade instead (see #55).
                 modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp),
             )
+            // See specs/ui-flows.md#2a-voice-feedback-settings and specs/voice-feedback.md.
+            Surface(
+                modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(12.dp),
+                shape = CircleShape,
+                tonalElevation = 4.dp,
+            ) {
+                IconButton(onClick = onOpenVoiceFeedbackSettings) {
+                    Icon(Icons.Filled.Settings, contentDescription = "Voice feedback settings")
+                }
+            }
         }
         TrackingStatsPanel(state = state, permissions = permissions)
     }

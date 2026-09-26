@@ -27,6 +27,7 @@ body:
         - Tracking (live recording)
         - Detail (a past or just-finished activity)
         - Km splits (per-kilometer breakdown, from Detail)
+        - Voice feedback settings (from Tracking)
         - Not tied to a specific screen / a new screen
 
   - type: textarea

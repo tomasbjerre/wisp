@@ -13,7 +13,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             WispTheme {
-                WispApp(repository = (application as WispApplication).repository)
+                val app = application as WispApplication
+                WispApp(repository = app.repository, voiceFeedbackPreferences = app.voiceFeedbackPreferences)
             }
         }
     }

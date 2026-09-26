@@ -55,6 +55,21 @@ pair `(previous point, a `segmentStart` point)` is never connected by a
 line, and the time/distance between them is never added to the session's
 totals.
 
+## Voice feedback settings
+
+See [Voice feedback](voice-feedback.md) for what each of these controls.
+Unlike Session/TrackPoint, this is a single set of key/value flags, not a
+growing history — one value per field, no identifier, no relations, no
+migrations to worry about beyond "missing means the fixed default below".
+
+| Field | Type | Default |
+|---|---|---|
+| `enabled` | boolean | `false` |
+| `announceKm` | boolean | `true` |
+| `announceSpeed` | boolean | `true` |
+| `announceSteps` | boolean | `true` |
+| `announceElapsedTime` | boolean | `true` |
+
 ## Required queries
 
 Any implementation's storage layer must support:

@@ -3,6 +3,7 @@ package com.github.tomasbjerre.wisp
 import android.app.Application
 import android.content.Context
 import com.github.tomasbjerre.wisp.data.SessionRepository
+import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
 import com.github.tomasbjerre.wisp.data.WispDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,11 +17,14 @@ import org.osmdroid.config.Configuration
 class WispApplication : Application() {
     lateinit var repository: SessionRepository
         private set
+    lateinit var voiceFeedbackPreferences: VoiceFeedbackPreferences
+        private set
 
     override fun onCreate() {
         super.onCreate()
         val database = WispDatabase.build(this)
         repository = SessionRepository(database.sessionDao(), database.trackPointDao())
+        voiceFeedbackPreferences = VoiceFeedbackPreferences(this)
 
         val osmdroidPrefs = getSharedPreferences("osmdroid", Context.MODE_PRIVATE)
         Configuration.getInstance().load(this, osmdroidPrefs)
