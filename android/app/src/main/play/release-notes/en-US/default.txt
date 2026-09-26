@@ -1,4 +1,8 @@
-Wisp 0.7.0
-- chore(changelog): v0.7.0
-- feat(android): show steps per km in the Km splits view (#95) (#96)
-- fix(android): isolate instrumented tests so Release Android passes (#93) (#94)
+wisp 0.8.0
+- feat: record heart rate from a BLE heart rate monitor (#127)
+- feat(android): add a Metric/Imperial unit setting on Home (#124)
+- test: seed screenshots and tests with a real recorded activity (#123)
+- fix(android): don't restart tracking when returning from voice settings (#126)
+- feat(android): show average and fastest km time on Tracking/Detail (#122)
+- feat: voice feedback (refs #116) (#118)
+- chore(deps): upgrade to Gradle 9, AGP 9, and co
