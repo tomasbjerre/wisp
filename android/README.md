@@ -165,22 +165,17 @@ Fix a location so Tracking has a real position instead of hanging on
 "Finding your location…" (see `specs/tracking.md#start-gating`):
 
 ```bash
-adb emu geo fix 18.0686 59.3293
+scripts/replay-real-track.sh --first-fix-only
 ```
 
 `ScreenshotTest`'s live-Tracking captures (recording/paused/satellite) need
 actual movement, not just a fixed point — Wisp only starts the clock once a
-fix implies at least walking pace (`specs/tracking.md#start-gating`). Feed
-it a slow walk north while the instrumented test runs, e.g. in a background
-loop:
+fix implies at least walking pace (`specs/tracking.md#start-gating`). Replay
+the real recorded walk from #121 (the same data the seeded screenshots use)
+while the instrumented test runs, in the background:
 
 ```bash
-lat=59.3293
-for i in $(seq 1 60); do
-  lat=$(echo "$lat + 0.000045" | bc)   # ~5m north per step
-  adb emu geo fix 18.0686 "$lat"
-  sleep 2
-done &
+scripts/replay-real-track.sh &
 ```
 
 Then run the test and pull the results as above. Kill the emulator
