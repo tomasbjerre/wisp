@@ -161,7 +161,6 @@ just-finished:
   (when a heart rate was recorded), and (once
   you've completed at least one kilometer) your average time per
   kilometer, plus your fastest one once you've completed a second.
-  (`7-detail` above shows it, max heart rate included.)
 
 - **Km splits (N)** — opens the [Km splits](#km-splits) view, N being
   the number of complete kilometers. Shown only once you've covered at
