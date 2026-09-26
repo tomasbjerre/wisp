@@ -71,14 +71,6 @@ fun TrackingScreen(
     val permissions = rememberLocationPermissionState()
     val state by TrackingService.state.collectAsStateWithLifecycle()
     val unit by unitPreferences.unit.collectAsStateWithLifecycle()
-    val heartRateEnabled by heartRatePreferences.enabled.collectAsStateWithLifecycle()
-    val heartRateAvailable = rememberHeartRateAvailable()
-
-    // See specs/heart-rate.md#setting: with nothing to connect to, the setting is switched
-    // off (and persisted as off) rather than left on for a monitor that can't be reached.
-    LaunchedEffect(heartRateAvailable, heartRateEnabled) {
-        if (!heartRateAvailable && heartRateEnabled) heartRatePreferences.setEnabled(false)
-    }
 
     // See specs/ui-flows.md#2-tracking-active-recording: back behaves exactly like
     // tapping Stop (below), not like leaving the screen — without this, system/gesture
@@ -168,9 +160,7 @@ fun TrackingScreen(
             state = state,
             permissions = permissions,
             unit = unit,
-            heartRateEnabled = heartRateEnabled,
-            heartRateAvailable = heartRateAvailable,
-            onHeartRateEnabledChange = heartRatePreferences::setEnabled,
+            heartRatePreferences = heartRatePreferences,
         )
     }
 }
@@ -180,9 +170,7 @@ private fun TrackingStatsPanel(
     state: TrackingUiState,
     permissions: LocationPermissionState,
     unit: UnitSystem,
-    heartRateEnabled: Boolean,
-    heartRateAvailable: Boolean,
-    onHeartRateEnabledChange: (Boolean) -> Unit,
+    heartRatePreferences: HeartRatePreferences,
 ) {
     Surface(tonalElevation = 4.dp) {
         // navigationBarsPadding: MainActivity draws edge-to-edge, so without this
@@ -243,18 +231,31 @@ private fun TrackingStatsPanel(
                     style = MaterialTheme.typography.bodyLarge,
                 )
             }
-            // See specs/heart-rate.md#display: omitted with the setting off; a placeholder,
-            // not hidden, while on but without a current reading, so it's clear Wisp is
-            // still looking for a monitor.
-            if (heartRateEnabled) HeartRateLine(state)
-            HeartRateSwitch(
-                enabled = heartRateEnabled,
-                available = heartRateAvailable,
-                onEnabledChange = onHeartRateEnabledChange,
-            )
+            HeartRateSection(state, heartRatePreferences)
             TrackingControls(isPaused = state.isPaused, isWaitingForMovement = state.isWaitingForMovement)
         }
     }
+}
+
+/** The heart rate line and its switch — see specs/heart-rate.md#setting and #display. */
+@Composable
+private fun HeartRateSection(
+    state: TrackingUiState,
+    heartRatePreferences: HeartRatePreferences,
+) {
+    val enabled by heartRatePreferences.enabled.collectAsStateWithLifecycle()
+    val available = rememberHeartRateAvailable()
+
+    // With nothing to connect to, the setting is switched off (and persisted as off)
+    // rather than left on for a monitor that can't be reached.
+    LaunchedEffect(available, enabled) {
+        if (!available && enabled) heartRatePreferences.setEnabled(false)
+    }
+
+    // Omitted with the setting off; a placeholder, not hidden, while on but without a
+    // current reading, so it's clear Wisp is still looking for a monitor.
+    if (enabled) HeartRateLine(state)
+    HeartRateSwitch(enabled = enabled, available = available, onEnabledChange = heartRatePreferences::setEnabled)
 }
 
 /** Whether Bluetooth can currently reach a monitor, kept current as it's turned on/off. */
