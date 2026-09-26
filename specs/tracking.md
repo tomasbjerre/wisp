@@ -151,6 +151,19 @@ that session's Detail screen.
   [Tracking](ui-flows.md#2-tracking-active-recording) (only the most
   recently completed one) so a user can see which parts of the activity
   were faster or slower.
+- The **fastest** complete km's own time is also shown live on
+  [Tracking](ui-flows.md#2-tracking-active-recording), next to the
+  latest split — null (nothing shown) until a second complete km exists
+  to compare against, the same threshold as the Km splits view's
+  fastest/slowest (below).
+- [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session)'s
+  summary also shows the session's **average time per kilometer**
+  (across every complete km) and, once there are at least two to
+  compare, the **fastest** one's own time — the same values the Km
+  splits view lets someone read kilometer by kilometer, surfaced
+  without having to open it. Omitted entirely with no complete km at
+  all (average) or fewer than two (fastest), same as the live Tracking
+  case above.
 - Computed from the session's recorded points on demand (not stored
   alongside the session, unlike distance/duration/speed) — points are
   already loaded to draw the route on Detail, and already held in memory

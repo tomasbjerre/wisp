@@ -48,6 +48,7 @@ import com.github.tomasbjerre.wisp.ui.Formatting
 import com.github.tomasbjerre.wisp.ui.common.MapType
 import com.github.tomasbjerre.wisp.ui.common.MapTypeToggle
 import com.github.tomasbjerre.wisp.ui.common.RouteMap
+import com.github.tomasbjerre.wisp.ui.splits.KmSplitRows
 import org.osmdroid.views.MapView
 
 /** See specs/ui-flows.md#3-detail-a-past-or-just-finished-session. */
@@ -97,7 +98,7 @@ fun DetailScreen(
 
             SessionSummaryPanel(
                 session = session,
-                kmSplitCount = kmSplitsSeconds.size,
+                kmSplitsSeconds = kmSplitsSeconds,
                 onOpenKmSplits = onOpenKmSplits,
                 onBack = onBack,
                 onExportImage = {
@@ -168,7 +169,7 @@ private fun DetailMap(
 @Composable
 private fun SessionSummaryPanel(
     session: Session?,
-    kmSplitCount: Int,
+    kmSplitsSeconds: List<Long>,
     onOpenKmSplits: () -> Unit,
     onBack: () -> Unit,
     onExportImage: () -> Unit,
@@ -187,16 +188,19 @@ private fun SessionSummaryPanel(
             val stepsPerMinute = Formatting.stepsPerMinute(session.steps, session.durationSeconds)
             Text(stepsPerMinute, style = MaterialTheme.typography.bodyLarge)
         }
+        // See specs/tracking.md#km-splits. Omitted entirely with no complete km at all,
+        // same reasoning as the steps line above.
+        paceLine(kmSplitsSeconds)?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
         // See specs/ui-flows.md#4-km-splits: the splits themselves live on their own
         // view (#86) — a list squeezed in here left room for only a few rows, and took
         // that room from the map. Omitted entirely under 1 km, not just disabled.
-        if (kmSplitCount > 0) {
+        if (kmSplitsSeconds.isNotEmpty()) {
             TextButton(
                 onClick = onOpenKmSplits,
                 contentPadding = PaddingValues(0.dp),
                 modifier = Modifier.padding(top = 4.dp),
             ) {
-                Text("Km splits ($kmSplitCount)")
+                Text("Km splits (${kmSplitsSeconds.size})")
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
             }
         }
@@ -267,3 +271,11 @@ private fun distanceAndDurationLine(session: Session?): String =
 
 private fun speedsLine(session: Session?): String =
     session?.let { "Avg ${Formatting.speedKmh(it.averageSpeedMps)} · Max ${Formatting.speedKmh(it.maxSpeedMps)}" } ?: ""
+
+/** See specs/tracking.md#km-splits. Null with no complete km at all — nothing to say. */
+private fun paceLine(kmSplitsSeconds: List<Long>): String? {
+    val average = KmSplitRows.averageSeconds(kmSplitsSeconds) ?: return null
+    val fastest = KmSplitRows.fastestSeconds(kmSplitsSeconds)
+    val fastestPart = fastest?.let { " · Fastest ${Formatting.duration(it)}/km" } ?: ""
+    return "Avg ${Formatting.duration(average)}/km$fastestPart"
+}

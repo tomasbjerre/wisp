@@ -80,11 +80,12 @@ A few more things on this screen:
   the map switches between the standard street map and a satellite view,
   useful for checking terrain. It resets back to the standard map next
   time you start a new activity.
-- **Steps and last km split** — once you have a step count or have
-  completed at least one kilometer, this screen also shows your current
-  steps/minute and how long that last kilometer took. (Not every phone
-  has a step-count sensor — if yours doesn't, or the permission wasn't
-  granted, this line simply doesn't appear.)
+- **Steps and km splits** — once you have a step count or have completed
+  at least one kilometer, this screen also shows your current
+  steps/minute, how long that last kilometer took, and (once you've
+  completed a second one) your fastest kilometer so far. (Not every
+  phone has a step-count sensor — if yours doesn't, or the permission
+  wasn't granted, the steps line simply doesn't appear.)
 - **Pause / Continue** — pauses recording without ending the activity;
   tap Continue to resume. Wisp also pauses automatically if you stop
   moving for a while (about 15 seconds) — same button, same behavior,
@@ -101,6 +102,20 @@ A few more things on this screen:
   (finalize the activity and navigate on) rather than silently leaving
   it running in the background — there's no way to abandon a recording
   session with a stray back tap.
+- **Voice feedback settings** — the gear icon opens a settings screen for
+  optional spoken announcements (handy with earbuds, so you get progress
+  updates without looking at your phone):
+
+  <img src="screenshots/tracking-voice-feedback-settings.jpg" alt="Voice feedback settings screen" width="300">
+
+  A master **Voice feedback** switch, off by default, plus four switches
+  for what each announcement includes: **Kilometers completed**,
+  **Average speed per kilometer**, **Steps per kilometer** (hidden when
+  your session has no step count at all), and **Elapsed time** (the
+  session's total, not just the last kilometer's). Announcements happen
+  once per completed kilometer, only while actively recording (not
+  paused). Every switch persists across app restarts and takes effect
+  immediately, even mid-session.
 
 Here's the satellite view from the toggle mentioned above:
 
@@ -121,7 +136,9 @@ just-finished:
   <img src="screenshots/detail-satellite.jpg" alt="Detail screen with the satellite map view" width="300">
 
 - **Summary stats** — date/time, nearest city, distance, duration,
-  average and max speed, and (when available) steps/minute.
+  average and max speed, (when available) steps/minute, and (once
+  you've completed at least one kilometer) your average time per
+  kilometer, plus your fastest one once you've completed a second.
 - **Km splits (N)** — opens the [Km splits](#km-splits) view, N being
   the number of complete kilometers. Shown only once you've covered at
   least 1 km.

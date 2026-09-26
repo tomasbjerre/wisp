@@ -4,6 +4,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -127,6 +128,18 @@ class ScreenshotTest {
         composeRule.waitForIdle()
     }
 
+    /**
+     * See specs/ui-flows.md#2a-voice-feedback-settings. Unnumbered, same reasoning as
+     * captureKmSplits: the Play listing slots are already spent by "4-tracking-recording".
+     */
+    private fun captureVoiceFeedbackSettings() {
+        composeRule.onNodeWithContentDescription("Voice feedback settings").performClick()
+        composeRule.waitForIdle()
+        screenshot("tracking-voice-feedback-settings")
+        composeRule.onNodeWithContentDescription("Back").performClick()
+        composeRule.waitForIdle()
+    }
+
     private fun captureTrackingStates() {
         // isRecording is true for the whole life of a session (see TrackingService.start)
         // — isLocating and isWaitingForMovement are what actually distinguish these
@@ -152,6 +165,8 @@ class ScreenshotTest {
         }
         composeRule.waitForIdle()
         screenshot("4-tracking-recording")
+
+        captureVoiceFeedbackSettings()
 
         // Satellite map toggle (specs/ui-flows.md#2-tracking-active-recording).
         composeRule.onNodeWithText("Satellite").performClick()
