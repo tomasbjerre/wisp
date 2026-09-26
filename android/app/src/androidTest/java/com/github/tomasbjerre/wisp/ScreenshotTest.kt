@@ -54,9 +54,9 @@ class ScreenshotTest {
 
         val app = instrumentation.targetContext.applicationContext as WispApplication
         runBlocking {
-            // Varying pace, so Detail's km splits (see captureKmSplits) have something to
-            // compare.
-            seedSessionWithVaryingPace(app, daysAgo = 1)
+            // A real recorded activity (issue #121) - varying pace, so Detail's km splits
+            // (see captureKmSplits) have something to compare, and real GPS noise besides.
+            seedRealSession(app, daysAgo = 1)
             seedSession(app, daysAgo = 4, durationSeconds = 3_120, speedMps = 4.0)
         }
         composeRule.waitForIdle()

@@ -1,5 +1,7 @@
 package com.github.tomasbjerre.wisp
 
+import androidx.test.platform.app.InstrumentationRegistry
+import com.github.tomasbjerre.wisp.export.TrackPointCsvParser
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToLong
@@ -90,6 +92,62 @@ suspend fun seedSessionWithVaryingPace(
     repository.finishSession(sessionId, timestamp, steps = steps.roundToLong())
 }
 
+/**
+ * Inserts one finished session from a real recorded activity (a walk, ~7.85 km /
+ * ~49 min) instead of procedurally-generated points — see issue #121. The fixture is
+ * `real-activity-track-points.csv` (an androidTest asset), byte-for-byte what
+ * `TrackPointCsvExporter` would produce for this same activity, exported from Wisp
+ * itself and attached to that issue. Used in place of [seedSessionWithVaryingPace] for
+ * the richer Detail/Km-splits screenshots ([ScreenshotTest]), since real GPS noise and
+ * pace variation makes for more realistic screenshots than a sine-curve route.
+ *
+ * The CSV has no per-point step count (only a session-total in the matching summary
+ * export, 8 501 steps for this activity) — steps are synthesized the same way
+ * [seedSessionWithVaryingPace] does it: a steady cadence, here picked so the running
+ * total lands on that same real total by the last point.
+ */
+suspend fun seedRealSession(
+    app: WispApplication,
+    daysAgo: Int,
+) {
+    val repository = app.repository
+    val csv =
+        InstrumentationRegistry
+            .getInstrumentation()
+            .context.assets
+            .open(ASSET_NAME)
+            .bufferedReader()
+            .use { it.readText() }
+    val rows = TrackPointCsvParser.parse(csv)
+    check(rows.isNotEmpty()) { "$ASSET_NAME has no track points" }
+
+    val firstTimestamp = rows.first().timestamp
+    val durationMillis = rows.last().timestamp - firstTimestamp
+    val startedAt = System.currentTimeMillis() - daysAgo * MILLIS_PER_DAY - durationMillis
+    val sessionId = repository.startSession(startedAt)
+
+    // A steady cadence for this activity's total steps over its total time, so the
+    // running count lands exactly on REAL_SESSION_TOTAL_STEPS by the last point.
+    val stepsPerMilli = REAL_SESSION_TOTAL_STEPS.toDouble() / durationMillis
+    var steps = 0.0
+    rows.forEachIndexed { index, row ->
+        if (index > 0) steps += stepsPerMilli * (row.timestamp - rows[index - 1].timestamp)
+        repository.appendPoint(
+            sessionId = sessionId,
+            sequence = index,
+            timestamp = startedAt + (row.timestamp - firstTimestamp),
+            latitude = row.latitude,
+            longitude = row.longitude,
+            accuracyMeters = 5f,
+            speedMps = row.speedMps,
+            segmentStart = index == 0,
+            steps = steps.roundToLong(),
+        )
+    }
+
+    repository.finishSession(sessionId, startedAt + durationMillis, steps = steps.roundToLong())
+}
+
 /** Seconds per km (i.e. milliseconds per meter) for the step ending at point [i]. */
 private fun secondsPerKmAt(i: Int): Double {
     val km = ((i - 1).coerceAtLeast(0) * SPLIT_SEED_STEP_METERS / 1_000).toInt()
@@ -106,3 +164,8 @@ private const val METERS_PER_DEGREE_LATITUDE = 6_371_000.0 * PI / 180
 private const val MILLIS_PER_DAY = 86_400_000L
 private const val BASE_LATITUDE = 59.3293
 private const val BASE_LONGITUDE = 18.0686
+
+// See seedRealSession: from wisp-activity-2026-09-26_09-14-26.csv, the summary export
+// matching real-activity-track-points.csv's track points (issue #121).
+private const val ASSET_NAME = "real-activity-track-points.csv"
+private const val REAL_SESSION_TOTAL_STEPS = 8_501L
