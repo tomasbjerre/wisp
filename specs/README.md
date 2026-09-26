@@ -28,3 +28,5 @@ source of truth for behavior.
   needed and how data is handled
 - [Export](export.md) — exporting history as CSV, and a single activity as an image
 - [Accessibility](accessibility.md) — map clarity and text contrast, everywhere
+- [Voice feedback](voice-feedback.md) — optional spoken announcements
+  during a live recording

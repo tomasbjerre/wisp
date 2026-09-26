@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
  */
 class TrackingService : LifecycleService() {
     private val repository by lazy { (application as WispApplication).repository }
+    private val voiceFeedbackPreferences by lazy { (application as WispApplication).voiceFeedbackPreferences }
     private val locationTracker by lazy { LocationTracker(this) }
     private val geocodingService by lazy { GeocodingService(this) }
     private val stepCounterTracker by lazy { StepCounterTracker(this) }
@@ -41,6 +42,10 @@ class TrackingService : LifecycleService() {
     private var movementGate = MovementGate()
     private var stepRecorder = StepRecorder()
     private var stationaryGate = StationaryGate()
+    private var voiceFeedbackSpeaker: VoiceFeedbackSpeaker? = null
+
+    // See specs/voice-feedback.md: announces at most once per completed km.
+    private var announcedCompleteKmCount = 0
 
     private var sessionId: Long? = null
     private var sequence = 0
@@ -75,6 +80,8 @@ class TrackingService : LifecycleService() {
         movementGate = MovementGate()
         stepRecorder = StepRecorder()
         stationaryGate = StationaryGate()
+        voiceFeedbackSpeaker = VoiceFeedbackSpeaker(this)
+        announcedCompleteKmCount = 0
         sequence = 0
         pausedAccumulatedMillis = 0L
         lifecycleScope.launch {
@@ -133,6 +140,8 @@ class TrackingService : LifecycleService() {
         locationTracker.stop()
         stepCounterTracker.stop()
         stopTicker()
+        voiceFeedbackSpeaker?.shutdown()
+        voiceFeedbackSpeaker = null
         val id = sessionId
         // Never saw movement (see specs/tracking.md#start-gating) => no points were ever
         // recorded, so there's nothing to show — discard rather than saving a session
@@ -219,17 +228,33 @@ class TrackingService : LifecycleService() {
             )
             val points = repository.getPoints(id)
             val summary = GeoUtils.summarize(points)
+            val splits = GeoUtils.kmSplits(points)
             _state.update {
                 it.copy(
                     distanceMeters = summary.distanceMeters,
                     currentSpeedMps = recorder.currentSpeedMps,
                     route = points.map { p -> LatLon(p.latitude, p.longitude) },
                     steps = stepRecorder.steps,
-                    latestKmSplitSeconds = GeoUtils.kmSplitsSeconds(points).lastOrNull(),
+                    latestKmSplitSeconds = splits.completeSeconds.lastOrNull(),
                 )
             }
+            announceNewlyCompletedKm(splits)
             updateNotification()
         }
+    }
+
+    /** See specs/voice-feedback.md. [VoiceFeedbackAnnouncement] decides what (if
+     * anything) to say; this just speaks it and remembers the km it just announced. */
+    private fun announceNewlyCompletedKm(splits: GeoUtils.KmSplits) {
+        val text =
+            VoiceFeedbackAnnouncement.forNewlyCompletedKm(
+                splits = splits,
+                previousCompleteCount = announcedCompleteKmCount,
+                elapsedSeconds = _state.value.elapsedSeconds,
+                settings = voiceFeedbackPreferences.settings.value,
+            )
+        announcedCompleteKmCount = splits.completeSeconds.size
+        if (text != null) voiceFeedbackSpeaker?.speak(text)
     }
 
     /**
