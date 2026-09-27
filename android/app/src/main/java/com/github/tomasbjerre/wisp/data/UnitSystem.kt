@@ -29,9 +29,6 @@ enum class UnitSystem {
     val distanceWordPlural: String
         get() = if (this == METRIC) "kilometers" else "miles"
 
-    val speedWords: String
-        get() = if (this == METRIC) "kilometers per hour" else "miles per hour"
-
     companion object {
         const val METERS_PER_KM = 1_000.0
         const val METERS_PER_MILE = 1_609.34

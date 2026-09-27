@@ -52,18 +52,18 @@ object VoiceFeedbackAnnouncement {
                 if (splitNumber == 1) "1 ${unit.distanceWordSingular}" else "$splitNumber ${unit.distanceWordPlural}"
         }
         if (settings.announceSpeed && lastSplitDurationSeconds > 0) {
-            // See specs/units.md: a split already covers whichever unit's own distance
-            // (a mile under imperial, not a km converted to one), so seconds-per-hour
-            // over it is already units-per-hour in the right unit — no conversion needed.
-            val perHour = SECONDS_PER_HOUR / lastSplitDurationSeconds
-            parts += "%.1f ${unit.speedWords}".format(perHour)
+            // Said as pace (time per unit distance, e.g. "5 minutes 13 seconds per
+            // kilometer") to match how Wisp shows this everywhere else it appears (the
+            // live "Last kilometer"/"Fastest kilometer" stats and the Km splits view are
+            // all a duration, never a km/h figure) — see #138.
+            parts += "${durationPhrase(lastSplitDurationSeconds)} per ${unit.distanceWordSingular}"
         }
         if (settings.announceSteps && lastSplitSteps != null) parts += "$lastSplitSteps steps"
-        if (settings.announceElapsedTime) parts += elapsedTimePhrase(elapsedSeconds)
+        if (settings.announceElapsedTime) parts += durationPhrase(elapsedSeconds)
         return parts.joinToString(". ")
     }
 
-    private fun elapsedTimePhrase(seconds: Long): String {
+    private fun durationPhrase(seconds: Long): String {
         val hours = seconds / 3_600
         val minutes = (seconds % 3_600) / 60
         val remainingSeconds = seconds % 60
@@ -78,6 +78,4 @@ object VoiceFeedbackAnnouncement {
         value: Long,
         singular: String,
     ) = "$value $singular" + if (value == 1L) "" else "s"
-
-    private const val SECONDS_PER_HOUR = 3_600.0
 }

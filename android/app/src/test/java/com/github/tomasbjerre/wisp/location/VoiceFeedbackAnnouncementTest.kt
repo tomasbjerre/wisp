@@ -98,7 +98,7 @@ class VoiceFeedbackAnnouncementTest {
                 unit = UnitSystem.METRIC,
             )
 
-        assertThat(text).isEqualTo("1 kilometer. 12.0 kilometers per hour. 963 steps. 5 minutes 5 seconds")
+        assertThat(text).isEqualTo("1 kilometer. 5 minutes 0 seconds per kilometer. 963 steps. 5 minutes 5 seconds")
     }
 
     @Test
@@ -126,7 +126,7 @@ class VoiceFeedbackAnnouncementTest {
                 unit = UnitSystem.IMPERIAL,
             )
 
-        assertThat(text).isEqualTo("1 mile. 12.0 miles per hour. 963 steps. 5 minutes 5 seconds")
+        assertThat(text).isEqualTo("1 mile. 5 minutes 0 seconds per mile. 963 steps. 5 minutes 5 seconds")
     }
 
     @Test
@@ -201,6 +201,33 @@ class VoiceFeedbackAnnouncementTest {
             )
 
         assertThat(text).isNull()
+    }
+
+    @Test
+    fun `average speed is said as a pace, matching the visual km-splits time, not a km-per-hour figure`() {
+        // Regression test for #138: this used to convert the split's duration into a
+        // km/h number (e.g. "12.0 kilometers per hour") - a different unit than every
+        // other place Wisp shows per-km performance (Detail, Km splits, and the live
+        // Tracking panel all show a duration, e.g. "5:13", never a speed).
+        val splits = GeoUtils.KmSplits(listOf(313L), null)
+
+        val text =
+            VoiceFeedbackAnnouncement.forNewlyCompletedKm(
+                splits = splits,
+                previousCompleteCount = 0,
+                elapsedSeconds = 313,
+                settings =
+                    VoiceFeedbackSettings(
+                        enabled = true,
+                        announceKm = false,
+                        announceSpeed = true,
+                        announceSteps = false,
+                        announceElapsedTime = false,
+                    ),
+                unit = UnitSystem.METRIC,
+            )
+
+        assertThat(text).isEqualTo("5 minutes 13 seconds per kilometer")
     }
 
     @Test
