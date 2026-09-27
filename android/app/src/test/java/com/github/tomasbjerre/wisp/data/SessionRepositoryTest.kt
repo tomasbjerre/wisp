@@ -217,6 +217,23 @@ class SessionRepositoryTest {
         }
 
     @Test
+    fun `finishing a session excludes noise points from its distance and speed`() =
+        runTest {
+            // See specs/tracking.md#noise — a noise point is stored but never counts
+            // toward the session's own stats.
+            val sessionId = repository.startSession(startedAt = 0)
+            repository.appendPoint(sessionId, 0, 0, 59.0000, 18.0, 5f, 1f, segmentStart = true)
+            // A GPS glitch far away, flagged noise — must not blow up distance/speed.
+            repository.appendPoint(sessionId, 1, 1_000, 60.0000, 18.0, 5f, 500f, segmentStart = false, isNoise = true)
+            repository.appendPoint(sessionId, 2, 10_000, 59.0010, 18.0, 5f, 9f, segmentStart = false)
+
+            repository.finishSession(sessionId, endedAt = 10_000)
+
+            val session = repository.observeSession(sessionId).first()!!
+            assertThat(session.maxSpeedMps).isCloseTo(9.0, within(0.0001))
+        }
+
+    @Test
     fun `finishing a session persists its step count`() =
         runTest {
             // See specs/tracking.md#step-count.
@@ -280,6 +297,21 @@ class SessionRepositoryTest {
             // Simulates the app being killed while still "locating" or "waiting for
             // movement" (specs/tracking.md#start-gating) — never recorded a point.
             val sessionId = repository.startSession(startedAt = 0)
+
+            val recovered = repository.recoverUnfinishedSessions()
+
+            assertThat(recovered).isEmpty()
+            assertThat(repository.observeSession(sessionId).first()).isNull()
+        }
+
+    @Test
+    fun `an unfinished session with only noise points is discarded, not recovered`() =
+        runTest {
+            // See specs/tracking.md#noise — a session interrupted before movement was
+            // ever confirmed has only noise points by then (specs/tracking.md#start-gating),
+            // same as one with no points at all.
+            val sessionId = repository.startSession(startedAt = 0)
+            repository.appendPoint(sessionId, 0, 0, 59.0, 18.0, 5f, null, segmentStart = true, isNoise = true)
 
             val recovered = repository.recoverUnfinishedSessions()
 

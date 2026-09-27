@@ -46,7 +46,19 @@ internal val MIGRATION_4_5 =
         }
     }
 
-@Database(entities = [Session::class, TrackPoint::class], version = 5, exportSchema = false)
+/**
+ * Adds TrackPoint.isNoise (see specs/tracking.md#noise). Existing points get false —
+ * they were already filtered to only ever hold what a pre-#137 Wisp considered clean,
+ * so nothing they currently mean changes; only new recordings can produce a true one.
+ */
+internal val MIGRATION_5_6 =
+    object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE track_points ADD COLUMN isNoise INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
+@Database(entities = [Session::class, TrackPoint::class], version = 6, exportSchema = false)
 abstract class WispDatabase : RoomDatabase() {
     abstract fun sessionDao(): SessionDao
 
@@ -56,7 +68,7 @@ abstract class WispDatabase : RoomDatabase() {
         fun build(context: Context): WispDatabase =
             Room
                 .databaseBuilder(context.applicationContext, WispDatabase::class.java, "wisp.db")
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 // Safety net only, not the primary path — see
                 // specs/data-model.md#data-integrity-on-start. Every schema change that has
                 // actually shipped to real users has an explicit Migration above; this only

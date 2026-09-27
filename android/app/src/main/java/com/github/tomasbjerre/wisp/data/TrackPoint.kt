@@ -32,4 +32,13 @@ data class TrackPoint(
     val steps: Long = 0,
     /** The current heart rate when recorded — see specs/heart-rate.md#recording. Null if there was none. */
     val heartRateBpm: Int? = null,
+    /**
+     * True if this point looks like an error (poor accuracy, an implausible jump, GPS
+     * jitter) or was recorded before movement was ever confirmed (see
+     * specs/tracking.md#start-gating) — see specs/data-model.md#trackpoint and
+     * specs/tracking.md#noise. Excluded from everything the app itself computes or
+     * shows (route, distance, speed, splits); exported as-is so a user's own tooling
+     * can decide what to do with it.
+     */
+    val isNoise: Boolean = false,
 )

@@ -4,14 +4,14 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 
-/** Verifies specs/tracking.md#location-sampling and #speed-calculation. */
+/** Verifies specs/tracking.md#location-sampling, #speed-calculation, and #noise. */
 class TrackRecorderTest {
     @Test
-    fun `a fix with poor accuracy is discarded`() {
+    fun `a fix with poor accuracy is recorded as noise`() {
         val recorder = TrackRecorder()
         val fix = fix(lat = 59.0, lon = 18.0, accuracy = 45f, t = 0)
 
-        assertThat(recorder.accept(fix)).isNull()
+        assertThat(recorder.accept(fix).isNoise).isTrue()
     }
 
     @Test
@@ -21,19 +21,19 @@ class TrackRecorderTest {
 
         val recorded = recorder.accept(fix)
 
-        assertThat(recorded).isNotNull
-        assertThat(recorded!!.segmentStart).isTrue()
+        assertThat(recorded.isNoise).isFalse()
+        assertThat(recorded.segmentStart).isTrue()
     }
 
     @Test
-    fun `gps jitter below the movement threshold is not recorded as a new point`() {
+    fun `gps jitter below the movement threshold is recorded as noise`() {
         val recorder = TrackRecorder()
         recorder.accept(fix(lat = 59.00000, lon = 18.00000, accuracy = 5f, t = 0))
 
         // ~1 meter of latitude drift — GPS noise, not real movement.
         val jitter = recorder.accept(fix(lat = 59.00001, lon = 18.00000, accuracy = 5f, t = 1_000))
 
-        assertThat(jitter).isNull()
+        assertThat(jitter.isNoise).isTrue()
     }
 
     @Test
@@ -44,18 +44,31 @@ class TrackRecorderTest {
         // ~11 meters of latitude movement.
         val moved = recorder.accept(fix(lat = 59.0001, lon = 18.0000, accuracy = 5f, t = 1_000))
 
-        assertThat(moved).isNotNull
+        assertThat(moved.isNoise).isFalse()
     }
 
     @Test
-    fun `a gps jump implying an impossible speed is discarded`() {
+    fun `a gps jump implying an impossible speed is recorded as noise`() {
         val recorder = TrackRecorder()
         recorder.accept(fix(lat = 59.0000, lon = 18.0000, accuracy = 5f, t = 0))
 
         // ~500m in 1s => ~500 m/s — a GPS glitch, not real movement.
         val jump = recorder.accept(fix(lat = 59.0045, lon = 18.0000, accuracy = 5f, t = 1_000))
 
-        assertThat(jump).isNull()
+        assertThat(jump.isNoise).isTrue()
+    }
+
+    @Test
+    fun `a noise point never becomes the baseline for judging the next fix`() {
+        val recorder = TrackRecorder()
+        recorder.accept(fix(lat = 59.0000, lon = 18.0000, accuracy = 5f, t = 0))
+        // A GPS glitch far away - noise, must not become the new "last known good" point.
+        recorder.accept(fix(lat = 59.0045, lon = 18.0000, accuracy = 5f, t = 1_000))
+
+        // Real movement from the *original* point, one second after it (not the glitch).
+        val moved = recorder.accept(fix(lat = 59.0001, lon = 18.0000, accuracy = 5f, t = 2_000))
+
+        assertThat(moved.isNoise).isFalse()
     }
 
     @Test
@@ -66,7 +79,7 @@ class TrackRecorderTest {
         // ~50m in 1s => ~50 m/s (180 km/h) — fast, but within the generous cap.
         val moved = recorder.accept(fix(lat = 59.00045, lon = 18.0000, accuracy = 5f, t = 1_000))
 
-        assertThat(moved).isNotNull
+        assertThat(moved.isNoise).isFalse()
     }
 
     @Test
@@ -78,8 +91,8 @@ class TrackRecorderTest {
         // Resumes 50km away after an hour — a real gap while paused, not a GPS glitch.
         val resumed = recorder.accept(fix(lat = 59.5000, lon = 18.0000, accuracy = 5f, t = 3_600_000))
 
-        assertThat(resumed).isNotNull
-        assertThat(resumed!!.segmentStart).isTrue()
+        assertThat(resumed.isNoise).isFalse()
+        assertThat(resumed.segmentStart).isTrue()
     }
 
     @Test
@@ -92,8 +105,8 @@ class TrackRecorderTest {
         // but a resume must always produce a segment-start point.
         val resumed = recorder.accept(fix(lat = 59.0, lon = 18.0, accuracy = 5f, t = 60_000))
 
-        assertThat(resumed).isNotNull
-        assertThat(resumed!!.segmentStart).isTrue()
+        assertThat(resumed.isNoise).isFalse()
+        assertThat(resumed.segmentStart).isTrue()
     }
 
     @Test

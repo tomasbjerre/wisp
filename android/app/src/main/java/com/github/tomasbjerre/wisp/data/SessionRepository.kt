@@ -32,6 +32,7 @@ class SessionRepository(
         segmentStart: Boolean,
         steps: Long = 0,
         heartRateBpm: Int? = null,
+        isNoise: Boolean = false,
     ) {
         trackPointDao.insert(
             TrackPoint(
@@ -45,6 +46,7 @@ class SessionRepository(
                 segmentStart = segmentStart,
                 steps = steps,
                 heartRateBpm = heartRateBpm,
+                isNoise = isNoise,
             ),
         )
     }
@@ -62,7 +64,9 @@ class SessionRepository(
         maxHeartRateBpm: Int? = null,
     ) {
         val session = sessionDao.getById(sessionId) ?: return
-        val points = trackPointDao.getForSession(sessionId)
+        // See specs/tracking.md#noise: noise points are stored but never count toward
+        // the session's own stats.
+        val points = trackPointDao.getForSession(sessionId).filterNot { it.isNoise }
         val summary = GeoUtils.summarize(points)
         sessionDao.update(
             session.copy(
@@ -109,7 +113,9 @@ class SessionRepository(
     suspend fun recoverUnfinishedSessions(): List<Session> {
         val recovered = mutableListOf<Session>()
         for (unfinished in sessionDao.findAllUnfinished()) {
-            val points = trackPointDao.getForSession(unfinished.id)
+            // See specs/tracking.md#noise: a session with only noise points never
+            // actually recorded anything real, same as one with no points at all.
+            val points = trackPointDao.getForSession(unfinished.id).filterNot { it.isNoise }
             if (points.isEmpty()) {
                 sessionDao.delete(unfinished)
                 continue

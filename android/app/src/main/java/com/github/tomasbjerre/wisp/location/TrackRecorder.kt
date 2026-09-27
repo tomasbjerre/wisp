@@ -17,6 +17,8 @@ data class RecordedPoint(
     val speedMps: Float?,
     val timestampMillis: Long,
     val segmentStart: Boolean,
+    /** See specs/tracking.md#noise. */
+    val isNoise: Boolean,
 )
 
 /**
@@ -39,10 +41,14 @@ class TrackRecorder {
         segmentPending = true
     }
 
-    /** Returns the recorded point for [fix], or null if it was filtered out. */
-    fun accept(fix: LocationFix): RecordedPoint? {
-        if (fix.accuracyMeters > MAX_ACCEPTABLE_ACCURACY_METERS) return null
-
+    /**
+     * Always returns a point for [fix] — see specs/tracking.md#noise: what used to be
+     * silently dropped is now stored, flagged [RecordedPoint.isNoise], instead. A noise
+     * point never becomes the baseline ([lastAccepted]/[currentSpeedMps]) for judging
+     * later fixes — exactly as if it had never been recorded, same as before this only
+     * stored what wasn't noise.
+     */
+    fun accept(fix: LocationFix): RecordedPoint {
         val previous = lastAccepted
         val isSegmentStart = segmentPending
         val movedMeters =
@@ -53,20 +59,24 @@ class TrackRecorder {
             }
         val elapsedSeconds = if (previous != null) (fix.timestampMillis - previous.timestampMillis) / 1000.0 else 0.0
 
-        if (!isSegmentStart && isImplausibleJump(movedMeters, elapsedSeconds)) return null
-        if (!isSegmentStart && movedMeters < MIN_MOVEMENT_METERS) return null
+        val isNoise =
+            fix.accuracyMeters > MAX_ACCEPTABLE_ACCURACY_METERS ||
+                (!isSegmentStart && isImplausibleJump(movedMeters, elapsedSeconds)) ||
+                (!isSegmentStart && movedMeters < MIN_MOVEMENT_METERS)
 
-        segmentPending = false
+        if (!isNoise) {
+            segmentPending = false
 
-        val rawSpeed =
-            fix.speedMps?.toDouble()
-                ?: if (previous != null && !isSegmentStart) {
-                    if (elapsedSeconds > 0) movedMeters / elapsedSeconds else 0.0
-                } else {
-                    0.0
-                }
-        smoothedSpeedMps =
-            if (isSegmentStart) rawSpeed else smoothedSpeedMps * (1 - SPEED_SMOOTHING) + rawSpeed * SPEED_SMOOTHING
+            val rawSpeed =
+                fix.speedMps?.toDouble()
+                    ?: if (previous != null && !isSegmentStart) {
+                        if (elapsedSeconds > 0) movedMeters / elapsedSeconds else 0.0
+                    } else {
+                        0.0
+                    }
+            smoothedSpeedMps =
+                if (isSegmentStart) rawSpeed else smoothedSpeedMps * (1 - SPEED_SMOOTHING) + rawSpeed * SPEED_SMOOTHING
+        }
 
         val recorded =
             RecordedPoint(
@@ -76,8 +86,9 @@ class TrackRecorder {
                 speedMps = fix.speedMps,
                 timestampMillis = fix.timestampMillis,
                 segmentStart = isSegmentStart,
+                isNoise = isNoise,
             )
-        lastAccepted = recorded
+        if (!isNoise) lastAccepted = recorded
         return recorded
     }
 

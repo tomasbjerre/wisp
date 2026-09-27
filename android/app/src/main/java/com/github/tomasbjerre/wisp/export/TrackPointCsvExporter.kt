@@ -9,7 +9,7 @@ import java.util.Locale
 
 /** See specs/export.md#format. Pure string generation — no I/O, no Android types. */
 object TrackPointCsvExporter {
-    private const val HEADER = "session_started_at,timestamp,latitude,longitude,speed_kmh"
+    private const val HEADER = "session_started_at,timestamp,latitude,longitude,speed_kmh,is_noise"
 
     private val TIMESTAMP_FORMAT = DateTimeFormatter.ISO_INSTANT
 
@@ -30,7 +30,7 @@ object TrackPointCsvExporter {
         val latitude = "%.6f".format(Locale.ROOT, point.latitude)
         val longitude = "%.6f".format(Locale.ROOT, point.longitude)
         val speedKmh = point.speedMps?.let { "%.1f".format(Locale.ROOT, it * 3.6) } ?: ""
-        return listOf(sessionStartedAt, timestamp, latitude, longitude, speedKmh).joinToString(",")
+        return listOf(sessionStartedAt, timestamp, latitude, longitude, speedKmh, point.isNoise).joinToString(",")
     }
 
     private fun format(epochMillis: Long): String {
