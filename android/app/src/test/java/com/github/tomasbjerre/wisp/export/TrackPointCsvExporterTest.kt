@@ -10,7 +10,7 @@ class TrackPointCsvExporterTest {
     @Test
     fun `no sessions is just the header row`() {
         assertThat(TrackPointCsvExporter.toCsv(emptyList()))
-            .isEqualTo("session_started_at,timestamp,latitude,longitude,speed_kmh\r\n")
+            .isEqualTo("session_started_at,timestamp,latitude,longitude,speed_kmh,is_noise\r\n")
     }
 
     @Test
@@ -33,9 +33,30 @@ class TrackPointCsvExporterTest {
         val csv = TrackPointCsvExporter.toCsv(listOf(session to listOf(point)))
 
         assertThat(csv).isEqualTo(
-            "session_started_at,timestamp,latitude,longitude,speed_kmh\r\n" +
-                "2026-09-26T14:03:00Z,2026-09-26T14:03:05Z,59.334591,18.063240,7.2\r\n",
+            "session_started_at,timestamp,latitude,longitude,speed_kmh,is_noise\r\n" +
+                "2026-09-26T14:03:00Z,2026-09-26T14:03:05Z,59.334591,18.063240,7.2,false\r\n",
         )
+    }
+
+    @Test
+    fun `a noise point's is_noise column is true`() {
+        val session = Session(id = 1, startedAt = 0)
+        val point =
+            TrackPoint(
+                sessionId = 1,
+                sequence = 0,
+                timestamp = 0,
+                latitude = 0.0,
+                longitude = 0.0,
+                accuracyMeters = 45f,
+                speedMps = null,
+                segmentStart = true,
+                isNoise = true,
+            )
+
+        val csv = TrackPointCsvExporter.toCsv(listOf(session to listOf(point)))
+
+        assertThat(csv).endsWith(",true\r\n")
     }
 
     @Test
@@ -55,7 +76,7 @@ class TrackPointCsvExporterTest {
 
         val csv = TrackPointCsvExporter.toCsv(listOf(session to listOf(point)))
 
-        assertThat(csv).endsWith("0.000000,0.000000,\r\n")
+        assertThat(csv).endsWith("0.000000,0.000000,,false\r\n")
     }
 
     @Test

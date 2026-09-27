@@ -64,6 +64,27 @@ class TrackPointCsvParserTest {
     }
 
     @Test
+    fun `a file exported before the is_noise column existed parses every point as non-noise`() {
+        val csv =
+            "session_started_at,timestamp,latitude,longitude,speed_kmh\r\n" +
+                "2026-09-26T07:14:26.910Z,2026-09-26T07:16:15.811Z,56.159508,15.582230,9.2\r\n"
+
+        assertThat(TrackPointCsvParser.parse(csv).single().isNoise).isFalse()
+    }
+
+    @Test
+    fun `parses the is_noise column when present`() {
+        val csv =
+            "session_started_at,timestamp,latitude,longitude,speed_kmh,is_noise\r\n" +
+                "2026-09-26T07:14:26.910Z,2026-09-26T07:16:15.811Z,56.159508,15.582230,9.2,true\r\n" +
+                "2026-09-26T07:14:26.910Z,2026-09-26T07:16:17.957Z,56.159458,15.582235,9.1,false\r\n"
+
+        val rows = TrackPointCsvParser.parse(csv)
+
+        assertThat(rows.map { it.isNoise }).containsExactly(true, false)
+    }
+
+    @Test
     fun `the real recorded activity attached to issue 121 parses in full, matching its own summary csv`() {
         val csv =
             javaClass.classLoader!!

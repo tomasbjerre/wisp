@@ -34,7 +34,10 @@ two gates first:
    the user recording will begin once they're moving. A person who just
    tapped Start is often still fumbling with their phone, walking to a
    trailhead, or waiting at a crosswalk — starting the clock at that exact
-   tap would count that dead time as part of the activity.
+   tap would count that dead time as part of the activity. Every fix
+   received during this wait is still recorded, as noise (see
+   [Noise](#noise)) — nothing seen during this step is thrown away, it
+   just never counts toward the session's own stats.
 
 Recording (the timer and the track) actually starts the moment a
 subsequent fix implies movement at or above a walking pace (roughly
@@ -64,9 +67,10 @@ demonstrated they're active.
 
 If Stop is tapped before movement is ever confirmed, the session is
 discarded entirely rather than saved — nothing meaningful was recorded
-(no points, zero distance and duration), so saving it would only add a
-broken-looking blank entry to history. The user returns to Home, not to
-that session's Detail screen.
+(zero distance and duration, and every point it does have is noise — see
+[Noise](#noise)), so saving it would only add a broken-looking blank
+entry to history. The user returns to Home, not to that session's Detail
+screen.
 
 ### Force start
 
@@ -104,29 +108,63 @@ once recording has actually started.
 - Target update interval: **every 2–5 seconds**, or on ~10 meter movement,
   whichever the platform's location API prefers — the goal is a smooth
   route line without excessive battery drain or storage bloat.
-- Discard fixes with poor accuracy (accuracy radius worse than ~30 meters)
-  rather than letting them distort the route or spike the speed reading.
-- Discard a fix whose implied speed from the previous accepted point
-  (distance ÷ time between them) is implausible for any activity Wisp is
-  used for — roughly 55 m/s / ~200 km/h — even if its reported accuracy
-  passed the filter above. A sudden jump that fast is a GPS glitch
-  (multipath reflection off buildings, a bad fix), not real movement, and
-  letting it through would spike distance, average speed, and max speed
-  with a value nobody actually reached. Generous on purpose: it must
-  never reject genuine fast movement (running, cycling, even a car), only
-  the kind of jump no tracked activity can produce.
-- Each accepted fix becomes one point on the current session's track.
+- Fixes with poor accuracy (accuracy radius worse than ~30 meters) are
+  noise (see [Noise](#noise)) rather than being let through to distort
+  the route or spike the speed reading.
+- A fix whose implied speed from the previous accepted point (distance ÷
+  time between them) is implausible for any activity Wisp is used for —
+  roughly 55 m/s / ~200 km/h — is also noise, even if its reported
+  accuracy passed the filter above. A sudden jump that fast is a GPS
+  glitch (multipath reflection off buildings, a bad fix), not real
+  movement, and letting it through would spike distance, average speed,
+  and max speed with a value nobody actually reached. Generous on
+  purpose: it must never flag genuine fast movement (running, cycling,
+  even a car), only the kind of jump no tracked activity can produce.
+- Each fix becomes one point on the current session's track, noise or
+  not — see [Noise](#noise) for what that means downstream.
+
+## Noise
+
+A recorded point may be flagged **noise**: it looks like an error (poor
+accuracy, an implausible jump — see [Location sampling](#location-sampling)
+above), is GPS jitter too small to be real movement (see
+[Distance calculation](#distance-calculation) below), or was recorded
+before movement was ever confirmed (see [Start gating](#start-gating)
+above) — a person is often still fumbling with their phone or walking
+to a trailhead at that point, exactly the noise-looking case, not
+something wrong with the fix itself.
+
+- A noise point is still stored — nothing Wisp ever measures is thrown
+  away — but excluded from everything the app itself computes or shows:
+  distance, duration, speed, splits, the drawn route. Functionally, this
+  is identical to how earlier versions of Wisp behaved by simply never
+  recording these points at all; the difference is only that they're now
+  kept, tagged, rather than discarded.
+- A noise point never becomes the baseline a later fix is judged against
+  (e.g. for the implausible-jump or minimum-movement checks) — exactly
+  as if it had never been recorded, same as before this was tracked at
+  all.
+- Exported as-is (see [Export](export.md#format)), tagged, alongside
+  every other point — a user's own tooling can decide what to include,
+  rather than Wisp's own judgment call about what counts as noise being
+  the only one that ever existed.
+- What counts as noise is an algorithm, not a fixed label — a future
+  version of Wisp may judge it differently. Nothing about this contract
+  requires re-flagging *already-recorded* points when that happens
+  (there is no re-classification pass today), but an implementation must
+  not paint itself into a corner where doing so later is impossible.
 
 ## Distance calculation
 
 - Distance is the sum of the great-circle (haversine) distance between
-  each consecutive pair of accepted points in a session.
+  each consecutive pair of non-noise points in a session.
 - Points recorded while paused are excluded from the track entirely (not
   just from the distance sum) — pausing should leave a visible gap, not a
   straight line jump, when the route is drawn later.
-- A minimum-movement threshold (a few meters) between consecutive points
-  may be applied before adding to the distance sum, to avoid GPS jitter
-  accumulating distance while stationary.
+- A fix less than a minimum-movement threshold (a few meters) from the
+  previous accepted point is noise (see [Noise](#noise)) rather than
+  being added to the distance sum — otherwise GPS jitter would accumulate
+  distance while stationary.
 
 ## Speed calculation
 
@@ -238,8 +276,8 @@ best-effort: with no monitor or permission, recording is unaffected.
   (ordinarily just one, but see
   [Data integrity on start](data-model.md#data-integrity-on-start) for
   why the check can't assume that) as stopped at its last recorded
-  point, rather than silently discarding it — unless it has no recorded
+  point, rather than silently discarding it — unless it has no non-noise
   points at all (interrupted while still "locating" or "waiting for
-  movement", see [Start gating](#start-gating)), in which case there's
-  no point to stop at, and it's discarded like any other never-moved
-  session.
+  movement", see [Start gating](#start-gating) and [Noise](#noise)), in
+  which case there's no point to stop at, and it's discarded like any
+  other never-moved session.

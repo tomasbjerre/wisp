@@ -42,8 +42,11 @@ class DetailViewModel(
         viewModelScope.launch {
             val points = repository.getPoints(sessionId)
             _points.value = points
-            _route.value = points.map { it.toLatLon() }
-            _kmSplitsSeconds.value = GeoUtils.kmSplitsSeconds(points, unit)
+            // See specs/tracking.md#noise: noise points are exported (above) but never
+            // shown or computed with.
+            val cleanPoints = points.filterNot { it.isNoise }
+            _route.value = cleanPoints.map { it.toLatLon() }
+            _kmSplitsSeconds.value = GeoUtils.kmSplitsSeconds(cleanPoints, unit)
         }
     }
 

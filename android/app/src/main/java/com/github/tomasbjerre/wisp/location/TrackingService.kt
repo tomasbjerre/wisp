@@ -245,7 +245,7 @@ class TrackingService : LifecycleService() {
                 timestampMillis = location.time,
             )
 
-        if (handleStartGating(fix)) return
+        if (handleStartGating(fix, id)) return
 
         // See specs/tracking.md#auto-pause: a sustained lack of movement while actively
         // recording pauses the session automatically, exactly like a manual Pause tap.
@@ -254,7 +254,7 @@ class TrackingService : LifecycleService() {
             return
         }
 
-        val recorded = recorder.accept(fix) ?: return
+        val recorded = recorder.accept(fix)
 
         lifecycleScope.launch {
             val seq = sequence++
@@ -271,8 +271,11 @@ class TrackingService : LifecycleService() {
                 // split per km.
                 steps = stepRecorder.steps,
                 heartRateBpm = currentHeartRate(),
+                isNoise = recorded.isNoise,
             )
-            val points = repository.getPoints(id)
+            // See specs/tracking.md#noise: noise points are stored but never count
+            // toward what the app itself computes or shows.
+            val points = repository.getPoints(id).filterNot { it.isNoise }
             val summary = GeoUtils.summarize(points)
             val splits = GeoUtils.kmSplits(points, unitPreferences.unit.value)
             _state.update {
@@ -308,21 +311,56 @@ class TrackingService : LifecycleService() {
     /**
      * See specs/tracking.md#start-gating. Returns true once this [fix] has been fully
      * handled by start-gating and the caller should stop processing it further — either
-     * it was rejected by the accuracy filter, or movement still isn't confirmed yet.
+     * it was rejected by the accuracy filter, or movement still isn't confirmed yet. A
+     * fix handled here is stored as a noise point (see [recordNoisePoint]) either way —
+     * see specs/tracking.md#noise.
      */
-    private fun handleStartGating(fix: LocationFix): Boolean {
+    private fun handleStartGating(
+        fix: LocationFix,
+        id: Long,
+    ): Boolean {
         if (!_state.value.isWaitingForMovement) return false
-        if (fix.accuracyMeters > TrackRecorder.MAX_ACCEPTABLE_ACCURACY_METERS) return true
+        if (fix.accuracyMeters > TrackRecorder.MAX_ACCEPTABLE_ACCURACY_METERS) {
+            recordNoisePoint(fix, id)
+            return true
+        }
 
         val startedMoving = movementGate.hasStartedMoving(fix)
         _state.update { it.copy(isLocating = false, route = listOf(LatLon(fix.latitude, fix.longitude))) }
         if (!startedMoving) {
+            recordNoisePoint(fix, id)
             updateNotification()
             return true
         }
 
         confirmMovementStarted()
         return false
+    }
+
+    /**
+     * See specs/tracking.md#noise: a fix seen before movement is ever confirmed never
+     * counts toward the session's own stats, but is still stored so exported data has
+     * every measurement Wisp saw, not just the ones it trusted — a user can then decide
+     * for themselves what to do with it.
+     */
+    private fun recordNoisePoint(
+        fix: LocationFix,
+        id: Long,
+    ) {
+        lifecycleScope.launch {
+            val seq = sequence++
+            repository.appendPoint(
+                sessionId = id,
+                sequence = seq,
+                timestamp = fix.timestampMillis,
+                latitude = fix.latitude,
+                longitude = fix.longitude,
+                accuracyMeters = fix.accuracyMeters,
+                speedMps = fix.speedMps,
+                segmentStart = seq == 0,
+                isNoise = true,
+            )
+        }
     }
 
     /**

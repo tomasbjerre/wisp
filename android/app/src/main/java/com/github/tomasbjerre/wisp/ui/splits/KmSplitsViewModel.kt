@@ -20,6 +20,10 @@ class KmSplitsViewModel(
     val splits: StateFlow<GeoUtils.KmSplits> = _splits.asStateFlow()
 
     init {
-        viewModelScope.launch { _splits.value = GeoUtils.kmSplits(repository.getPoints(sessionId), unit) }
+        viewModelScope.launch {
+            // See specs/tracking.md#noise: excluded from everything the app computes.
+            val cleanPoints = repository.getPoints(sessionId).filterNot { it.isNoise }
+            _splits.value = GeoUtils.kmSplits(cleanPoints, unit)
+        }
     }
 }

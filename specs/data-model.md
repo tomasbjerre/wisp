@@ -49,6 +49,7 @@ One accepted GPS fix belonging to a session.
 | `segmentStart` | boolean | true if this is the first point of a session, or the first point after a resume |
 | `steps` | integer | the session's step count so far when this point was recorded (see [Tracking](tracking.md#step-count)) — a running total, so the steps between any two points are the difference between theirs; 0 on every point if no step sensor/permission was available, or the point predates this field |
 | `heartRateBpm` | integer, nullable | the current heart rate when this point was recorded (see [Heart rate](heart-rate.md#recording)); null if there was none, or the point predates this field |
+| `isNoise` | boolean | see [Tracking](tracking.md#noise); false for every point recorded before this field existed, since only non-noise points were ever stored back then |
 
 Points recorded while a session is paused are never created — see
 [Tracking](tracking.md). `segmentStart` marks where a pause broke the track,

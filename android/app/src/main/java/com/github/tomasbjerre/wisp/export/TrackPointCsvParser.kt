@@ -18,23 +18,38 @@ object TrackPointCsvParser {
         val latitude: Double,
         val longitude: Double,
         val speedMps: Float?,
+        val isNoise: Boolean,
     )
 
-    private const val HEADER = "session_started_at,timestamp,latitude,longitude,speed_kmh"
-    private const val COLUMN_COUNT = 5
+    private const val HEADER_WITHOUT_NOISE = "session_started_at,timestamp,latitude,longitude,speed_kmh"
+    private const val HEADER_WITH_NOISE = "$HEADER_WITHOUT_NOISE,is_noise"
 
-    /** @throws IllegalArgumentException if [csv] doesn't start with the expected header. */
+    /**
+     * @throws IllegalArgumentException if [csv] doesn't start with a header this
+     *     recognizes — either the current one (with `is_noise`, see
+     *     specs/export.md#format) or the one every export used before that column
+     *     existed (see [Row.isNoise]).
+     */
     fun parse(csv: String): List<Row> {
         val lines = csv.split("\r\n", "\n").filter { it.isNotBlank() }
-        require(lines.isNotEmpty() && lines.first() == HEADER) {
-            "Expected header \"$HEADER\", got \"${lines.firstOrNull()}\""
-        }
-        return lines.drop(1).map(::parseRow)
+        val header = lines.firstOrNull()
+        val columnCount =
+            when (header) {
+                HEADER_WITH_NOISE -> 6
+                HEADER_WITHOUT_NOISE -> 5
+                else -> throw IllegalArgumentException(
+                    "Expected header \"$HEADER_WITH_NOISE\" or \"$HEADER_WITHOUT_NOISE\", got \"$header\"",
+                )
+            }
+        return lines.drop(1).map { parseRow(it, columnCount) }
     }
 
-    private fun parseRow(line: String): Row {
+    private fun parseRow(
+        line: String,
+        columnCount: Int,
+    ): Row {
         val columns = line.split(",")
-        require(columns.size == COLUMN_COUNT) { "Expected $COLUMN_COUNT columns, got ${columns.size}: \"$line\"" }
+        require(columns.size == columnCount) { "Expected $columnCount columns, got ${columns.size}: \"$line\"" }
         val speedKmh = columns[4]
         return Row(
             sessionStartedAt = Instant.parse(columns[0]).toEpochMilli(),
@@ -42,6 +57,10 @@ object TrackPointCsvParser {
             latitude = columns[2].toDouble(),
             longitude = columns[3].toDouble(),
             speedMps = if (speedKmh.isBlank()) null else speedKmh.toFloat() / 3.6f,
+            // A file exported before this column existed only ever held non-noise
+            // points (see specs/export.md#format) — false is the correct read, not a
+            // guess.
+            isNoise = if (columnCount == 6) columns[5].toBoolean() else false,
         )
     }
 }

@@ -90,6 +90,7 @@ recent session first) and in recorded order within each session:
 | `latitude` | `TrackPoint.latitude` | number, degrees, 6 decimals |
 | `longitude` | `TrackPoint.longitude` | number, degrees, 6 decimals |
 | `speed_kmh` | `TrackPoint.speedMps` | number, ×3.6, 1 decimal; blank if the platform didn't report a speed for that point |
+| `is_noise` | `TrackPoint.isNoise` | `true`/`false` — see [Tracking](tracking.md#noise). Every point Wisp ever recorded is exported, not just the ones it trusts; this column lets a user's own tooling decide what to include. A file exported before this column existed has no way to tell — treat a missing column the same as `false` (every point in it was already noise-filtered, the only kind that existed then) |
 
 ## Single activity as CSV
 
