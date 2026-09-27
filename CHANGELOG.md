@@ -1,3 +1,22 @@
+## 0.9.0 (2026-09-27)
+
+### Features
+
+-  add a Save to device option to every export (#147) ([469c0](https://github.com/tomasbjerre/wisp/commit/469c0b1ff704d7c) Tomas Bjerre)  
+-  store every recorded measurement, flagging noise instead of discarding it (#146) ([42629](https://github.com/tomasbjerre/wisp/commit/42629de7e9bd1b2) Tomas Bjerre)  
+-  **android**  move heart rate switch from Home to Tracking (#131) ([f0273](https://github.com/tomasbjerre/wisp/commit/f02732fd2fc4345) Tomas Bjerre)  
+
+### Bug Fixes
+
+-  announce km pace as time, not km/h, in voice feedback (#145) ([206c8](https://github.com/tomasbjerre/wisp/commit/206c8cb666ecfef) Tomas Bjerre)  
+-  make movement detection more sensitive and add a force-start override (#144) ([e904c](https://github.com/tomasbjerre/wisp/commit/e904c8f0809aef8) Tomas Bjerre)  
+-  point replay-real-track.sh at the renamed running-activity fixture (#143) ([ad4f1](https://github.com/tomasbjerre/wisp/commit/ad4f11c19fa92ca) Tomas Bjerre)  
+-  bump version ([85e02](https://github.com/tomasbjerre/wisp/commit/85e02ba895e71e7) Tomas Bjerre)  
+-  **android**  show pace as min/km instead of /km (#133) ([4c1a3](https://github.com/tomasbjerre/wisp/commit/4c1a38218942206) Tomas Bjerre)  
+
+### Other changes
+
+
 ## 0.8.0 (2026-09-26)
 
 ### Features
