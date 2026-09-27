@@ -11,7 +11,7 @@
 # max-points (default 200) fixes, stopping early once stop-file (default
 # /tmp/wisp-walk-stop) exists.
 set -u
-csv="$(dirname "$0")/../app/src/androidTest/assets/real-activity-track-points.csv"
+csv="$(dirname "$0")/../app/src/androidTest/assets/real-running-activity-track-points.csv"
 # Columns: session_started_at,timestamp,latitude,longitude,speed_kmh. Note that
 # `adb emu geo fix` takes longitude first.
 fixes() { tail -n +2 "$csv" | awk -F, '{print $4, $3}'; }
