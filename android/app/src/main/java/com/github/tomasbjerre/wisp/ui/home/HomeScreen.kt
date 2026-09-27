@@ -2,6 +2,8 @@ package com.github.tomasbjerre.wisp.ui.home
 
 import android.content.Context
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,12 +53,14 @@ import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.TrackPoint
 import com.github.tomasbjerre.wisp.data.UnitPreferences
 import com.github.tomasbjerre.wisp.data.UnitSystem
+import com.github.tomasbjerre.wisp.export.CsvDeviceWriter
 import com.github.tomasbjerre.wisp.export.CsvExporter
 import com.github.tomasbjerre.wisp.export.CsvShareIntent
 import com.github.tomasbjerre.wisp.export.ExportFileNames
 import com.github.tomasbjerre.wisp.export.TrackPointCsvExporter
 import com.github.tomasbjerre.wisp.ui.Formatting
 import com.github.tomasbjerre.wisp.ui.TestTags
+import com.github.tomasbjerre.wisp.ui.common.ExportMenu
 import kotlinx.coroutines.launch
 
 private const val FEEDBACK_URL = "https://github.com/tomasbjerre/wisp/issues"
@@ -147,13 +151,25 @@ private fun HomeTopBar(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    // Content built ahead of the folder picker below, then written once a folder is
+    // chosen — the picker itself can't be suspended for the async load/format above.
+    var pendingHistoryCsv by remember { mutableStateOf<Pair<ExportFileNames.CsvPair, Pair<String, String>>?>(null) }
+    val saveToDeviceLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { treeUri ->
+            val pending = pendingHistoryCsv
+            if (treeUri != null && pending != null) {
+                val (fileNames, csv) = pending
+                CsvDeviceWriter.write(context, treeUri, fileNames, csv.first, csv.second)
+            }
+            pendingHistoryCsv = null
+        }
 
     TopAppBar(
         title = { Text("Wisp Tracker") },
         actions = {
             // See specs/export.md#trigger and #history-as-csv.
-            IconButton(
-                onClick = {
+            ExportMenu(
+                onShare = {
                     coroutineScope.launch {
                         val sessionsCsv = CsvExporter.toCsv(sessions)
                         val trackPointsCsv = TrackPointCsvExporter.toCsv(loadPointsBySession())
@@ -161,9 +177,19 @@ private fun HomeTopBar(
                         context.startActivity(CsvShareIntent.build(context, sessionsCsv, trackPointsCsv, fileNames))
                     }
                 },
-                enabled = sessions.isNotEmpty(),
-            ) {
-                Icon(Icons.Filled.Share, contentDescription = "Export history as CSV")
+                onSaveToDevice = {
+                    coroutineScope.launch {
+                        val sessionsCsv = CsvExporter.toCsv(sessions)
+                        val trackPointsCsv = TrackPointCsvExporter.toCsv(loadPointsBySession())
+                        val fileNames = ExportFileNames.historyCsv(System.currentTimeMillis())
+                        pendingHistoryCsv = fileNames to (sessionsCsv to trackPointsCsv)
+                        saveToDeviceLauncher.launch(null)
+                    }
+                },
+            ) { onClick ->
+                IconButton(onClick = onClick, enabled = sessions.isNotEmpty()) {
+                    Icon(Icons.Filled.Share, contentDescription = "Export history as CSV")
+                }
             }
             // See specs/ui-flows.md#feedback-and-support.
             IconButton(onClick = onInfoClick) {
