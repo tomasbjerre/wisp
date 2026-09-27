@@ -67,7 +67,7 @@ class TrackPointCsvParserTest {
     fun `the real recorded activity attached to issue 121 parses in full, matching its own summary csv`() {
         val csv =
             javaClass.classLoader!!
-                .getResourceAsStream("fixtures/real-activity-track-points.csv")!!
+                .getResourceAsStream("fixtures/real-running-activity-track-points.csv")!!
                 .bufferedReader()
                 .use { it.readText() }
 

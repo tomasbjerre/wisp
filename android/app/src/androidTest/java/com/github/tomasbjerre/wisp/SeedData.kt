@@ -95,7 +95,7 @@ suspend fun seedSessionWithVaryingPace(
 /**
  * Inserts one finished session from a real recorded activity (a walk, ~7.85 km /
  * ~49 min) instead of procedurally-generated points — see issue #121. The fixture is
- * `real-activity-track-points.csv` (an androidTest asset), byte-for-byte what
+ * `real-running-activity-track-points.csv` (an androidTest asset), byte-for-byte what
  * `TrackPointCsvExporter` would produce for this same activity, exported from Wisp
  * itself and attached to that issue. Used in place of [seedSessionWithVaryingPace] for
  * the richer Detail/Km-splits screenshots ([ScreenshotTest]), since real GPS noise and
@@ -174,8 +174,8 @@ private const val BASE_LATITUDE = 59.3293
 private const val BASE_LONGITUDE = 18.0686
 
 // See seedRealSession: from wisp-activity-2026-09-26_09-14-26.csv, the summary export
-// matching real-activity-track-points.csv's track points (issue #121).
-private const val ASSET_NAME = "real-activity-track-points.csv"
+// matching real-running-activity-track-points.csv's track points (issue #121).
+private const val ASSET_NAME = "real-running-activity-track-points.csv"
 private const val REAL_SESSION_TOTAL_STEPS = 8_501L
 
 /** Synthesized heart rate range for [seedRealSession] — see the comment where it is used. */
