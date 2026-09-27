@@ -14,7 +14,11 @@ why this is configurable at all, unlike almost everything else in Wisp.
   (below), all on by default the first time voice feedback is turned on:
   - **Kilometers completed** — the running count of complete kilometers.
   - **Average speed per kilometer** — labeled to make clear this is the
-    kilometer that was just completed, not an overall average.
+    kilometer that was just completed, not an overall average. Said as a
+    pace (time per unit distance, e.g. "5 minutes 13 seconds per
+    kilometer"), matching how Wisp expresses this everywhere else it
+    appears (the live "Last kilometer"/"Fastest kilometer" stats and the
+    [Km splits](ui-flows.md#4-km-splits) view), not a km/h or mph figure.
   - **Steps per kilometer** — labeled to make clear this is the
     kilometer that was just completed, not a running total (see
     [Tracking](tracking.md#step-count)). Never included when the session
