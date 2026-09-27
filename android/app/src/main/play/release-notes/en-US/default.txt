@@ -1,8 +1,8 @@
-wisp 0.8.0
-- feat: record heart rate from a BLE heart rate monitor (#127)
-- feat(android): add a Metric/Imperial unit setting on Home (#124)
-- test: seed screenshots and tests with a real recorded activity (#123)
-- fix(android): don't restart tracking when returning from voice settings (#126)
-- feat(android): show average and fastest km time on Tracking/Detail (#122)
-- feat: voice feedback (refs #116) (#118)
-- chore(deps): upgrade to Gradle 9, AGP 9, and co
+wisp 0.9.0
+- ci: publish releases to closed testing instead of internal track
+- feat: add a Save to device option to every export (#147)
+- feat: store every recorded measurement, flagging noise instead of discarding it (#146)
+- fix: announce km pace as time, not km/h, in voice feedback (#145)
+- fix: make movement detection more sensitive and add a force-start override (#144)
+- fix: point replay-real-track.sh at the renamed running-activity fixture (#143)
+- 
