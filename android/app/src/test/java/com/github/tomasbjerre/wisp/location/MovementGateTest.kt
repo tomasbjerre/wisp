@@ -51,6 +51,30 @@ class MovementGateTest {
     }
 
     @Test
+    fun `a path that loops back toward the anchor still confirms movement once enough ground is covered`() {
+        // Regression test for #136: walking back and forth near the start (e.g. pacing
+        // at a trailhead, or a meandering path) keeps net displacement from the fixed
+        // anchor small forever, even though real ground is being covered. Each step here
+        // (~3.3 m every 5 s, ~0.66 m/s) stays below walking pace on its own, whether
+        // measured from the anchor or from the previous fix, so only the cumulative
+        // distance check can confirm movement.
+        val gate = MovementGate()
+        val pointA = 59.00000
+        val pointB = 59.00003
+
+        gate.hasStartedMoving(fix(lat = pointA, lon = 18.0, t = 0))
+
+        var startedMoving = false
+        for (step in 1..9) {
+            val lat = if (step % 2 == 1) pointB else pointA
+            startedMoving = gate.hasStartedMoving(fix(lat = lat, lon = 18.0, t = step * 5_000L))
+            if (step < 9) assertThat(startedMoving).describedAs("step $step").isFalse()
+        }
+
+        assertThat(startedMoving).isTrue()
+    }
+
+    @Test
     fun `distance is measured from the fixed anchor, not the previous fix`() {
         val gate = MovementGate()
         gate.hasStartedMoving(fix(lat = 59.00000, lon = 18.00000, t = 0, speedMps = null))

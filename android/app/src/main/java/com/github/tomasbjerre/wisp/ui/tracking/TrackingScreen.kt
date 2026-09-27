@@ -197,7 +197,8 @@ private fun TrackingStatsPanel(
             if (state.isWaitingForMovement) {
                 Text(
                     "Start moving to begin recording — it starts automatically once " +
-                        "you're moving at a walking pace or faster.",
+                        "you're moving at a walking pace or faster. You can also force " +
+                        "start below if you'd rather begin recording immediately.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -347,8 +348,16 @@ private fun TrackingControls(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // Nothing to pause yet while waiting for movement — see specs/tracking.md#start-gating.
-        if (!isWaitingForMovement) {
+        // Nothing to pause yet while waiting for movement — offer to skip the wait
+        // instead, see specs/tracking.md#start-gating.
+        if (isWaitingForMovement) {
+            OutlinedButton(
+                onClick = { TrackingService.forceStart(context) },
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("Force start")
+            }
+        } else {
             OutlinedButton(
                 onClick = { if (isPaused) TrackingService.resume(context) else TrackingService.pause(context) },
                 modifier = Modifier.weight(1f),
