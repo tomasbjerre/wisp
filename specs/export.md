@@ -1,9 +1,16 @@
 # Export
 
 Three independent exports: the full history as a CSV file, a single
-activity as a CSV file, and a single activity as an image. All hand off
-to the platform's share/save mechanism rather than writing to a fixed
-location — the user picks where the file goes.
+activity as a CSV file, and a single activity as an image. Wisp never
+writes to a fixed location — every export offers the user a choice of
+**Share** (the platform's share sheet, handing the file to another app —
+email, messaging, cloud storage, etc.) or **Save to device** (the
+platform's own file/folder picker, writing directly to local storage
+with no other app involved). Both read the same generated content and
+produce the same file(s), named the same way (see below) — the
+difference is only where they end up. Save to device exists specifically
+so getting a local copy never requires sharing to a cloud app and
+downloading it back from there.
 
 ## File names
 
@@ -57,8 +64,10 @@ Sheets, etc.) or fed into other tools.
 An "Export CSV" action reachable from Home (see
 [UI Flows](ui-flows.md#1-home)), near — but visually distinct from — the
 feedback link, so it doesn't compete with the primary Start action.
-Disabled or hidden when there is no history yet (nothing to export). Both
-files are handed to the platform's share sheet together, in one action.
+Disabled or hidden when there is no history yet (nothing to export).
+Tapping it offers the Share/Save to device choice described above; either
+way both files go together, in one action (Save to device asks for one
+folder, not one picker per file).
 
 ### Format
 

@@ -1,6 +1,9 @@
 package com.github.tomasbjerre.wisp.ui.detail
 
 import android.content.Context
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,13 +43,16 @@ import com.github.tomasbjerre.wisp.data.TrackPoint
 import com.github.tomasbjerre.wisp.data.UnitPreferences
 import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.export.ActivityImageExporter
+import com.github.tomasbjerre.wisp.export.CsvDeviceWriter
 import com.github.tomasbjerre.wisp.export.CsvExporter
 import com.github.tomasbjerre.wisp.export.CsvShareIntent
 import com.github.tomasbjerre.wisp.export.ExportFileNames
+import com.github.tomasbjerre.wisp.export.ImageDeviceWriter
 import com.github.tomasbjerre.wisp.export.ImageShareIntent
 import com.github.tomasbjerre.wisp.export.TrackPointCsvExporter
 import com.github.tomasbjerre.wisp.location.LatLon
 import com.github.tomasbjerre.wisp.ui.Formatting
+import com.github.tomasbjerre.wisp.ui.common.ExportMenu
 import com.github.tomasbjerre.wisp.ui.common.MapType
 import com.github.tomasbjerre.wisp.ui.common.MapTypeToggle
 import com.github.tomasbjerre.wisp.ui.common.RouteMap
@@ -79,6 +85,7 @@ fun DetailScreen(
     // to persist it to. See specs/ui-flows.md#3-detail.
     var mapType by remember { mutableStateOf(MapType.STANDARD) }
     val context = LocalContext.current
+    val exportActions = rememberExportActions(context, session, points, mapView, unit)
 
     Scaffold(
         topBar = {
@@ -108,14 +115,7 @@ fun DetailScreen(
                 unit = unit,
                 onOpenKmSplits = onOpenKmSplits,
                 onBack = onBack,
-                onExportImage = {
-                    val map = mapView
-                    val current = session
-                    if (map != null && current != null) exportSessionAsImage(context, map, current, unit)
-                },
-                // See specs/export.md#single-activity-as-csv: same two-file format as the
-                // full history export, scoped to just this one session.
-                onExportCsv = { session?.let { exportSessionAsCsv(context, it, points) } },
+                exportActions = exportActions,
                 onDeleteClick = { showDeleteConfirm = true },
             )
         }
@@ -180,8 +180,7 @@ private fun SessionSummaryPanel(
     unit: UnitSystem,
     onOpenKmSplits: () -> Unit,
     onBack: () -> Unit,
-    onExportImage: () -> Unit,
-    onExportCsv: () -> Unit,
+    exportActions: ExportActions,
     onDeleteClick: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
@@ -230,13 +229,25 @@ private fun SessionSummaryPanel(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // See specs/export.md#single-activity-as-csv.
-                FilledTonalButton(onClick = onExportCsv, enabled = session != null, modifier = Modifier.weight(1f)) {
-                    Text("Export CSV")
+                // See specs/export.md#single-activity-as-csv and #trigger.
+                ExportMenu(
+                    onShare = exportActions.onShareCsv,
+                    onSaveToDevice = exportActions.onSaveCsvToDevice,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    FilledTonalButton(onClick = it, enabled = session != null, modifier = Modifier.fillMaxWidth()) {
+                        Text("Export CSV")
+                    }
                 }
-                // See specs/export.md#single-activity-as-an-image.
-                FilledTonalButton(onClick = onExportImage, enabled = session != null, modifier = Modifier.weight(1f)) {
-                    Text("Export Image")
+                // See specs/export.md#single-activity-as-an-image and #trigger.
+                ExportMenu(
+                    onShare = exportActions.onShareImage,
+                    onSaveToDevice = exportActions.onSaveImageToDevice,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    FilledTonalButton(onClick = it, enabled = session != null, modifier = Modifier.fillMaxWidth()) {
+                        Text("Export Image")
+                    }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -249,6 +260,73 @@ private fun SessionSummaryPanel(
             }
         }
     }
+}
+
+/** See specs/export.md#trigger — a **Share** and a **Save to device** action for each export. */
+private data class ExportActions(
+    val onShareCsv: () -> Unit,
+    val onSaveCsvToDevice: () -> Unit,
+    val onShareImage: () -> Unit,
+    val onSaveImageToDevice: () -> Unit,
+)
+
+/**
+ * See specs/export.md#trigger and issue #141: **Save to device** writes directly to a
+ * location the user picks via the Storage Access Framework, instead of only ever
+ * handing the file to another app via the share sheet ([exportSessionAsCsv]/
+ * [exportSessionAsImage]). Content is built ahead of the picker — it can't be suspended
+ * for it — and written once a location is actually chosen (the callback below).
+ */
+@Composable
+private fun rememberExportActions(
+    context: Context,
+    session: Session?,
+    points: List<TrackPoint>,
+    mapView: MapView?,
+    unit: UnitSystem,
+): ExportActions {
+    var pendingCsv by remember { mutableStateOf<Pair<ExportFileNames.CsvPair, Pair<String, String>>?>(null) }
+    val saveCsvLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { treeUri ->
+            val pending = pendingCsv
+            if (treeUri != null && pending != null) {
+                val (fileNames, csv) = pending
+                CsvDeviceWriter.write(context, treeUri, fileNames, csv.first, csv.second)
+            }
+            pendingCsv = null
+        }
+    var pendingImage by remember { mutableStateOf<Bitmap?>(null) }
+    val saveImageLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("image/png")) { uri ->
+            val bitmap = pendingImage
+            if (uri != null && bitmap != null) ImageDeviceWriter.write(context, uri, bitmap)
+            pendingImage = null
+        }
+
+    return ExportActions(
+        onShareCsv = { session?.let { exportSessionAsCsv(context, it, points) } },
+        onSaveCsvToDevice = {
+            session?.let {
+                val sessionsCsv = CsvExporter.toCsv(listOf(it))
+                val trackPointsCsv = TrackPointCsvExporter.toCsv(listOf(it to points))
+                pendingCsv = ExportFileNames.activityCsv(it.startedAt) to (sessionsCsv to trackPointsCsv)
+                saveCsvLauncher.launch(null)
+            }
+        },
+        onShareImage = {
+            val map = mapView
+            val current = session
+            if (map != null && current != null) exportSessionAsImage(context, map, current, unit)
+        },
+        onSaveImageToDevice = {
+            val map = mapView
+            val current = session
+            if (map != null && current != null) {
+                pendingImage = ActivityImageExporter.compose(map, current, unit)
+                saveImageLauncher.launch(ExportFileNames.activityImage(current.startedAt))
+            }
+        },
+    )
 }
 
 private fun exportSessionAsImage(

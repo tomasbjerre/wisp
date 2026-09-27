@@ -36,9 +36,13 @@ This is what you see when you open Wisp. It has:
   from Home, without having to open it first. You'll be asked to confirm.
 - **Export CSV** — the share icon in the top-right exports your whole
   history as two CSV files (one row per activity, and one with every
-  recorded GPS point) through Android's share sheet. The file names carry
-  the time of the export, e.g. `wisp-history-2026-09-25_07-18-03.csv`, so
-  the newest (most complete) export is easy to spot among older ones.
+  recorded GPS point). Tapping it offers a choice: **Share** (through
+  Android's share sheet, same as before) or **Save to device** (writes
+  the files straight to a folder you pick, no other app needed — handy
+  if you just want a local copy without routing it through a cloud app
+  first). The file names carry the time of the export, e.g.
+  `wisp-history-2026-09-25_07-18-03.csv`, so the newest (most complete)
+  export is easy to spot among older ones.
 - **Information** — the ⓘ icon in the top-right opens a small dialog with
   Wisp's version and your device model/Android version (handy if you're
   about to report a bug — issue reports ask for both, in the same
@@ -167,18 +171,19 @@ just-finished:
 - **Km splits (N)** — opens the [Km splits](#km-splits) view, N being
   the number of complete kilometers. Shown only once you've covered at
   least 1 km.
-- **Export CSV** — shares the activity's data as two CSV files (one row
-  summarizing the activity, one with every recorded GPS point), also
-  through the share sheet. Useful for importing into a spreadsheet or
-  another tool. Both files — and the Export Image file — are named after
-  the activity's start time, e.g. `wisp-activity-2026-09-25_06-51-12.csv`,
-  so exports of different activities never get mixed up. Always in
-  metric, regardless of Home's Metric/Imperial setting — a predictable
-  unit for spreadsheets and other tools, whatever's on screen at the time.
-- **Export Image** — shares a snapshot of the route map and stats as an
-  image, via Android's normal share sheet (save it, send it, post it —
-  your choice, same as sharing a photo from any other app). Follows
-  Home's Metric/Imperial setting, unlike Export CSV — it's a picture of
+- **Export CSV** — offers the same Share/Save to device choice as Home's
+  Export CSV (above), for this one activity's data as two CSV files (one
+  row summarizing the activity, one with every recorded GPS point).
+  Useful for importing into a spreadsheet or another tool. Both files —
+  and the Export Image file — are named after the activity's start time,
+  e.g. `wisp-activity-2026-09-25_06-51-12.csv`, so exports of different
+  activities never get mixed up. Always in metric, regardless of Home's
+  Metric/Imperial setting — a predictable unit for spreadsheets and other
+  tools, whatever's on screen at the time.
+- **Export Image** — the same Share/Save to device choice, for a
+  snapshot of the route map and stats as an image (save it, send it,
+  post it — your choice, same as sharing a photo from any other app).
+  Follows Home's Metric/Imperial setting, unlike Export CSV — it's a picture of
   what's already on screen.
 - **Back** — returns to wherever you came from (Home, or straight here
   after finishing a recording).
