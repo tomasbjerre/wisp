@@ -74,7 +74,9 @@ short steps first:
    Start, the moments spent fumbling with your phone or walking to the
    start line would count as part of your activity. Once you're actually
    moving at a walking pace or faster, recording begins automatically —
-   no need to tap anything.
+   no need to tap anything. Don't want to wait? Tap **Force start**,
+   shown in place of Pause during this step, to begin recording right
+   away.
 
 Once recording is underway, the screen shows your route being drawn live
 on the map, along with your current speed, distance, and elapsed time:

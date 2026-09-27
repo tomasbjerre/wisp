@@ -45,6 +45,19 @@ brief speed spike well above walking pace (GPS multipath/signal noise,
 not real movement), which started sessions with zero actual displacement
 when this gate trusted it.
 
+Movement can also be confirmed without ever reaching that pace relative
+to the first position: if a person's path curves back toward where they
+started (pacing at a trailhead, walking around a parked car), net
+displacement from that first fix can stay small even while real ground
+is being covered. To catch that case, movement is also confirmed once
+the sum of fix-to-fix movement since the first fix reaches roughly 30
+meters, regardless of direction — small, GPS-jitter-sized steps (a few
+meters or less) aren't counted toward that sum, so standing still never
+accumulates into a false positive.
+
+A user who doesn't want to wait for either of the above can skip it —
+see [Force start](#force-start).
+
 This gating applies only to a session's initial Start — resuming after
 Pause does not re-require movement, since the user has already
 demonstrated they're active.
@@ -54,6 +67,16 @@ discarded entirely rather than saved — nothing meaningful was recorded
 (no points, zero distance and duration), so saving it would only add a
 broken-looking blank entry to history. The user returns to Home, not to
 that session's Detail screen.
+
+### Force start
+
+While waiting for movement, a **Force start** control (see
+[Tracking](ui-flows.md#2-tracking-active-recording)) lets the user skip
+both checks above and begin recording immediately — e.g. GPS is slow to
+confirm movement, or they'd simply rather not wait. It has no effect once
+movement has already been confirmed (or before a session exists at all),
+and does not affect [auto-pause](#auto-pause), which only ever applies
+once recording has actually started.
 
 ## Auto-pause
 

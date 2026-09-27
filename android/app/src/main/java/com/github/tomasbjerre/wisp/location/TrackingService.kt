@@ -73,6 +73,7 @@ class TrackingService : LifecycleService() {
         super.onStartCommand(intent, flags, startId)
         when (intent?.action) {
             ACTION_START -> start()
+            ACTION_FORCE_START -> forceStart()
             ACTION_PAUSE -> pause()
             ACTION_RESUME -> resume()
             ACTION_STOP -> stop()
@@ -320,6 +321,21 @@ class TrackingService : LifecycleService() {
             return true
         }
 
+        confirmMovementStarted()
+        return false
+    }
+
+    /**
+     * See specs/tracking.md#start-gating: lets the user skip waiting for movement to be
+     * detected automatically, e.g. when GPS is slow to acquire a usable fix. A no-op once
+     * movement is already confirmed (or if a session isn't waiting for it at all).
+     */
+    private fun forceStart() {
+        if (!_state.value.isWaitingForMovement) return
+        confirmMovementStarted()
+    }
+
+    private fun confirmMovementStarted() {
         recordingStartElapsedRealtime = SystemClock.elapsedRealtime()
         _state.update { it.copy(isWaitingForMovement = false) }
         startTicker()
@@ -327,7 +343,6 @@ class TrackingService : LifecycleService() {
         // taken before movement is confirmed don't count.
         stepCounterTracker.start(stepRecorder::onStepCounterChanged)
         startHeartRateMonitor()
-        return false
     }
 
     /** See specs/heart-rate.md#connecting: only when the user has turned the setting on. */
@@ -395,6 +410,7 @@ class TrackingService : LifecycleService() {
         private const val NOTIFICATION_ID = 1
 
         const val ACTION_START = "com.github.tomasbjerre.wisp.action.START"
+        const val ACTION_FORCE_START = "com.github.tomasbjerre.wisp.action.FORCE_START"
         const val ACTION_PAUSE = "com.github.tomasbjerre.wisp.action.PAUSE"
         const val ACTION_RESUME = "com.github.tomasbjerre.wisp.action.RESUME"
         const val ACTION_STOP = "com.github.tomasbjerre.wisp.action.STOP"
@@ -408,6 +424,8 @@ class TrackingService : LifecycleService() {
         ) = Intent(context, TrackingService::class.java).setAction(action)
 
         fun start(context: Context) = context.startForegroundService(intent(context, ACTION_START))
+
+        fun forceStart(context: Context) = context.startService(intent(context, ACTION_FORCE_START))
 
         fun pause(context: Context) = context.startService(intent(context, ACTION_PAUSE))
 
