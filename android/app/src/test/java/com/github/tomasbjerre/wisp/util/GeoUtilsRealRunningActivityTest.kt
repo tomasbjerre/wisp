@@ -9,18 +9,21 @@ import org.junit.jupiter.api.Test
 
 /**
  * Verifies specs/tracking.md#distance-calculation and #speed-calculation against a real
- * recorded activity (attached to issue #121 as
+ * recorded running activity (attached to issue #121 as
  * wisp-activity-2026-09-26_09-14-26-track-points.csv), rather than only the synthetic
  * edge cases in [GeoUtilsTest] — [GeoUtils.summarize] run over these real, noisy GPS
  * points should reproduce the stats Wisp itself recorded for this same activity (see
  * wisp-activity-2026-09-26_09-14-26.csv, the matching summary export):
  * distance_km=7.85, duration_seconds=2937, average_speed_kmh=9.6, max_speed_kmh=10.9.
+ *
+ * See [GeoUtilsRealWalkingActivityTest] for the same check against a walking activity
+ * (issue #140).
  */
-class GeoUtilsRealActivityTest {
+class GeoUtilsRealRunningActivityTest {
     private val points: List<TrackPoint> by lazy {
         val csv =
             javaClass.classLoader!!
-                .getResourceAsStream("fixtures/real-activity-track-points.csv")!!
+                .getResourceAsStream("fixtures/real-running-activity-track-points.csv")!!
                 .bufferedReader()
                 .use { it.readText() }
         TrackPointCsvParser.parse(csv).mapIndexed { index, row ->
@@ -65,7 +68,7 @@ class GeoUtilsRealActivityTest {
     fun `the real activity has km splits worth comparing, unlike a constant-pace synthetic route`() {
         val splits = GeoUtils.kmSplitsSeconds(points, UnitSystem.METRIC)
         assertThat(splits).hasSizeGreaterThanOrEqualTo(6)
-        // A real walk isn't a perfectly even pace - not every split takes the same time.
+        // A real run isn't a perfectly even pace - not every split takes the same time.
         assertThat(splits.distinct().size).isGreaterThan(1)
     }
 }
