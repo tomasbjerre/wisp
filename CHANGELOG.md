@@ -1,3 +1,9 @@
+## 0.11.0 (2026-09-28)
+
+### Features
+
+-  **tracking**  export noise diagnostics, keep fixes while paused, auto-resume (#152) ([9183c](https://github.com/tomasbjerre/wisp/commit/9183cce837b1286) Tomas Bjerre)  
+
 ## 0.10.0 (2026-09-28)
 
 ### Features
