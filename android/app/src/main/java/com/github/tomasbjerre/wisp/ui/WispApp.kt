@@ -3,6 +3,7 @@ package com.github.tomasbjerre.wisp.ui
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -18,6 +19,7 @@ import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.UnitPreferences
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
 import com.github.tomasbjerre.wisp.data.WeightPreferences
+import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.ui.detail.DetailScreen
 import com.github.tomasbjerre.wisp.ui.home.HomeScreen
 import com.github.tomasbjerre.wisp.ui.home.WeightScreen
@@ -33,6 +35,27 @@ private const val ROUTE_DETAIL = "detail/{sessionId}"
 private const val ROUTE_KM_SPLITS = "detail/{sessionId}/splits"
 private const val ARG_SESSION_ID = "sessionId"
 
+/**
+ * See specs/permissions-and-privacy.md#required-access: tapping the recording notification
+ * opens Tracking on the session being recorded, from wherever the app was. Ignored when
+ * nothing is being recorded (a stale tap, or the recording is still coming back after the
+ * app was killed): Tracking would start a new session instead of showing one.
+ */
+@Composable
+private fun OpenTrackingOnNotificationTap(
+    navController: NavController,
+    openTrackingRequests: Int,
+) {
+    LaunchedEffect(openTrackingRequests) {
+        if (openTrackingRequests > 0 && TrackingService.state.value.isRecording) {
+            navController.navigate(ROUTE_TRACKING) {
+                popUpTo(ROUTE_HOME)
+                launchSingleTop = true
+            }
+        }
+    }
+}
+
 /** See specs/ui-flows.md#navigation. */
 @Composable
 fun WispApp(
@@ -42,8 +65,11 @@ fun WispApp(
     heartRatePreferences: HeartRatePreferences,
     weightPreferences: WeightPreferences,
     activityTypePreferences: ActivityTypePreferences,
+    openTrackingRequests: Int = 0,
 ) {
     val navController = rememberNavController()
+
+    OpenTrackingOnNotificationTap(navController, openTrackingRequests)
 
     // Every screen's map/panel boundary sits at a different height (see
     // specs/ui-flows.md), so the library's default crossfade briefly composes both

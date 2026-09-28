@@ -121,6 +121,16 @@ on the map, along with your current speed, distance, and elapsed time:
 
 A few more things on this screen:
 
+- **Notification** — while you record, Wisp keeps a notification in your
+  notification shade (swipe down from the top) showing your distance and
+  time, plus "paused" or "waiting to move" when that applies. Tap it to come
+  straight back to this screen from anywhere. The first time, Android asks
+  whether Wisp may show notifications — say yes to get it. If they're off,
+  a line above the stats says so, with a **Fix** button that opens Wisp's
+  notification settings:
+
+  <img src="screenshots/tracking-notifications-off.jpg" alt="Tracking screen with a line saying notifications are off" width="300">
+
 - **Satellite/Map toggle** — the pill button over the top-right corner of
   the map switches between the standard street map and a satellite view,
   useful for checking terrain. It resets back to the standard map next
