@@ -41,7 +41,7 @@ Everything measured in distance or speed, everywhere it's shown:
   announcement fires once per completed split (km or mile, per this
   setting), and says "kilometers"/"kilometers per hour" or
   "miles"/"miles per hour" to match. The **Steps per kilometer**/
-  **Average speed per kilometer** switches on
+  **Average speed per kilometer**/**Elapsed time per kilometer** switches on
   [Voice feedback settings](ui-flows.md#2a-voice-feedback-settings) relabel
   to say "mile" under imperial, same switches, same stored preference.
 - Changing the setting takes effect immediately, including recomputing a

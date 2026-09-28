@@ -59,7 +59,12 @@ object VoiceFeedbackAnnouncement {
             parts += "${durationPhrase(lastSplitDurationSeconds)} per ${unit.distanceWordSingular}"
         }
         if (settings.announceSteps && lastSplitSteps != null) parts += "$lastSplitSteps steps"
-        if (settings.announceElapsedTime) parts += durationPhrase(elapsedSeconds)
+        // Said differently from each other on purpose: with both switches on, two bare
+        // durations in a row would leave a listener guessing which is which — see #148.
+        if (settings.announceKmElapsedTime && lastSplitDurationSeconds > 0) {
+            parts += "${unit.distanceWordSingular} time ${durationPhrase(lastSplitDurationSeconds)}"
+        }
+        if (settings.announceElapsedTime) parts += "total time ${durationPhrase(elapsedSeconds)}"
         return parts.joinToString(". ")
     }
 

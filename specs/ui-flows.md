@@ -117,9 +117,9 @@ full contract.
 - A title and a back control returning to Tracking (system back does the
   same).
 - A **Voice feedback** master switch.
-- Four switches choosing what each announcement includes: **Kilometers
+- Five switches choosing what each announcement includes: **Kilometers
   completed**, **Average speed per kilometer**, **Steps per kilometer**,
-  **Elapsed time**.
+  **Elapsed time per kilometer**, **Total elapsed time**.
 - Every switch reflects and immediately persists its current setting —
   no separate Save action.
 

@@ -3,6 +3,8 @@ package com.github.tomasbjerre.wisp.ui
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
@@ -72,8 +74,10 @@ fun WispApp(
             )
         }
         composable(ROUTE_VOICE_FEEDBACK_SETTINGS) {
+            val unit by unitPreferences.unit.collectAsStateWithLifecycle()
             VoiceFeedbackSettingsScreen(
                 preferences = voiceFeedbackPreferences,
+                unit = unit,
                 onBack = { navController.popBackStack() },
             )
         }

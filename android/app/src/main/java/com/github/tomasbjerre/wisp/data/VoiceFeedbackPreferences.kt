@@ -11,6 +11,7 @@ data class VoiceFeedbackSettings(
     val announceKm: Boolean = true,
     val announceSpeed: Boolean = true,
     val announceSteps: Boolean = true,
+    val announceKmElapsedTime: Boolean = false,
     val announceElapsedTime: Boolean = true,
 )
 
@@ -46,6 +47,10 @@ class VoiceFeedbackPreferences(
         update(KEY_ANNOUNCE_STEPS, announce) { it.copy(announceSteps = announce) }
     }
 
+    fun setAnnounceKmElapsedTime(announce: Boolean) {
+        update(KEY_ANNOUNCE_KM_ELAPSED_TIME, announce) { it.copy(announceKmElapsedTime = announce) }
+    }
+
     fun setAnnounceElapsedTime(announce: Boolean) {
         update(KEY_ANNOUNCE_ELAPSED_TIME, announce) { it.copy(announceElapsedTime = announce) }
     }
@@ -65,6 +70,7 @@ class VoiceFeedbackPreferences(
             announceKm = prefs.getBoolean(KEY_ANNOUNCE_KM, true),
             announceSpeed = prefs.getBoolean(KEY_ANNOUNCE_SPEED, true),
             announceSteps = prefs.getBoolean(KEY_ANNOUNCE_STEPS, true),
+            announceKmElapsedTime = prefs.getBoolean(KEY_ANNOUNCE_KM_ELAPSED_TIME, false),
             announceElapsedTime = prefs.getBoolean(KEY_ANNOUNCE_ELAPSED_TIME, true),
         )
 
@@ -74,6 +80,7 @@ class VoiceFeedbackPreferences(
         const val KEY_ANNOUNCE_KM = "announce_km"
         const val KEY_ANNOUNCE_SPEED = "announce_speed"
         const val KEY_ANNOUNCE_STEPS = "announce_steps"
+        const val KEY_ANNOUNCE_KM_ELAPSED_TIME = "announce_km_elapsed_time"
         const val KEY_ANNOUNCE_ELAPSED_TIME = "announce_elapsed_time"
     }
 }

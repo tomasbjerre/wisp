@@ -135,11 +135,12 @@ A few more things on this screen:
 
   <img src="screenshots/tracking-voice-feedback-settings.jpg" alt="Voice feedback settings screen" width="300">
 
-  A master **Voice feedback** switch, off by default, plus four switches
+  A master **Voice feedback** switch, off by default, plus five switches
   for what each announcement includes: **Kilometers completed**,
   **Average speed per kilometer**, **Steps per kilometer** (hidden when
-  your session has no step count at all), and **Elapsed time** (the
-  session's total, not just the last kilometer's). Announcements happen
+  your session has no step count at all), **Elapsed time per kilometer**
+  (how long the last kilometer took, off by default) and **Total elapsed
+  time** (since the session started). Announcements happen
   once per completed kilometer, only while actively recording (not
   paused). Every switch persists across app restarts and takes effect
   immediately, even mid-session.
