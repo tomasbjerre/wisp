@@ -1,8 +1,8 @@
-wisp 0.9.0
+wisp 0.10.0
+- feat: add elapsed time per kilometer and total elapsed time voice options (#151)
+- fix: keep the splits link on Detail for sessions under one full unit (#150)
+- chore(changelog): updating changelog
+- chore(android): update screenshots and play listing
 - ci: publish releases to closed testing instead of internal track
 - feat: add a Save to device option to every export (#147)
-- feat: store every recorded measurement, flagging noise instead of discarding it (#146)
-- fix: announce km pace as time, not km/h, in voice feedback (#145)
-- fix: make movement detection more sensitive and add a force-start override (#144)
-- fix: point replay-real-track.sh at the renamed running-activity fixture (#143)
-- 
+- feat: store every recorded measurement, flagging noise instead of di
