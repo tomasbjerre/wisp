@@ -44,11 +44,16 @@ class VoiceFeedbackSettingsTest {
         // Off by default (specs/voice-feedback.md#settings).
         composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ENABLED_SWITCH).assertIsOff()
         composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_STEPS_SWITCH).assertIsOn()
+        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_ELAPSED_TIME_SWITCH).assertIsOff()
+        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_ELAPSED_TIME_SWITCH).assertIsOn()
+        composeRule.onNodeWithText("Elapsed time per kilometer").assertExists()
+        composeRule.onNodeWithText("Total elapsed time").assertExists()
 
         // Flip it on, and flip one of the four sub-switches off, to verify both
         // directions persist.
         composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ENABLED_SWITCH).performClick()
         composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_STEPS_SWITCH).performClick()
+        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_ELAPSED_TIME_SWITCH).performClick()
 
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
@@ -58,6 +63,7 @@ class VoiceFeedbackSettingsTest {
         openVoiceFeedbackSettings()
         composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ENABLED_SWITCH).assertIsOn()
         composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_STEPS_SWITCH).assertIsOff()
+        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_ELAPSED_TIME_SWITCH).assertIsOn()
         composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_SWITCH).assertIsOn()
 
         composeRule.onNodeWithContentDescription("Back").performClick()

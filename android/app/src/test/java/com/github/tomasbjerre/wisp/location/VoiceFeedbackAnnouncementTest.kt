@@ -98,7 +98,8 @@ class VoiceFeedbackAnnouncementTest {
                 unit = UnitSystem.METRIC,
             )
 
-        assertThat(text).isEqualTo("1 kilometer. 5 minutes 0 seconds per kilometer. 963 steps. 5 minutes 5 seconds")
+        assertThat(text)
+            .isEqualTo("1 kilometer. 5 minutes 0 seconds per kilometer. 963 steps. total time 5 minutes 5 seconds")
     }
 
     @Test
@@ -126,7 +127,7 @@ class VoiceFeedbackAnnouncementTest {
                 unit = UnitSystem.IMPERIAL,
             )
 
-        assertThat(text).isEqualTo("1 mile. 5 minutes 0 seconds per mile. 963 steps. 5 minutes 5 seconds")
+        assertThat(text).isEqualTo("1 mile. 5 minutes 0 seconds per mile. 963 steps. total time 5 minutes 5 seconds")
     }
 
     @Test
@@ -251,6 +252,62 @@ class VoiceFeedbackAnnouncementTest {
                 unit = UnitSystem.METRIC,
             )
 
-        assertThat(text).isEqualTo("1 hour 2 minutes 3 seconds")
+        assertThat(text).isEqualTo("total time 1 hour 2 minutes 3 seconds")
+    }
+
+    @Test
+    fun `elapsed time per kilometer says how long that kilometer took, not the session total`() {
+        val splits = GeoUtils.KmSplits(listOf(300L, 330L), null)
+
+        val text =
+            VoiceFeedbackAnnouncement.forNewlyCompletedKm(
+                splits = splits,
+                previousCompleteCount = 1,
+                elapsedSeconds = 630,
+                settings =
+                    VoiceFeedbackSettings(
+                        enabled = true,
+                        announceKm = false,
+                        announceSpeed = false,
+                        announceSteps = false,
+                        announceKmElapsedTime = true,
+                        announceElapsedTime = false,
+                    ),
+                unit = UnitSystem.METRIC,
+            )
+
+        assertThat(text).isEqualTo("kilometer time 5 minutes 30 seconds")
+    }
+
+    @Test
+    fun `both elapsed times are worded so they cannot be mistaken for each other, in that order`() {
+        val splits = GeoUtils.KmSplits(listOf(300L, 330L), null)
+
+        val text =
+            VoiceFeedbackAnnouncement.forNewlyCompletedKm(
+                splits = splits,
+                previousCompleteCount = 1,
+                elapsedSeconds = 630,
+                settings =
+                    VoiceFeedbackSettings(
+                        enabled = true,
+                        announceKm = false,
+                        announceSpeed = false,
+                        announceSteps = false,
+                        announceKmElapsedTime = true,
+                        announceElapsedTime = true,
+                    ),
+                unit = UnitSystem.IMPERIAL,
+            )
+
+        assertThat(text).isEqualTo("mile time 5 minutes 30 seconds. total time 10 minutes 30 seconds")
+    }
+
+    @Test
+    fun `elapsed time per kilometer is off by default, total elapsed time is on`() {
+        val defaults = VoiceFeedbackSettings()
+
+        assertThat(defaults.announceKmElapsedTime).isFalse()
+        assertThat(defaults.announceElapsedTime).isTrue()
     }
 }

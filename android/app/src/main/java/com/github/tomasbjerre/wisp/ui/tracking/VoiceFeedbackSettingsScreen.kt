@@ -24,7 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
+import com.github.tomasbjerre.wisp.data.VoiceFeedbackSettings
 import com.github.tomasbjerre.wisp.ui.TestTags
 
 /** See specs/ui-flows.md#2a-voice-feedback-settings and specs/voice-feedback.md. */
@@ -32,6 +34,7 @@ import com.github.tomasbjerre.wisp.ui.TestTags
 @Composable
 fun VoiceFeedbackSettingsScreen(
     preferences: VoiceFeedbackPreferences,
+    unit: UnitSystem,
     onBack: () -> Unit,
 ) {
     val settings by preferences.settings.collectAsStateWithLifecycle()
@@ -56,39 +59,56 @@ fun VoiceFeedbackSettingsScreen(
                 testTag = TestTags.VOICE_FEEDBACK_ENABLED_SWITCH,
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            // Disabled (not hidden) while the master switch above is off — their stored
-            // values still persist either way, this only reflects that they don't
-            // currently do anything. See specs/voice-feedback.md#settings.
-            SettingSwitchRow(
-                label = "Kilometers completed",
-                checked = settings.announceKm,
-                enabled = settings.enabled,
-                onCheckedChange = preferences::setAnnounceKm,
-                testTag = TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_SWITCH,
-            )
-            SettingSwitchRow(
-                label = "Average speed per kilometer",
-                checked = settings.announceSpeed,
-                enabled = settings.enabled,
-                onCheckedChange = preferences::setAnnounceSpeed,
-                testTag = TestTags.VOICE_FEEDBACK_ANNOUNCE_SPEED_SWITCH,
-            )
-            SettingSwitchRow(
-                label = "Steps per kilometer",
-                checked = settings.announceSteps,
-                enabled = settings.enabled,
-                onCheckedChange = preferences::setAnnounceSteps,
-                testTag = TestTags.VOICE_FEEDBACK_ANNOUNCE_STEPS_SWITCH,
-            )
-            SettingSwitchRow(
-                label = "Elapsed time",
-                checked = settings.announceElapsedTime,
-                enabled = settings.enabled,
-                onCheckedChange = preferences::setAnnounceElapsedTime,
-                testTag = TestTags.VOICE_FEEDBACK_ANNOUNCE_ELAPSED_TIME_SWITCH,
-            )
+            AnnouncementSwitches(settings, preferences, unit)
         }
     }
+}
+
+/** The per-announcement switches — see specs/voice-feedback.md#settings. */
+@Composable
+private fun AnnouncementSwitches(
+    settings: VoiceFeedbackSettings,
+    preferences: VoiceFeedbackPreferences,
+    unit: UnitSystem,
+) {
+    // Disabled (not hidden) while the master switch above is off — their stored
+    // values still persist either way, this only reflects that they don't
+    // currently do anything. See specs/voice-feedback.md#settings.
+    SettingSwitchRow(
+        label = "Kilometers completed",
+        checked = settings.announceKm,
+        enabled = settings.enabled,
+        onCheckedChange = preferences::setAnnounceKm,
+        testTag = TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_SWITCH,
+    )
+    SettingSwitchRow(
+        label = "Average speed per ${unit.distanceWordSingular}",
+        checked = settings.announceSpeed,
+        enabled = settings.enabled,
+        onCheckedChange = preferences::setAnnounceSpeed,
+        testTag = TestTags.VOICE_FEEDBACK_ANNOUNCE_SPEED_SWITCH,
+    )
+    SettingSwitchRow(
+        label = "Steps per ${unit.distanceWordSingular}",
+        checked = settings.announceSteps,
+        enabled = settings.enabled,
+        onCheckedChange = preferences::setAnnounceSteps,
+        testTag = TestTags.VOICE_FEEDBACK_ANNOUNCE_STEPS_SWITCH,
+    )
+    SettingSwitchRow(
+        label = "Elapsed time per ${unit.distanceWordSingular}",
+        checked = settings.announceKmElapsedTime,
+        enabled = settings.enabled,
+        onCheckedChange = preferences::setAnnounceKmElapsedTime,
+        testTag = TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_ELAPSED_TIME_SWITCH,
+    )
+    SettingSwitchRow(
+        label = "Total elapsed time",
+        checked = settings.announceElapsedTime,
+        enabled = settings.enabled,
+        onCheckedChange = preferences::setAnnounceElapsedTime,
+        testTag = TestTags.VOICE_FEEDBACK_ANNOUNCE_ELAPSED_TIME_SWITCH,
+    )
 }
 
 @Composable

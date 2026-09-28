@@ -71,7 +71,8 @@ migrations to worry about beyond "missing means the fixed default below".
 | `announceKm` | boolean | `true` |
 | `announceSpeed` | boolean | `true` |
 | `announceSteps` | boolean | `true` |
-| `announceElapsedTime` | boolean | `true` |
+| `announceKmElapsedTime` | boolean | `false` |
+| `announceElapsedTime` | boolean | `true` (the total elapsed time switch) |
 
 ## Heart rate setting
 
