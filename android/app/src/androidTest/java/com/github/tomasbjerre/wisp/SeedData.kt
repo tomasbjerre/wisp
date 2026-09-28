@@ -1,6 +1,7 @@
 package com.github.tomasbjerre.wisp
 
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.tomasbjerre.wisp.data.ActivityType
 import com.github.tomasbjerre.wisp.export.TrackPointCsvParser
 import kotlin.math.PI
 import kotlin.math.cos
@@ -18,10 +19,12 @@ suspend fun seedSession(
     daysAgo: Int,
     durationSeconds: Long,
     speedMps: Double,
+    activityType: ActivityType? = null,
+    weightKg: Double? = null,
 ) {
     val repository = app.repository
     val startedAt = System.currentTimeMillis() - daysAgo * MILLIS_PER_DAY - durationSeconds * 1_000
-    val sessionId = repository.startSession(startedAt)
+    val sessionId = repository.startSession(startedAt, activityType, weightKg)
 
     val pointCount = 8
     for (i in 0 until pointCount) {
@@ -138,6 +141,8 @@ suspend fun seedRealSession(
     app: WispApplication,
     daysAgo: Int,
     pointCount: Int = Int.MAX_VALUE,
+    activityType: ActivityType? = null,
+    weightKg: Double? = null,
 ) {
     val repository = app.repository
     val csv =
@@ -155,7 +160,7 @@ suspend fun seedRealSession(
     val firstTimestamp = rows.first().timestamp
     val durationMillis = rows.last().timestamp - firstTimestamp
     val startedAt = System.currentTimeMillis() - daysAgo * MILLIS_PER_DAY - durationMillis
-    val sessionId = repository.startSession(startedAt)
+    val sessionId = repository.startSession(startedAt, activityType, weightKg)
 
     // A steady cadence for this activity's total steps over its total time, so the
     // running count lands exactly on REAL_SESSION_TOTAL_STEPS by the last point.

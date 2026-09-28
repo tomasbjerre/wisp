@@ -71,7 +71,20 @@ internal val MIGRATION_6_7 =
         }
     }
 
-@Database(entities = [Session::class, TrackPoint::class], version = 7, exportSchema = false)
+/**
+ * Adds Session.activityType and Session.weightKg (see specs/calories.md). Both nullable with no
+ * default: existing sessions simply have neither, so they never show calories — the same as a
+ * session started with no weight configured.
+ */
+internal val MIGRATION_7_8 =
+    object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE sessions ADD COLUMN activityType TEXT")
+            db.execSQL("ALTER TABLE sessions ADD COLUMN weightKg REAL")
+        }
+    }
+
+@Database(entities = [Session::class, TrackPoint::class], version = 8, exportSchema = false)
 abstract class WispDatabase : RoomDatabase() {
     abstract fun sessionDao(): SessionDao
 
@@ -81,7 +94,7 @@ abstract class WispDatabase : RoomDatabase() {
         fun build(context: Context): WispDatabase =
             Room
                 .databaseBuilder(context.applicationContext, WispDatabase::class.java, "wisp.db")
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                 // Safety net only, not the primary path — see
                 // specs/data-model.md#data-integrity-on-start. Every schema change that has
                 // actually shipped to real users has an explicit Migration above; this only

@@ -15,8 +15,11 @@ import androidx.lifecycle.lifecycleScope
 import com.github.tomasbjerre.wisp.MainActivity
 import com.github.tomasbjerre.wisp.R
 import com.github.tomasbjerre.wisp.WispApplication
+import com.github.tomasbjerre.wisp.data.ActivityType
+import com.github.tomasbjerre.wisp.data.Session
 import com.github.tomasbjerre.wisp.data.TrackPoint
 import com.github.tomasbjerre.wisp.ui.splits.KmSplitRows
+import com.github.tomasbjerre.wisp.util.CaloriesCalculator
 import com.github.tomasbjerre.wisp.util.GeoUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +45,8 @@ class TrackingService : LifecycleService() {
     private val unitPreferences by lazy { (application as WispApplication).unitPreferences }
     private val heartRatePreferences by lazy { (application as WispApplication).heartRatePreferences }
     private val activeRecordingStore by lazy { (application as WispApplication).activeRecordingStore }
+    private val weightPreferences by lazy { (application as WispApplication).weightPreferences }
+    private val activityTypePreferences by lazy { (application as WispApplication).activityTypePreferences }
     private val heartRateMonitor by lazy { HeartRateMonitor(this) }
     private var heartRateRecorder = HeartRateRecorder()
     private var heartRateSettingJob: Job? = null
@@ -58,6 +63,11 @@ class TrackingService : LifecycleService() {
     private var announcedCompleteKmCount = 0
 
     private var sessionId: Long? = null
+
+    // See specs/calories.md: what this session's calories are calculated from, fixed when it
+    // started (or read back from the stored session when it is continued after a kill).
+    private var activityType: ActivityType? = null
+    private var weightKg: Double? = null
     private var sequence = 0
 
     // See specs/data-model.md#trackpoint (pauseCause): why the most recent pause happened,
@@ -110,8 +120,11 @@ class TrackingService : LifecycleService() {
         pendingPauseCause = null
         pauseWatcher = null
         pausedAccumulatedMillis = 0L
+        // Read once, now: a later change of either must not change this session's calories.
+        activityType = activityTypePreferences.activityType.value
+        weightKg = weightPreferences.weightKg.value
         lifecycleScope.launch {
-            val id = repository.startSession(System.currentTimeMillis())
+            val id = repository.startSession(System.currentTimeMillis(), activityType, weightKg)
             sessionId = id
             activeRecordingStore.sessionId = id
             _state.value =
@@ -155,12 +168,13 @@ class TrackingService : LifecycleService() {
                 stopSelf()
                 return@launch
             }
-            continueSession(id, plan, points.filterNot { it.isNoise })
+            continueSession(id, session, plan, points.filterNot { it.isNoise })
         }
     }
 
     private fun continueSession(
         id: Long,
+        session: Session?,
         plan: ResumePlan,
         acceptedPoints: List<TrackPoint>,
     ) {
@@ -174,6 +188,8 @@ class TrackingService : LifecycleService() {
         val splits = GeoUtils.kmSplits(acceptedPoints, unitPreferences.unit.value)
         announcedCompleteKmCount = splits.completeSeconds.size
         sessionId = id
+        activityType = ActivityType.fromId(session?.activityType)
+        weightKg = session?.weightKg
         sequence = plan.nextSequence
         pendingPauseCause = RecordingResume.PAUSE_CAUSE_INTERRUPTED
         pauseWatcher = null
@@ -191,6 +207,7 @@ class TrackingService : LifecycleService() {
                 latestKmSplitSeconds = splits.completeSeconds.lastOrNull(),
                 fastestKmSplitSeconds = KmSplitRows.fastestSeconds(splits.completeSeconds),
                 maxHeartRateBpm = plan.maxHeartRateBpm,
+                kilocalories = currentKilocalories(plan.distanceMeters, plan.elapsedSeconds),
             )
         locationTracker.start(::onLocation)
         stepCounterTracker.start(stepRecorder::onStepCounterChanged)
@@ -255,6 +272,7 @@ class TrackingService : LifecycleService() {
                     _state.update {
                         it.copy(
                             elapsedSeconds = elapsedMillis / 1_000,
+                            kilocalories = currentKilocalories(it.distanceMeters, elapsedMillis / 1_000),
                             // Also refreshed here so a lost monitor clears the display — see
                             // specs/heart-rate.md#recording.
                             heartRateBpm = currentHeartRate(),
@@ -264,6 +282,16 @@ class TrackingService : LifecycleService() {
                     delay(1_000)
                 }
             }
+    }
+
+    /** See specs/calories.md: null without an activity type and weight for this session. */
+    private fun currentKilocalories(
+        distanceMeters: Double,
+        elapsedSeconds: Long,
+    ): Double? {
+        val activity = activityType ?: return null
+        val weight = weightKg ?: return null
+        return CaloriesCalculator.kilocalories(activity, weight, distanceMeters, elapsedSeconds)
     }
 
     private fun stopTicker() {

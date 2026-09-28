@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -48,6 +49,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.github.tomasbjerre.wisp.data.ActivityType
+import com.github.tomasbjerre.wisp.data.ActivityTypePreferences
 import com.github.tomasbjerre.wisp.data.Session
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.TrackPoint
@@ -76,13 +79,16 @@ private const val USER_MANUAL_URL = "https://github.com/tomasbjerre/wisp/blob/ma
 fun HomeScreen(
     repository: SessionRepository,
     unitPreferences: UnitPreferences,
+    activityTypePreferences: ActivityTypePreferences,
     onStart: () -> Unit,
     onOpenSession: (Long) -> Unit,
+    onOpenWeight: () -> Unit,
 ) {
     val viewModel: HomeViewModel =
         viewModel(factory = viewModelFactory { initializer { HomeViewModel(repository) } })
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val unit by unitPreferences.unit.collectAsStateWithLifecycle()
+    val activityType by activityTypePreferences.activityType.collectAsStateWithLifecycle()
     var pendingDelete by remember { mutableStateOf<Session?>(null) }
     var showInfo by remember { mutableStateOf(false) }
 
@@ -92,6 +98,7 @@ fun HomeScreen(
                 sessions = sessions,
                 loadPointsBySession = viewModel::loadPointsBySession,
                 onInfoClick = { showInfo = true },
+                onWeightClick = onOpenWeight,
             )
         },
     ) { padding ->
@@ -100,28 +107,19 @@ fun HomeScreen(
                 Text("Start")
             }
 
-            // See specs/units.md and specs/ui-flows.md#1-home.
+            // See specs/calories.md#activity-type, specs/units.md and specs/ui-flows.md#1-home.
+            ActivityTypeChoice(
+                selected = activityType,
+                onSelect = activityTypePreferences::setActivityType,
+                modifier = Modifier.padding(top = 16.dp),
+            )
             UnitSystemToggle(
                 unit = unit,
                 onUnitChange = unitPreferences::setUnit,
                 modifier = Modifier.padding(top = 16.dp),
             )
 
-            if (sessions.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        "No activities yet — tap Start to record your first route.",
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
-            } else {
-                SessionList(
-                    sessions = sessions,
-                    unit = unit,
-                    onOpenSession = onOpenSession,
-                    onDeleteClick = { pendingDelete = it },
-                )
-            }
+            HistorySection(sessions, unit, onOpenSession, onDeleteClick = { pendingDelete = it })
         }
     }
 
@@ -148,6 +146,7 @@ private fun HomeTopBar(
     sessions: List<Session>,
     loadPointsBySession: suspend () -> List<Pair<Session, List<TrackPoint>>>,
     onInfoClick: () -> Unit,
+    onWeightClick: () -> Unit,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -190,6 +189,10 @@ private fun HomeTopBar(
                 IconButton(onClick = onClick, enabled = sessions.isNotEmpty()) {
                     Icon(Icons.Filled.Share, contentDescription = "Export history as CSV")
                 }
+            }
+            // See specs/ui-flows.md#1a-weight.
+            IconButton(onClick = onWeightClick, modifier = Modifier.testTag(TestTags.WEIGHT_BUTTON)) {
+                Icon(Icons.Filled.Person, contentDescription = "Weight, used to calculate calories")
             }
             // See specs/ui-flows.md#feedback-and-support.
             IconButton(onClick = onInfoClick) {
@@ -234,6 +237,27 @@ private fun appVersionName(context: Context): String =
 
 private fun deviceInfo(): String = "${Build.MODEL}, Android ${Build.VERSION.RELEASE}"
 
+/** See specs/calories.md#activity-type: what the next recording is, so calories can be estimated. */
+@Composable
+private fun ActivityTypeChoice(
+    selected: ActivityType,
+    onSelect: (ActivityType) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SingleChoiceSegmentedButtonRow(modifier = modifier.fillMaxWidth()) {
+        ActivityType.entries.forEachIndexed { index, option ->
+            SegmentedButton(
+                selected = selected == option,
+                onClick = { onSelect(option) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = ActivityType.entries.size),
+                modifier = Modifier.testTag(TestTags.activityTypeOption(option.id)),
+            ) {
+                Text(option.label)
+            }
+        }
+    }
+}
+
 /** See specs/units.md: a Metric/Imperial choice, the one setting Wisp has on Home. */
 @Composable
 private fun UnitSystemToggle(
@@ -251,6 +275,25 @@ private fun UnitSystemToggle(
                 Text(if (option == UnitSystem.METRIC) "Metric" else "Imperial")
             }
         }
+    }
+}
+
+@Composable
+private fun HistorySection(
+    sessions: List<Session>,
+    unit: UnitSystem,
+    onOpenSession: (Long) -> Unit,
+    onDeleteClick: (Session) -> Unit,
+) {
+    if (sessions.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                "No activities yet — tap Start to record your first route.",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
+    } else {
+        SessionList(sessions = sessions, unit = unit, onOpenSession = onOpenSession, onDeleteClick = onDeleteClick)
     }
 }
 
@@ -309,10 +352,12 @@ private fun SessionRow(
                     Formatting.dateTime(session.startedAt) + (session.nearestCity?.let { " · $it" } ?: ""),
                     style = MaterialTheme.typography.titleMedium,
                 )
+                // See specs/calories.md#where-it-is-shown: omitted when the session has none.
+                val calories = session.kilocalories()?.let { " · ${Formatting.calories(it)}" } ?: ""
                 Text(
                     "${Formatting.distance(session.distanceMeters, unit)} · " +
                         "${Formatting.duration(session.durationSeconds)} · " +
-                        Formatting.speed(session.averageSpeedMps, unit),
+                        Formatting.speed(session.averageSpeedMps, unit) + calories,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }

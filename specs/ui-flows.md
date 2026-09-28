@@ -1,7 +1,8 @@
 # UI Flows
 
 Wisp has three main screens — Home, Tracking, Detail — plus a Km splits
-view reached from Detail, and a Voice feedback settings view reached
+view reached from Detail, a Weight view reached from Home (see
+[Calories burned](calories.md)), and a Voice feedback settings view reached
 from Tracking (see [Voice feedback](voice-feedback.md), and
 [Overview](overview.md#design-principle) for why this one narrow
 exception exists). No onboarding wizard, no account/login — simplicity
@@ -18,9 +19,16 @@ the right screen, and go stale silently otherwise.
 The app's entry point.
 
 - A prominent **Start** button/action, always available when idle.
-- Below it, a list of past sessions (most recent first), each row showing:
+- Directly below it, an **activity type** choice — **Walking**, **Running**
+  or **Cycling** (see [Calories burned](calories.md#activity-type)) — with
+  the last used one selected.
+- A **Weight** action that opens the [Weight](#1a-weight) view, in the top
+  bar next to Export and the information dialog.
+- A list of past sessions (most recent first), each row showing:
   date/time, place name if known (see
-  [Data Model](data-model.md#place-name)), distance, duration, average speed.
+  [Data Model](data-model.md#place-name)), distance, duration, average speed,
+  and calories when the session has them (see
+  [Calories burned](calories.md#where-it-is-shown)).
 - Tapping a row opens that session's **Detail** screen.
 - Each row also has a **Delete** action of its own (e.g. a trash icon),
   with the same confirmation step as Detail's Delete, so a session can be
@@ -32,6 +40,20 @@ The app's entry point.
 - If there's an interrupted session recovered on launch (see
   [Tracking](tracking.md)), it simply appears in the list like any other
   finished session — no special dialog or interruption.
+
+## 1a. Weight
+
+Opened from the **Weight** action on [Home](#1-home). See
+[Calories burned](calories.md#weight).
+
+- A title and a back control returning to Home (system back does the
+  same).
+- One numeric field, labelled with its unit (kg, or lb under imperial),
+  and a line explaining that the weight is used to calculate calories and
+  that calories are not shown while it is empty.
+- The field reflects and immediately persists what is typed — no separate
+  Save action. A value that is not a positive number is not stored;
+  clearing the field removes the weight.
 
 ## 2. Tracking (active recording)
 
@@ -78,7 +100,9 @@ screen while recording.
   a growing list on this screen, and "how was that last km, and is it
   my best one" is what's actually useful mid-run.
   Also the current and maximum heart rate when the heart rate monitor
-  setting is on (see [Heart rate](heart-rate.md#display)).
+  setting is on (see [Heart rate](heart-rate.md#display)), and the
+  calories burned so far when the session has them (see
+  [Calories burned](calories.md#where-it-is-shown)).
 - A **Heart rate monitor** switch, off by default, in the stats panel
   above the controls, visible while waiting for movement as well as while
   recording; disabled when no monitor is available (see
@@ -139,8 +163,10 @@ full contract.
   has no step count), and average time per kilometer plus the fastest
   one's own time (see [Tracking](tracking.md#km-splits) — average
   omitted with no complete km at all, fastest omitted with fewer than
-  two), and max heart rate (see [Heart rate](heart-rate.md#display) —
-  omitted when the session has none).
+  two), max heart rate (see [Heart rate](heart-rate.md#display) —
+  omitted when the session has none), and calories burned (see
+  [Calories burned](calories.md#where-it-is-shown) — omitted when the
+  session has none).
 - Below the summary stats, a **Km splits (N)** link — N being the number
   of complete kilometers (miles under imperial, where it reads **Mile
   splits (N)**) — opening the [Km splits](#4-km-splits) view.
@@ -210,4 +236,6 @@ Home ──(tap Start)──▶ Tracking ──(tap Stop)──▶ Detail ──
   │             Voice feedback settings              │
   │                                                 ▲
   └──────────────────(tap a history row)────────────┘
+
+Home ──(tap Weight)──▶ Weight ──(back)──▶ Home
 ```

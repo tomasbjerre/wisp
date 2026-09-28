@@ -354,6 +354,28 @@ class SessionRepositoryTest {
         }
 
     @Test
+    fun `a session keeps the activity type and weight it was started with`() =
+        runTest {
+            // See specs/calories.md#weight: changing the weight later must not change it.
+            val sessionId = repository.startSession(startedAt = 0, activityType = ActivityType.CYCLING, weightKg = 72.5)
+            repository.appendPoint(sessionId, 0, 0, 59.0, 18.0, 5f, null, segmentStart = true)
+            repository.finishSession(sessionId, endedAt = 3_600_000)
+
+            val session = repository.getSession(sessionId)!!
+
+            assertThat(session.activityType).isEqualTo("cycling")
+            assertThat(session.weightKg).isEqualTo(72.5)
+        }
+
+    @Test
+    fun `a session started without a weight has none`() =
+        runTest {
+            val sessionId = repository.startSession(startedAt = 0, activityType = ActivityType.WALKING, weightKg = null)
+
+            assertThat(repository.getSession(sessionId)!!.weightKg).isNull()
+        }
+
+    @Test
     fun `a session can be discarded by id`() =
         runTest {
             val sessionId = repository.startSession(startedAt = 0)

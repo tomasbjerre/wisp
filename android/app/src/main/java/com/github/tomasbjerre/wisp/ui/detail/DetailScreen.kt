@@ -174,6 +174,25 @@ private fun DetailMap(
     }
 }
 
+/** Stats a session may not have — each omitted entirely rather than shown empty. */
+@Composable
+private fun OptionalStatLines(session: Session?) {
+    // See specs/tracking.md#step-count. Omitted entirely with no step count, not just
+    // empty — most sessions on most devices will never have one.
+    if (session != null && session.steps > 0) {
+        val stepsPerMinute = Formatting.stepsPerMinute(session.steps, session.durationSeconds)
+        Text(stepsPerMinute, style = MaterialTheme.typography.bodyLarge)
+    }
+    // See specs/heart-rate.md#display. Omitted entirely with no reading, like steps.
+    session?.maxHeartRateBpm?.let {
+        Text("Max heart rate: ${Formatting.heartRate(it)}", style = MaterialTheme.typography.bodyLarge)
+    }
+    // See specs/calories.md#where-it-is-shown. Omitted entirely when the session has none.
+    session?.kilocalories()?.let {
+        Text("Calories: ${Formatting.calories(it)}", style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
 @Composable
 private fun SessionSummaryPanel(
     session: Session?,
@@ -190,16 +209,7 @@ private fun SessionSummaryPanel(
         // below visibly jumps down once the text pops in. See specs/ui-flows.md#3-detail.
         Text(distanceAndDurationLine(session, unit), style = MaterialTheme.typography.titleLarge)
         Text(speedsLine(session, unit), style = MaterialTheme.typography.bodyLarge)
-        // See specs/tracking.md#step-count. Omitted entirely with no step count, not just
-        // empty — most sessions on most devices will never have one.
-        if (session != null && session.steps > 0) {
-            val stepsPerMinute = Formatting.stepsPerMinute(session.steps, session.durationSeconds)
-            Text(stepsPerMinute, style = MaterialTheme.typography.bodyLarge)
-        }
-        // See specs/heart-rate.md#display. Omitted entirely with no reading, like steps.
-        session?.maxHeartRateBpm?.let {
-            Text("Max heart rate: ${Formatting.heartRate(it)}", style = MaterialTheme.typography.bodyLarge)
-        }
+        OptionalStatLines(session)
         // See specs/tracking.md#km-splits. Omitted entirely with no complete km at all,
         // same reasoning as the steps line above.
         paceLine(kmSplits.completeSeconds, unit)?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }

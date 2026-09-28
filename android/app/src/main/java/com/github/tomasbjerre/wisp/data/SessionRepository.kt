@@ -19,7 +19,12 @@ class SessionRepository(
 
     suspend fun getPoints(sessionId: Long): List<TrackPoint> = trackPointDao.getForSession(sessionId)
 
-    suspend fun startSession(startedAt: Long): Long = sessionDao.insert(Session(startedAt = startedAt))
+    /** [activityType] and [weightKg] are stored as they are now — see specs/calories.md. */
+    suspend fun startSession(
+        startedAt: Long,
+        activityType: ActivityType? = null,
+        weightKg: Double? = null,
+    ): Long = sessionDao.insert(Session(startedAt = startedAt, activityType = activityType?.id, weightKg = weightKg))
 
     // One column per recorded field, mirroring TrackPoint itself.
     @Suppress("LongParameterList")

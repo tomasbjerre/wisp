@@ -23,6 +23,14 @@ enum class UnitSystem {
     val speedAbbreviation: String
         get() = if (this == METRIC) "km/h" else "mph"
 
+    /** See specs/units.md — body weight is entered and shown in this, stored in kilograms. */
+    val weightAbbreviation: String
+        get() = if (this == METRIC) "kg" else "lb"
+
+    fun kilogramsToDisplay(kilograms: Double): Double = if (this == METRIC) kilograms else kilograms * POUNDS_PER_KG
+
+    fun displayToKilograms(displayed: Double): Double = if (this == METRIC) displayed else displayed / POUNDS_PER_KG
+
     val distanceWordSingular: String
         get() = if (this == METRIC) "kilometer" else "mile"
 
@@ -33,5 +41,6 @@ enum class UnitSystem {
         const val METERS_PER_KM = 1_000.0
         const val METERS_PER_MILE = 1_609.34
         const val FEET_PER_METER = 3.28084
+        const val POUNDS_PER_KG = 2.20462
     }
 }

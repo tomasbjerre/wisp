@@ -33,4 +33,6 @@ data class TrackingUiState(
     // current reading (nothing received yet, or the last one went stale).
     val heartRateBpm: Int? = null,
     val maxHeartRateBpm: Int? = null,
+    // See specs/calories.md. Null when the session has no activity type or weight.
+    val kilocalories: Double? = null,
 )
