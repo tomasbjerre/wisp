@@ -87,7 +87,9 @@ class VoiceFeedbackSettingsTest {
     }
 
     private companion object {
-        const val APP_PACKAGE = "com.github.tomasbjerre.wisp"
+        // The debug build has an application id suffix (see app/build.gradle.kts), so read the
+        // id of the app under test instead of hard-coding it.
+        val APP_PACKAGE: String get() = InstrumentationRegistry.getInstrumentation().targetContext.packageName
         const val TIMEOUT_MILLIS = 15_000L
     }
 }
