@@ -31,6 +31,11 @@ the spec first — it's the source of truth, not this code.
    ./gradlew installDebug
    ```
 
+The debug build has its own application id (`com.github.tomasbjerre.wisp.debug`)
+and launcher label ("Wisp Tracker (debug)"), so it installs next to the Play
+Store version instead of replacing it. It starts with an empty database and
+asks for its permissions again.
+
 No API keys, accounts, or backend setup are required to build and run.
 
 ### Command line only (no Android Studio)
