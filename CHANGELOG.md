@@ -1,3 +1,25 @@
+## 0.12.0 (2026-09-28)
+
+### Features
+
+-  **tracking**  confirm before back stops a recording ([b88cc](https://github.com/tomasbjerre/wisp/commit/b88cc9fc3bc8063) Tomas Bjerre)  
+-  **android**  choose the activity type on Tracking, default to the last one (#165) ([06694](https://github.com/tomasbjerre/wisp/commit/066941f7433bc86) Tomas Bjerre)  
+-  **android**  optionally calculate calories burned (#161) ([74a29](https://github.com/tomasbjerre/wisp/commit/74a29bb2e7e87e3) Tomas Bjerre)  
+-  **android**  name sessions after the most specific place found (#157) ([02095](https://github.com/tomasbjerre/wisp/commit/020953dcfb37bd9) Tomas Bjerre)  
+
+### Bug Fixes
+
+-  **ci**  replay the whole recorded walk, not just its first 200 points (#167) ([b0a02](https://github.com/tomasbjerre/wisp/commit/b0a02835039e19a) Tomas Bjerre)  
+-  **tracking**  show the recording notification and open Tracking from it (#162) ([9e631](https://github.com/tomasbjerre/wisp/commit/9e6318645750d50) Tomas Bjerre)  
+-  **tracking**  continue the recording when the OS restarts it after a kill (#158) ([25a4d](https://github.com/tomasbjerre/wisp/commit/25a4d725d1be1b6) Tomas Bjerre)  
+
+### Dependency updates
+
+- update dependency androidx.navigation:navigation-compose to v2.10.2 (#28) ([c842f](https://github.com/tomasbjerre/wisp/commit/c842fd59547e751) renovate[bot])  
+- update dependency androidx.core:core-ktx to v1.19.1 (#164) ([bde69](https://github.com/tomasbjerre/wisp/commit/bde6990d996d9cc) renovate[bot])  
+### Other changes
+
+
 ## 0.11.0 (2026-09-28)
 
 ### Features
