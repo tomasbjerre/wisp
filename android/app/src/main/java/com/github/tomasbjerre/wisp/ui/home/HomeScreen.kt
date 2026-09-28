@@ -50,7 +50,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.tomasbjerre.wisp.data.ActivityType
-import com.github.tomasbjerre.wisp.data.ActivityTypePreferences
 import com.github.tomasbjerre.wisp.data.Session
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.TrackPoint
@@ -79,7 +78,6 @@ private const val USER_MANUAL_URL = "https://github.com/tomasbjerre/wisp/blob/ma
 fun HomeScreen(
     repository: SessionRepository,
     unitPreferences: UnitPreferences,
-    activityTypePreferences: ActivityTypePreferences,
     onStart: () -> Unit,
     onOpenSession: (Long) -> Unit,
     onOpenWeight: () -> Unit,
@@ -88,7 +86,6 @@ fun HomeScreen(
         viewModel(factory = viewModelFactory { initializer { HomeViewModel(repository) } })
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val unit by unitPreferences.unit.collectAsStateWithLifecycle()
-    val activityType by activityTypePreferences.activityType.collectAsStateWithLifecycle()
     var pendingDelete by remember { mutableStateOf<Session?>(null) }
     var showInfo by remember { mutableStateOf(false) }
 
@@ -107,12 +104,7 @@ fun HomeScreen(
                 Text("Start")
             }
 
-            // See specs/calories.md#activity-type, specs/units.md and specs/ui-flows.md#1-home.
-            ActivityTypeChoice(
-                selected = activityType,
-                onSelect = activityTypePreferences::setActivityType,
-                modifier = Modifier.padding(top = 16.dp),
-            )
+            // See specs/units.md and specs/ui-flows.md#1-home.
             UnitSystemToggle(
                 unit = unit,
                 onUnitChange = unitPreferences::setUnit,
@@ -237,27 +229,6 @@ private fun appVersionName(context: Context): String =
 
 private fun deviceInfo(): String = "${Build.MODEL}, Android ${Build.VERSION.RELEASE}"
 
-/** See specs/calories.md#activity-type: what the next recording is, so calories can be estimated. */
-@Composable
-private fun ActivityTypeChoice(
-    selected: ActivityType,
-    onSelect: (ActivityType) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    SingleChoiceSegmentedButtonRow(modifier = modifier.fillMaxWidth()) {
-        ActivityType.entries.forEachIndexed { index, option ->
-            SegmentedButton(
-                selected = selected == option,
-                onClick = { onSelect(option) },
-                shape = SegmentedButtonDefaults.itemShape(index = index, count = ActivityType.entries.size),
-                modifier = Modifier.testTag(TestTags.activityTypeOption(option.id)),
-            ) {
-                Text(option.label)
-            }
-        }
-    }
-}
-
 /** See specs/units.md: a Metric/Imperial choice, the one setting Wisp has on Home. */
 @Composable
 private fun UnitSystemToggle(
@@ -354,8 +325,11 @@ private fun SessionRow(
                 )
                 // See specs/calories.md#where-it-is-shown: omitted when the session has none.
                 val calories = session.kilocalories()?.let { " · ${Formatting.calories(it)}" } ?: ""
+                // See specs/calories.md#where-it-is-shown: only displayed here, chosen on Tracking.
+                val activity = ActivityType.fromId(session.activityType)?.let { "${it.label} · " } ?: ""
                 Text(
-                    "${Formatting.distance(session.distanceMeters, unit)} · " +
+                    activity +
+                        "${Formatting.distance(session.distanceMeters, unit)} · " +
                         "${Formatting.duration(session.durationSeconds)} · " +
                         Formatting.speed(session.averageSpeedMps, unit) + calories,
                     style = MaterialTheme.typography.bodyMedium,

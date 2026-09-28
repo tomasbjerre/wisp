@@ -1,12 +1,13 @@
 package com.github.tomasbjerre.wisp
 
-import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
@@ -68,19 +69,16 @@ class CaloriesTest {
     }
 
     @Test
-    fun theChosenActivityTypeIsRemembered() {
-        app.activityTypePreferences.setActivityType(ActivityType.WALKING)
+    fun homeOnlyShowsTheActivityTypeItDoesNotOfferToChooseIt() {
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag(TestTags.activityTypeOption("walking")).assertIsSelected()
-        composeRule.onNodeWithTag(TestTags.activityTypeOption("cycling")).performClick()
-
-        composeRule.onNodeWithTag(TestTags.activityTypeOption("cycling")).assertIsSelected()
-        assert(app.activityTypePreferences.activityType.value == ActivityType.CYCLING)
+        ActivityType.entries.forEach {
+            composeRule.onAllNodesWithTag(TestTags.activityTypeOption(it.id)).assertCountEquals(0)
+        }
     }
 
     @Test
-    fun aSessionWithAWeightShowsCaloriesOnHomeAndDetail() {
+    fun aSessionWithAWeightShowsItsActivityTypeAndCaloriesOnHomeAndDetail() {
         runBlocking {
             // 5 km in an hour, walking, 80 kg: MET 3.5 * 80 kg * 1 h = 280 kcal.
             seedSession(
@@ -96,11 +94,14 @@ class CaloriesTest {
             composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onAllNodesWithText("kcal", substring = true).onFirst().assertExists()
+        // See specs/calories.md#where-it-is-shown: the row says what kind of activity it was.
+        composeRule.onAllNodesWithText("Walking", substring = true).onFirst().assertExists()
 
         composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).onFirst().performClick()
         composeRule.waitUntil(TIMEOUT_MILLIS) {
             composeRule.onAllNodesWithText("Calories:", substring = true).fetchSemanticsNodes().isNotEmpty()
         }
+        composeRule.onNodeWithText("Activity: Walking").assertExists()
     }
 
     @Test

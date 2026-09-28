@@ -46,7 +46,6 @@ class TrackingService : LifecycleService() {
     private val heartRatePreferences by lazy { (application as WispApplication).heartRatePreferences }
     private val activeRecordingStore by lazy { (application as WispApplication).activeRecordingStore }
     private val weightPreferences by lazy { (application as WispApplication).weightPreferences }
-    private val activityTypePreferences by lazy { (application as WispApplication).activityTypePreferences }
     private val heartRateMonitor by lazy { HeartRateMonitor(this) }
     private var heartRateRecorder = HeartRateRecorder()
     private var heartRateSettingJob: Job? = null
@@ -102,6 +101,8 @@ class TrackingService : LifecycleService() {
             ACTION_RESUME -> resume()
             ACTION_STOP -> stop()
             ACTION_REFRESH_NOTIFICATION -> updateNotification()
+            ACTION_SET_ACTIVITY_TYPE ->
+                ActivityType.fromId(intent.getStringExtra(EXTRA_ACTIVITY_TYPE))?.let(::setActivityType)
         }
         return START_STICKY
     }
@@ -121,15 +122,27 @@ class TrackingService : LifecycleService() {
         pendingPauseCause = null
         pauseWatcher = null
         pausedAccumulatedMillis = 0L
-        // Read once, now: a later change of either must not change this session's calories.
-        activityType = activityTypePreferences.activityType.value
+        // The weight is read once, now: a later change of it must not change this session's
+        // calories. The activity type starts as that of the last activity and can change while
+        // recording — see specs/calories.md#activity-type.
+        activityType = null
         weightKg = weightPreferences.weightKg.value
         lifecycleScope.launch {
+            // A choice made in the meantime (see setActivityType) wins over the default.
+            val default = repository.latestActivityType() ?: ActivityType.WALKING
+            if (activityType == null) activityType = default
             val id = repository.startSession(System.currentTimeMillis(), activityType, weightKg)
             sessionId = id
             activeRecordingStore.sessionId = id
             _state.value =
-                TrackingUiState(isRecording = true, isLocating = true, isWaitingForMovement = true, sessionId = id)
+                TrackingUiState(
+                    isRecording = true,
+                    isLocating = true,
+                    isWaitingForMovement = true,
+                    sessionId = id,
+                    // As it is now, not as it was at start: it may have been changed since.
+                    activityType = activityType,
+                )
             locationTracker.start(::onLocation)
             // Ticker starts once movement is confirmed, not here — see onLocation and
             // specs/tracking.md#start-gating.
@@ -208,6 +221,7 @@ class TrackingService : LifecycleService() {
                 latestKmSplitSeconds = splits.completeSeconds.lastOrNull(),
                 fastestKmSplitSeconds = KmSplitRows.fastestSeconds(splits.completeSeconds),
                 maxHeartRateBpm = plan.maxHeartRateBpm,
+                activityType = activityType,
                 kilocalories = currentKilocalories(plan.distanceMeters, plan.elapsedSeconds),
             )
         locationTracker.start(::onLocation)
@@ -283,6 +297,21 @@ class TrackingService : LifecycleService() {
                     delay(1_000)
                 }
             }
+    }
+
+    /**
+     * See specs/calories.md#activity-type: changed while recording — stored on this session as
+     * soon as it exists (it may not yet: [start] inserts it asynchronously, and reads
+     * [activityType] when it does), and reflected in the calories now. Nothing else remembers
+     * it: the next session starts as this session's type because this session stores it.
+     */
+    private fun setActivityType(type: ActivityType) {
+        activityType = type
+        _state.update {
+            it.copy(activityType = type, kilocalories = currentKilocalories(it.distanceMeters, it.elapsedSeconds))
+        }
+        sessionId?.let { id -> lifecycleScope.launch { repository.updateActivityType(id, type) } }
+        updateNotification()
     }
 
     /** See specs/calories.md: null without an activity type and weight for this session. */
@@ -607,6 +636,8 @@ class TrackingService : LifecycleService() {
         const val ACTION_RESUME = "com.github.tomasbjerre.wisp.action.RESUME"
         const val ACTION_STOP = "com.github.tomasbjerre.wisp.action.STOP"
         const val ACTION_REFRESH_NOTIFICATION = "com.github.tomasbjerre.wisp.action.REFRESH_NOTIFICATION"
+        const val ACTION_SET_ACTIVITY_TYPE = "com.github.tomasbjerre.wisp.action.SET_ACTIVITY_TYPE"
+        private const val EXTRA_ACTIVITY_TYPE = "com.github.tomasbjerre.wisp.extra.ACTIVITY_TYPE"
 
         // Stored on TrackPoint.pauseCause — see specs/data-model.md#trackpoint.
         private const val PAUSE_CAUSE_MANUAL = "manual"
@@ -635,6 +666,11 @@ class TrackingService : LifecycleService() {
          * was dropped, and nothing else posts it again until the next location fix — which a
          * user standing still may not produce for a while.
          */
+        fun setActivityType(
+            context: Context,
+            type: ActivityType,
+        ) = context.startService(intent(context, ACTION_SET_ACTIVITY_TYPE).putExtra(EXTRA_ACTIVITY_TYPE, type.id))
+
         fun refreshNotification(context: Context) = context.startService(intent(context, ACTION_REFRESH_NOTIFICATION))
     }
 }

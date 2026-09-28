@@ -74,9 +74,9 @@ class ScreenshotTest {
                 weightKg = SCREENSHOT_WEIGHT_KG,
             )
         }
-        // What the live Tracking captures below are recorded with.
+        // What the live Tracking captures below are recorded with; the type comes from the
+        // seeded running sessions above.
         app.weightPreferences.setWeightKg(SCREENSHOT_WEIGHT_KG)
-        app.activityTypePreferences.setActivityType(ActivityType.RUNNING)
         composeRule.waitForIdle()
         screenshot("2-home-history")
 

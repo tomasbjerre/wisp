@@ -368,6 +368,51 @@ class SessionRepositoryTest {
         }
 
     @Test
+    fun `the activity type can be changed while the session is being recorded`() =
+        runTest {
+            // See specs/calories.md#activity-type.
+            val sessionId = repository.startSession(startedAt = 0, activityType = ActivityType.WALKING, weightKg = 70.0)
+
+            repository.updateActivityType(sessionId, ActivityType.CYCLING)
+
+            val session = repository.getSession(sessionId)!!
+            assertThat(session.activityType).isEqualTo("cycling")
+            // Nothing else about the session changes with it.
+            assertThat(session.weightKg).isEqualTo(70.0)
+        }
+
+    @Test
+    fun `a new session starts as the type of the most recent session that has one`() =
+        runTest {
+            // See specs/calories.md#activity-type.
+            repository.startSession(startedAt = 1_000, activityType = ActivityType.RUNNING)
+            repository.startSession(startedAt = 2_000, activityType = ActivityType.CYCLING)
+            // Older than any type existed: no type, and not the last one.
+            repository.startSession(startedAt = 500)
+
+            assertThat(repository.latestActivityType()).isEqualTo(ActivityType.CYCLING)
+        }
+
+    @Test
+    fun `a deleted session no longer decides what a new one starts as`() =
+        runTest {
+            repository.startSession(startedAt = 1_000, activityType = ActivityType.RUNNING)
+            val latest = repository.startSession(startedAt = 2_000, activityType = ActivityType.CYCLING)
+
+            repository.deleteSessionById(latest)
+
+            assertThat(repository.latestActivityType()).isEqualTo(ActivityType.RUNNING)
+        }
+
+    @Test
+    fun `with no session that has a type there is no default`() =
+        runTest {
+            repository.startSession(startedAt = 1_000)
+
+            assertThat(repository.latestActivityType()).isNull()
+        }
+
+    @Test
     fun `a session started without a weight has none`() =
         runTest {
             val sessionId = repository.startSession(startedAt = 0, activityType = ActivityType.WALKING, weightKg = null)

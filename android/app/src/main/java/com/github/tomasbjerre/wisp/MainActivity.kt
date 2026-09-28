@@ -29,7 +29,6 @@ class MainActivity : ComponentActivity() {
                     unitPreferences = app.unitPreferences,
                     heartRatePreferences = app.heartRatePreferences,
                     weightPreferences = app.weightPreferences,
-                    activityTypePreferences = app.activityTypePreferences,
                     openTrackingRequests = openTrackingRequests,
                 )
             }
