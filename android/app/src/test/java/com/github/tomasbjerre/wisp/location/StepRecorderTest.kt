@@ -55,4 +55,15 @@ class StepRecorderTest {
         // 50 before the reset, 30 after re-anchoring — never goes negative.
         assertThat(recorder.steps).isEqualTo(80L)
     }
+
+    @Test
+    fun `a continued session keeps counting from the steps it had already reached`() {
+        // See specs/tracking.md#what-must-survive-interruption.
+        val recorder = StepRecorder(initialSteps = 500)
+
+        recorder.onStepCounterChanged(90_000)
+        recorder.onStepCounterChanged(90_040)
+
+        assertThat(recorder.steps).isEqualTo(540L)
+    }
 }

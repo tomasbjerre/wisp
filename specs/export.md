@@ -103,7 +103,7 @@ recent session first) and in recorded order within each session:
 | `accuracy_m` | `TrackPoint.accuracyMeters` | number, meters, 1 decimal — the platform's reported accuracy radius for that fix. Exported so a user can see whether a `poor_accuracy` flag was borderline or hopeless |
 | `noise_reason` | `TrackPoint.noiseReason` | the reason name(s), `\|`-separated — see [Tracking](tracking.md#noise-reasons); blank on a non-noise point, and on a noise point recorded before Wisp kept reasons |
 | `segment_start` | `TrackPoint.segmentStart` | `true`/`false` — true on the session's first point and on the first point(s) after a pause, i.e. where the route is broken and no distance is counted from the previous point |
-| `pause_cause` | `TrackPoint.pauseCause` | `manual` or `auto` on a point that starts a segment after a pause, blank otherwise — see [Tracking](tracking.md#auto-pause) |
+| `pause_cause` | `TrackPoint.pauseCause` | `manual`, `auto` or `interrupted` on a point that starts a segment after a pause, blank otherwise — see [Tracking](tracking.md#auto-pause) and, for `interrupted` (the app was killed and recording continued), [Tracking](tracking.md#what-must-survive-interruption) |
 | `steps` | `TrackPoint.steps` | integer — the session's running step count when the point was recorded, so a stretch with steps but no distance is visible |
 
 These last five exist for troubleshooting and tuning the noise filter

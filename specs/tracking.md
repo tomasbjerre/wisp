@@ -337,6 +337,24 @@ best-effort: with no monitor or permission, recording is unaffected.
 - If the app is killed by the OS while recording, the session recorded so
   far must not be lost. Points already accepted are persisted incrementally
   during recording, not only at stop.
+- If the OS then restarts the recording (the process comes back on its own,
+  without the user doing anything), the same session **continues** instead
+  of being ended at the moment of the kill:
+  - Recording carries on as an active session — never paused, even if it
+    was paused when the app was killed — with the distance, time, route,
+    steps and highest heart rate recorded so far as its starting point.
+    Time spent while nothing was recording is not counted.
+  - The first point recorded after the restart starts a new segment (see
+    [Data Model](data-model.md#trackpoint)), so the gap is never bridged
+    by a line and never adds distance or time, and carries the pause cause
+    `interrupted`, so it can be told apart from a `manual` or `auto`
+    pause, also in the [export](export.md#format).
+  - Only a session that had already confirmed movement (see
+    [Start gating](#start-gating)) is continued. One that hadn't is
+    discarded, as described below.
+  - If the OS does not restart the recording within a short time after
+    the app process starts, the session is ended at its last recorded
+    point, as described below.
 - If the device reboots or the app is force-closed mid-recording, on next
   launch the app should treat every unstopped session it finds this way
   (ordinarily just one, but see

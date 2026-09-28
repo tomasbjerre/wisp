@@ -85,6 +85,28 @@ class TrackPointCsvExporterTest {
     }
 
     @Test
+    fun `a point that resumed a recording cut short by the app being killed is exported as interrupted`() {
+        // See specs/export.md#format (pause_cause).
+        val session = Session(id = 1, startedAt = 0)
+        val point =
+            TrackPoint(
+                sessionId = 1,
+                sequence = 3,
+                timestamp = 0,
+                latitude = 0.0,
+                longitude = 0.0,
+                accuracyMeters = 5f,
+                speedMps = null,
+                segmentStart = true,
+                pauseCause = "interrupted",
+            )
+
+        val csv = TrackPointCsvExporter.toCsv(listOf(session to listOf(point)))
+
+        assertThat(csv).endsWith(",true,interrupted,0\r\n")
+    }
+
+    @Test
     fun `a mid-segment point exports segment_start false and no pause cause`() {
         val session = Session(id = 1, startedAt = 0)
         val point =
