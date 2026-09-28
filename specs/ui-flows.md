@@ -19,8 +19,8 @@ The app's entry point.
 
 - A prominent **Start** button/action, always available when idle.
 - Below it, a list of past sessions (most recent first), each row showing:
-  date/time, nearest city if known (see
-  [Data Model](data-model.md#session)), distance, duration, average speed.
+  date/time, place name if known (see
+  [Data Model](data-model.md#place-name)), distance, duration, average speed.
 - Tapping a row opens that session's **Detail** screen.
 - Each row also has a **Delete** action of its own (e.g. a trash icon),
   with the same confirmation step as Detail's Delete, so a session can be
@@ -132,8 +132,8 @@ full contract.
   standard/satellite toggle described under [Tracking](#2-tracking-active-recording)
   above, over a corner of the map.
 - Summary stats below the map, in their own panel (see
-  [Accessibility](accessibility.md#text-contrast)): date/time, nearest
-  city if known (see [Data Model](data-model.md#session)), distance,
+  [Accessibility](accessibility.md#text-contrast)): date/time,
+  place name if known (see [Data Model](data-model.md#place-name)), distance,
   duration, average speed, max speed, steps per minute (see
   [Tracking](tracking.md#step-count) — omitted entirely when the session
   has no step count), and average time per kilometer plus the fastest

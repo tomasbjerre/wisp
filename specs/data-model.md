@@ -17,7 +17,7 @@ One recorded activity.
 | `durationSeconds` | number | total recording time, excluding paused time |
 | `averageSpeedMps` | number | `distanceMeters / durationSeconds` |
 | `maxSpeedMps` | number | highest recorded current-speed sample |
-| `nearestCity` | text, nullable | name of the city/place nearest the session's start point; null until resolved, or if it couldn't be resolved (see [Permissions & Privacy](permissions-and-privacy.md#data-handling)) |
+| `nearestCity` | text, nullable | name of the place nearest the session's start point, as specific as the geocoding service can give: a neighborhood or district if it names one, otherwise the city, otherwise a broader area such as a county or region (see [Place name](#place-name)); null until resolved, or if it couldn't be resolved (see [Permissions & Privacy](permissions-and-privacy.md#data-handling)) |
 | `steps` | integer | total steps counted during the session, excluding paused time (see [Tracking](tracking.md#step-count)); 0 if no step sensor/permission was available, or the session was recovered after an interruption |
 | `maxHeartRateBpm` | integer, nullable | highest heart rate reading during the session, excluding paused time (see [Heart rate](heart-rate.md#recording)); null if no reading was ever received |
 
@@ -26,11 +26,28 @@ are derived from the session's points but should be stored (not
 recomputed on every read) so history lists stay cheap to render.
 `nearestCity` is resolved after the session finishes and stored once
 known — it never blocks finishing a session or navigating away from it.
+The name is never looked up again for a session that already has one.
 `steps` comes from a live sensor reading during recording, not from the
 points, so it can't be recomputed later the way the others can. (Each
 point also records the running step count at that moment — see
 [TrackPoint](#trackpoint) — but only so steps can be split by kilometer,
 see [Tracking](tracking.md#km-splits); `Session.steps` stays the total.)
+
+### Place name
+
+`nearestCity` is the most specific place name the geocoding service
+returns for the session's start point. Candidates are ranked from most to
+least specific, and the highest-ranked name found on any candidate wins:
+
+1. sub-locality (a neighborhood or district, e.g. Trossö)
+2. locality (a city or town, e.g. Karlskrona)
+3. sub-administrative area (e.g. a county)
+4. administrative area (e.g. a region, e.g. Blekinge)
+
+A blank field is skipped as if absent. If none of them is available the
+session has no place name. No service other than the platform's geocoder
+is used to find one — see
+[Permissions & Privacy](permissions-and-privacy.md#data-handling).
 
 ## TrackPoint
 
