@@ -196,7 +196,9 @@ just-finished:
 
 Opened with the **Km splits** link on Detail (titled **Mile splits**
 under imperial), for analyzing an activity kilometer by kilometer — or
-mile by mile, with imperial selected on Home:
+mile by mile, with imperial selected on Home. An activity shorter than
+one full kilometer/mile has no complete split to count, so the link has
+no number and the view shows just the distance covered so far:
 
 <img src="screenshots/detail-km-splits.jpg" alt="Km splits view with a row per kilometer" width="300">
 

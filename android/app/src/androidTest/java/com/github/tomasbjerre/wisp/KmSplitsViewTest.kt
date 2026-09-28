@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.ui.TestTags
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
@@ -56,6 +57,29 @@ class KmSplitsViewTest {
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
             composeRule.onAllNodesWithText("Export CSV").fetchSemanticsNodes().isNotEmpty()
         }
+    }
+
+    // #149: 1.2 km is a complete km under metric but only a partial mile under imperial —
+    // Detail used to show no splits link at all then.
+    @Test
+    fun imperialSessionUnderOneMileStillLinksToItsPartialSplit() {
+        val app = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as WispApplication
+        app.unitPreferences.setUnit(UnitSystem.IMPERIAL)
+        runBlocking { seedSessionOfLength(app, meters = 1_200.0, durationSeconds = 720) }
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).onFirst().performClick()
+
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Mile splits").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Mile splits").performClick()
+
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("+", substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("+", substring = true).assertIsDisplayed()
     }
 
     private companion object {

@@ -11,6 +11,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
+import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.ui.TestTags
 import kotlinx.coroutines.runBlocking
@@ -186,6 +187,27 @@ class ScreenshotTest {
 
         composeRule.onNodeWithText("Stop").performClick()
         composeRule.waitForIdle()
+    }
+
+    /**
+     * See specs/ui-flows.md#3-detail: an imperial session under one mile still links to
+     * its partial split (#149). Unnumbered, docs/screenshots only, like captureKmSplits.
+     */
+    @Test
+    fun captureImperialSessionUnderOneMile() {
+        dismissSystemAnrIfPresent()
+        val app = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as WispApplication
+        app.unitPreferences.setUnit(UnitSystem.IMPERIAL)
+        runBlocking { seedSessionOfLength(app, meters = 1_200.0, durationSeconds = 720) }
+        composeRule.waitUntil(timeoutMillis = LOCATE_TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).onFirst().performClick()
+        composeRule.waitUntil(timeoutMillis = LOCATE_TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Mile splits").fetchSemanticsNodes().isNotEmpty()
+        }
+        Thread.sleep(MAP_TILE_SETTLE_MILLIS)
+        screenshot("detail-imperial-partial-split")
     }
 
     // Via the shell, not app-code File I/O: scoped storage silently blocks the app

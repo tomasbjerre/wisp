@@ -148,6 +148,23 @@ class GeoUtilsTest {
     }
 
     @Test
+    fun `a session between one km and one mile has a partial mile split but no complete one under imperial`() {
+        // #149: 1.2 km is a complete split under metric, but under imperial it is only
+        // a partial mile — still something for Detail to link to.
+        val points =
+            listOf(
+                pointAtDistance(seq = 0, t = 0, distanceMeters = 0.0, segmentStart = true),
+                pointAtDistance(seq = 1, t = 360_000, distanceMeters = 1_200.0, segmentStart = false),
+            )
+
+        val imperial = GeoUtils.kmSplits(points, UnitSystem.IMPERIAL)
+
+        assertThat(imperial.completeSeconds).isEmpty()
+        assertThat(imperial.partial).isNotNull()
+        assertThat(GeoUtils.kmSplits(points, UnitSystem.METRIC).completeSeconds).hasSize(1)
+    }
+
+    @Test
     fun `a pause between two km does not inflate that split's time`() {
         // See specs/tracking.md#km-splits: paused time/distance is excluded exactly like
         // specs/tracking.md#distance-calculation's session totals.

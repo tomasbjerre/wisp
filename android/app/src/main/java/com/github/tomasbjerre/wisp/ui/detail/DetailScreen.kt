@@ -57,6 +57,7 @@ import com.github.tomasbjerre.wisp.ui.common.MapType
 import com.github.tomasbjerre.wisp.ui.common.MapTypeToggle
 import com.github.tomasbjerre.wisp.ui.common.RouteMap
 import com.github.tomasbjerre.wisp.ui.splits.KmSplitRows
+import com.github.tomasbjerre.wisp.util.GeoUtils
 import org.osmdroid.views.MapView
 
 /** See specs/ui-flows.md#3-detail-a-past-or-just-finished-session. */
@@ -77,7 +78,7 @@ fun DetailScreen(
         )
     val session by viewModel.session.collectAsStateWithLifecycle()
     val route by viewModel.route.collectAsStateWithLifecycle()
-    val kmSplitsSeconds by viewModel.kmSplitsSeconds.collectAsStateWithLifecycle()
+    val kmSplits by viewModel.kmSplits.collectAsStateWithLifecycle()
     val points by viewModel.points.collectAsStateWithLifecycle()
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var mapView by remember { mutableStateOf<MapView?>(null) }
@@ -111,7 +112,7 @@ fun DetailScreen(
 
             SessionSummaryPanel(
                 session = session,
-                kmSplitsSeconds = kmSplitsSeconds,
+                kmSplits = kmSplits,
                 unit = unit,
                 onOpenKmSplits = onOpenKmSplits,
                 onBack = onBack,
@@ -176,7 +177,7 @@ private fun DetailMap(
 @Composable
 private fun SessionSummaryPanel(
     session: Session?,
-    kmSplitsSeconds: List<Long>,
+    kmSplits: GeoUtils.KmSplits,
     unit: UnitSystem,
     onOpenKmSplits: () -> Unit,
     onBack: () -> Unit,
@@ -201,17 +202,18 @@ private fun SessionSummaryPanel(
         }
         // See specs/tracking.md#km-splits. Omitted entirely with no complete km at all,
         // same reasoning as the steps line above.
-        paceLine(kmSplitsSeconds, unit)?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
+        paceLine(kmSplits.completeSeconds, unit)?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
         // See specs/ui-flows.md#4-km-splits: the splits themselves live on their own
         // view (#86) — a list squeezed in here left room for only a few rows, and took
-        // that room from the map. Omitted entirely under 1 km, not just disabled.
-        if (kmSplitsSeconds.isNotEmpty()) {
+        // that room from the map. Omitted entirely with nothing to list, not just disabled —
+        // a partial split alone is enough (#149: under a mile, imperial has no complete one).
+        KmSplitRows.linkLabel(kmSplits, unit)?.let { linkLabel ->
             TextButton(
                 onClick = onOpenKmSplits,
                 contentPadding = PaddingValues(0.dp),
                 modifier = Modifier.padding(top = 4.dp),
             ) {
-                Text("${splitsLabel(unit)} (${kmSplitsSeconds.size})")
+                Text(linkLabel)
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
             }
         }
@@ -383,6 +385,3 @@ private fun paceLine(
     val fastestPart = fastest?.let { " · Fastest ${Formatting.pace(it, unit)}" } ?: ""
     return "Avg ${Formatting.pace(average, unit)}$fastestPart"
 }
-
-/** See specs/units.md: the Km splits view/link relabels to "Mile splits" under imperial. */
-private fun splitsLabel(unit: UnitSystem): String = if (unit == UnitSystem.METRIC) "Km splits" else "Mile splits"

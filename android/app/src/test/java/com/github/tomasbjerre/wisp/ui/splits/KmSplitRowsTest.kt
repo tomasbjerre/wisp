@@ -110,4 +110,25 @@ class KmSplitRowsTest {
     fun `average seconds is null with no complete km at all`() {
         assertThat(KmSplitRows.averageSeconds(emptyList())).isNull()
     }
+
+    @Test
+    fun `link label counts complete splits and is relabelled under imperial`() {
+        val splits = GeoUtils.KmSplits(listOf(300L, 250L), GeoUtils.PartialSplit(470.0, 150L))
+
+        assertThat(KmSplitRows.linkLabel(splits, UnitSystem.METRIC)).isEqualTo("Km splits (2)")
+        assertThat(KmSplitRows.linkLabel(splits, UnitSystem.IMPERIAL)).isEqualTo("Mile splits (2)")
+    }
+
+    @Test
+    fun `link label with only a partial split has no count`() {
+        val splits = GeoUtils.KmSplits(emptyList(), GeoUtils.PartialSplit(400.0, 150L))
+
+        assertThat(KmSplitRows.linkLabel(splits, UnitSystem.METRIC)).isEqualTo("Km splits")
+        assertThat(KmSplitRows.linkLabel(splits, UnitSystem.IMPERIAL)).isEqualTo("Mile splits")
+    }
+
+    @Test
+    fun `link label is null with nothing to list`() {
+        assertThat(KmSplitRows.linkLabel(GeoUtils.KmSplits(emptyList(), null), UnitSystem.IMPERIAL)).isNull()
+    }
 }

@@ -140,10 +140,16 @@ full contract.
   two), and max heart rate (see [Heart rate](heart-rate.md#display) —
   omitted when the session has none).
 - Below the summary stats, a **Km splits (N)** link — N being the number
-  of complete kilometers — opening the [Km splits](#4-km-splits) view.
+  of complete kilometers (miles under imperial, where it reads **Mile
+  splits (N)**) — opening the [Km splits](#4-km-splits) view.
   The splits themselves aren't listed here: this panel shares the screen
   with the map, and a list long enough to be useful would take the map's
-  room. Omitted entirely for a session under 1 km.
+  room. For a session under one full unit there is no complete split to
+  count, so the link reads just **Km splits** / **Mile splits** and opens
+  the view with only the [partial split](tracking.md#km-splits) — which
+  is what an imperial user sees for a 1–1.6 km session, instead of the
+  link vanishing. Omitted entirely only when there is no partial split
+  either (under 10 m).
 - Below that, two rows of two controls: **Export CSV** (see
   [Export](export.md#single-activity-as-csv)) and **Export Image** (see
   [Export](export.md#single-activity-as-an-image)) on top, **Back** and

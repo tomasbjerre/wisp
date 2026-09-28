@@ -93,6 +93,34 @@ suspend fun seedSessionWithVaryingPace(
 }
 
 /**
+ * Like [seedSession], but a straight walk of exactly [meters] — for the edge cases around
+ * one full split, where a meandering route's length would not be known up front.
+ */
+suspend fun seedSessionOfLength(
+    app: WispApplication,
+    meters: Double,
+    durationSeconds: Long,
+) {
+    val repository = app.repository
+    val startedAt = System.currentTimeMillis() - durationSeconds * 1_000
+    val sessionId = repository.startSession(startedAt)
+    val pointCount = (meters / SPLIT_SEED_STEP_METERS).toInt() + 1
+    for (i in 0 until pointCount) {
+        repository.appendPoint(
+            sessionId = sessionId,
+            sequence = i,
+            timestamp = startedAt + (durationSeconds * 1_000 * i / (pointCount - 1)),
+            latitude = BASE_LATITUDE + meters * i / (pointCount - 1) / METERS_PER_DEGREE_LATITUDE,
+            longitude = BASE_LONGITUDE,
+            accuracyMeters = 5f,
+            speedMps = (meters / durationSeconds).toFloat(),
+            segmentStart = i == 0,
+        )
+    }
+    repository.finishSession(sessionId, startedAt + durationSeconds * 1_000)
+}
+
+/**
  * Inserts one finished session from a real recorded activity (a walk, ~7.85 km /
  * ~49 min) instead of procedurally-generated points — see issue #121. The fixture is
  * `real-running-activity-track-points.csv` (an androidTest asset), byte-for-byte what

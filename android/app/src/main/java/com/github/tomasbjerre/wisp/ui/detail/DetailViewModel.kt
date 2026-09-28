@@ -30,8 +30,8 @@ class DetailViewModel(
 
     // See specs/tracking.md#km-splits — derived from the same points loaded for the
     // route above, not a separate query.
-    private val _kmSplitsSeconds = MutableStateFlow<List<Long>>(emptyList())
-    val kmSplitsSeconds: StateFlow<List<Long>> = _kmSplitsSeconds.asStateFlow()
+    private val _kmSplits = MutableStateFlow(GeoUtils.KmSplits(emptyList(), null))
+    val kmSplits: StateFlow<GeoUtils.KmSplits> = _kmSplits.asStateFlow()
 
     // Raw points, kept for CSV export (see specs/export.md#single-activity-as-csv) — same
     // load as route/kmSplitsSeconds above, not a separate query.
@@ -46,7 +46,7 @@ class DetailViewModel(
             // shown or computed with.
             val cleanPoints = points.filterNot { it.isNoise }
             _route.value = cleanPoints.map { it.toLatLon() }
-            _kmSplitsSeconds.value = GeoUtils.kmSplitsSeconds(cleanPoints, unit)
+            _kmSplits.value = GeoUtils.kmSplits(cleanPoints, unit)
         }
     }
 
