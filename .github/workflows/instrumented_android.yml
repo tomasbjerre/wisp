@@ -92,12 +92,21 @@ jobs:
             # ScreenshotTest's live-Tracking captures and InstructionVideoTest's
             # Pause/Continue segment need actual movement, not just a fixed point —
             # recording only starts once a fix implies at least walking pace (see
-            # specs/tracking.md#start-gating). Replay the real recorded walk from #121 for the whole test
-            # run (~6.5 minutes, well past both tests' combined runtime) in the
-            # background; stopped explicitly below, once it's no longer needed (a
-            # sentinel file the loop polls for every iteration, not `kill "$!"` on its
-            # PID — tried that and it did not reliably stop the loop). One line, not a
-            # multi-line for loop — see the comment below on why.
+            # specs/tracking.md#start-gating). Replay the real recorded walk from #121 in
+            # the background for the whole test run; stopped explicitly below, once it's
+            # no longer needed (a sentinel file the loop polls for every iteration, not
+            # `kill "$!"` on its PID — tried that and it did not reliably stop the loop).
+            # One line, not a multi-line for loop — see the comment below on why.
+            #
+            # The whole fixture (every point in the CSV, not just its first 200), because
+            # this suite has grown a test class at a time (each paying its own real
+            # activity-launch/DB/UI cost before ScreenshotTest's turn, alphabetically
+            # among the last) to where 200 points (~6.5 minutes of replay) ran out before
+            # ScreenshotTest ever got there — the walk had already reached its last point
+            # and gone still, so captureTrackingStates' wait for continued movement
+            # (specs/tracking.md#start-gating) timed out for good, not intermittently:
+            # every run of the full suite reproduced it. Passing more points than the CSV
+            # actually has is fine — `head -n` in the script just stops at what's there.
             #
             # Deliberately NOT a `trap ... EXIT`: this action appears to run each line of
             # this script: block as its own `sh -c` invocation (confirmed from a run's own
@@ -112,7 +121,7 @@ jobs:
             # instead. An explicit line run after the last command that needs the walk
             # (below) is what actually works here, matching the RECORD_PID pattern.
             rm -f /tmp/wisp-walk-stop
-            ./scripts/replay-real-track.sh 200 /tmp/wisp-walk-stop &
+            ./scripts/replay-real-track.sh 100000 /tmp/wisp-walk-stop &
             # /sdcard's emulated storage can lag a few seconds behind sys.boot_completed
             # (already waited for by this point) on a freshly booted emulator — without
             # this, screenrecord has occasionally failed outright with "Unable to open
