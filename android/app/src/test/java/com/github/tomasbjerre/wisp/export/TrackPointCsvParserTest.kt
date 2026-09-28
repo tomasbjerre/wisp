@@ -1,5 +1,7 @@
 package com.github.tomasbjerre.wisp.export
 
+import com.github.tomasbjerre.wisp.data.Session
+import com.github.tomasbjerre.wisp.data.TrackPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -82,6 +84,74 @@ class TrackPointCsvParserTest {
         val rows = TrackPointCsvParser.parse(csv)
 
         assertThat(rows.map { it.isNoise }).containsExactly(true, false)
+    }
+
+    @Test
+    fun `a file without the troubleshooting columns leaves them null`() {
+        val csv =
+            "session_started_at,timestamp,latitude,longitude,speed_kmh,is_noise\r\n" +
+                "2026-09-26T07:14:26.910Z,2026-09-26T07:16:15.811Z,56.159508,15.582230,9.2,true\r\n"
+
+        val row = TrackPointCsvParser.parse(csv).single()
+
+        assertThat(row.accuracyMeters).isNull()
+        assertThat(row.noiseReason).isNull()
+        assertThat(row.segmentStart).isNull()
+        assertThat(row.pauseCause).isNull()
+        assertThat(row.steps).isNull()
+    }
+
+    @Test
+    fun `parses the troubleshooting columns when present, blank reason and cause as null`() {
+        val csv =
+            "session_started_at,timestamp,latitude,longitude,speed_kmh,is_noise," +
+                "accuracy_m,noise_reason,segment_start,pause_cause,steps\r\n" +
+                "2026-09-26T07:14:26.910Z,2026-09-26T07:16:15.811Z,56.159508,15.582230,9.2,true," +
+                "45.0,poor_accuracy|min_movement,false,,12\r\n" +
+                "2026-09-26T07:14:26.910Z,2026-09-26T07:16:17.957Z,56.159458,15.582235,9.1,false," +
+                "5.5,,true,auto,1234\r\n"
+
+        val rows = TrackPointCsvParser.parse(csv)
+
+        assertThat(rows[0].accuracyMeters).isEqualTo(45.0f)
+        assertThat(rows[0].noiseReason).isEqualTo("poor_accuracy|min_movement")
+        assertThat(rows[0].segmentStart).isFalse()
+        assertThat(rows[0].pauseCause).isNull()
+        assertThat(rows[0].steps).isEqualTo(12L)
+        assertThat(rows[1].noiseReason).isNull()
+        assertThat(rows[1].segmentStart).isTrue()
+        assertThat(rows[1].pauseCause).isEqualTo("auto")
+        assertThat(rows[1].steps).isEqualTo(1234L)
+    }
+
+    @Test
+    fun `reads back exactly what the exporter writes`() {
+        val session = Session(id = 1, startedAt = 1790431380000L)
+        val point =
+            TrackPoint(
+                sessionId = 1,
+                sequence = 0,
+                timestamp = 1790431385000L,
+                latitude = 59.334591,
+                longitude = 18.06324,
+                accuracyMeters = 45f,
+                speedMps = null,
+                segmentStart = true,
+                steps = 77,
+                isNoise = true,
+                noiseReason = "poor_accuracy|paused",
+                pauseCause = "manual",
+            )
+
+        val row = TrackPointCsvParser.parse(TrackPointCsvExporter.toCsv(listOf(session to listOf(point)))).single()
+
+        assertThat(row.latitude).isEqualTo(59.334591)
+        assertThat(row.isNoise).isTrue()
+        assertThat(row.accuracyMeters).isEqualTo(45f)
+        assertThat(row.noiseReason).isEqualTo("poor_accuracy|paused")
+        assertThat(row.segmentStart).isTrue()
+        assertThat(row.pauseCause).isEqualTo("manual")
+        assertThat(row.steps).isEqualTo(77L)
     }
 
     @Test

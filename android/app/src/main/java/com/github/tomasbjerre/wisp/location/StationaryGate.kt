@@ -29,6 +29,14 @@ class StationaryGate {
             lastMovingFix = fix
             return false
         }
+        // A fix too inaccurate to trust (see TrackRecorder) can't show that someone has
+        // stopped: its speed and position are exactly what's unreliable. Pausing on it
+        // silently loses everything until the person notices, so treat it as "can't tell"
+        // and restart the idle clock — same position, later time.
+        if (fix.accuracyMeters > TrackRecorder.MAX_ACCEPTABLE_ACCURACY_METERS) {
+            lastMovingFix = previous.copy(timestampMillis = fix.timestampMillis)
+            return false
+        }
         val movedMeters = GeoUtils.haversineMeters(previous.latitude, previous.longitude, fix.latitude, fix.longitude)
         val elapsedSeconds = (fix.timestampMillis - previous.timestampMillis) / 1000.0
         val impliedSpeedMps = if (elapsedSeconds > 0) movedMeters / elapsedSeconds else 0.0

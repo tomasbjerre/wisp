@@ -87,8 +87,10 @@ screen while recording.
   **Stop** control, both visible together at all times once recording has
   actually started — recording or paused, it's always exactly these two
   controls, no intermediate confirmation step. Also flips to paused on
-  its own after a sustained stop (see [Tracking](tracking.md#auto-pause))
-  — same controls either way.
+  its own after a sustained stop, and flips back to recording on its own
+  once real movement resumes after such an automatic pause (a manual
+  pause waits for Continue) — see [Tracking](tracking.md#auto-pause).
+  Same controls either way; Continue works at any time.
 - While waiting for movement, **Pause** is replaced by **Force start**
   (see [Tracking](tracking.md#force-start)) — **Stop** stays in its
   place, so it's always exactly two controls regardless of state. A line

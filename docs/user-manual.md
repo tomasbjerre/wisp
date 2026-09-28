@@ -116,7 +116,12 @@ A few more things on this screen:
 - **Pause / Continue** — pauses recording without ending the activity;
   tap Continue to resume. Wisp also pauses automatically if you stop
   moving for a while (about 15 seconds) — same button, same behavior,
-  it's just triggered for you instead of by a tap:
+  it's just triggered for you instead of by a tap. Unlike a pause you
+  started yourself, an automatic pause also ends on its own once you've
+  covered about 30 meters, so a stop at a crossing doesn't cost you the
+  rest of your run if you don't notice it. (Wisp keeps reading your
+  location while paused, so your exported data still shows where you
+  went — it just isn't counted.):
 
   <img src="screenshots/5-tracking-paused.jpg" alt="Tracking screen paused, with satellite view" width="300">
 
@@ -175,7 +180,11 @@ just-finished:
 - **Export CSV** — offers the same Share/Save to device choice as Home's
   Export CSV (above), for this one activity's data as two CSV files (one
   row summarizing the activity, one with every recorded GPS point).
-  Useful for importing into a spreadsheet or another tool. Both files —
+  Useful for importing into a spreadsheet or another tool. The GPS
+  points file includes every fix Wisp received — even ones it didn't
+  count — with each fix's accuracy, whether it was flagged as noise and
+  why, and where a pause broke the route (and whether you or auto-pause
+  caused it), so you can see exactly why a stretch wasn't counted. Both files —
   and the Export Image file — are named after the activity's start time,
   e.g. `wisp-activity-2026-09-25_06-51-12.csv`, so exports of different
   activities never get mixed up. Always in metric, regardless of Home's

@@ -9,8 +9,13 @@ States: `idle → recording → (paused ⇄ recording) → stopped`.
 - **Start**: begins acquiring location and appending points to the session.
   A session is created as soon as start is tapped, even before the first
   fix arrives, so nothing is lost if the app is killed a moment later.
-- **Pause**: stops appending points without ending the session. Elapsed
-  time while paused does not count toward duration or average speed.
+- **Pause**: stops adding points to the track without ending the session.
+  Elapsed time while paused does not count toward duration or average
+  speed. Location updates keep arriving while paused, and each one is
+  still stored — as a noise point with the reason `paused` (see
+  [Noise](#noise)) — so an exported session shows where the person
+  actually went during a pause, rather than a silent hole. They count
+  toward nothing the app computes or shows.
 - **Resume**: continues appending points to the same session.
 - **Stop**: ends the session and finalizes its summary (see
   [Data Model](data-model.md)). A stopped session cannot be resumed.
@@ -96,10 +101,42 @@ once recording has actually started.
   instead of once at the beginning (a confirmed presence of it).
 - Behaves exactly like tapping Pause manually — same Continue control on
   [Tracking](ui-flows.md#2-tracking-active-recording), no distinct
-  "auto-paused" indicator. Resuming is always a manual tap; auto-pause
-  never auto-resumes itself the moment movement resumes, so a person
-  only ever starts the clock again by deliberately choosing to, not by
-  an incidental shuffle a few seconds after stopping.
+  "auto-paused" indicator — and tapping Continue resumes at any time.
+- **Auto-resume**: unlike a manual pause, an auto-pause also ends by
+  itself once real, sustained movement is seen. A pause the app started
+  on its own must not depend on the person noticing it: a runner with
+  the phone in an armband who pauses at a crossing would otherwise lose
+  the rest of the run without ever knowing. A manual pause never
+  auto-resumes — the person paused deliberately, so only they end it.
+  - "Real, sustained movement" is deliberately stricter than the
+    [start gate](#start-gating): the sum of fix-to-fix movement since the
+    pause began reaches roughly 30 meters (steps of a few meters or less
+    are jitter and don't count), never a speed reading or a displacement
+    from one anchor. An incidental shuffle after stopping must not
+    resume, or a person standing at a light would flap between paused
+    and recording.
+  - Only fixes within the [accuracy threshold](#location-sampling) count
+    toward it, since it's the fixes' positions that are being summed.
+  - The fix that confirms the movement is the first point of the resumed
+    segment, exactly as if the person had tapped Continue then. Time and
+    distance from the pause up to that fix are not counted (they stay
+    noise, as [Pause](#session-lifecycle) says); the export still has
+    them.
+- The fix that trips auto-pause is recorded like any other fix (as a
+  regular point, or as noise if it fails a check — see [Noise](#noise)),
+  *before* the pause takes effect. It is never dropped: nothing Wisp
+  measures is thrown away.
+- A fix too inaccurate to trust (worse than the
+  [accuracy threshold](#location-sampling)) can't show that someone has
+  stopped, so it never triggers auto-pause, and it restarts the idle
+  clock rather than counting toward it. A false pause silently loses
+  everything until the person notices and taps Continue, which is far
+  worse than a late one.
+- Whether a pause was manual or automatic is recorded on the first
+  point(s) of the segment that follows it (see `pauseCause` in
+  [Data Model](data-model.md#trackpoint)), so an exported track shows
+  which gaps were the user's doing and which were auto-pause's — the
+  only way to tell a real rest from auto-pause misfiring mid-run.
 
 ## Location sampling
 
@@ -132,7 +169,9 @@ above), is GPS jitter too small to be real movement (see
 before movement was ever confirmed (see [Start gating](#start-gating)
 above) — a person is often still fumbling with their phone or walking
 to a trailhead at that point, exactly the noise-looking case, not
-something wrong with the fix itself.
+something wrong with the fix itself — or arrived while the session was
+paused (see [Session lifecycle](#session-lifecycle)), which likewise says
+nothing bad about the fix.
 
 - A noise point is still stored — nothing Wisp ever measures is thrown
   away — but excluded from everything the app itself computes or shows:
@@ -148,19 +187,43 @@ something wrong with the fix itself.
   every other point — a user's own tooling can decide what to include,
   rather than Wisp's own judgment call about what counts as noise being
   the only one that ever existed.
+- Every noise point also records *why* it was flagged, so a user or
+  developer looking at an export can tell a genuinely bad fix from a
+  threshold that's tuned too tight — see [Noise reasons](#noise-reasons).
 - What counts as noise is an algorithm, not a fixed label — a future
   version of Wisp may judge it differently. Nothing about this contract
   requires re-flagging *already-recorded* points when that happens
   (there is no re-classification pass today), but an implementation must
   not paint itself into a corner where doing so later is impossible.
 
+### Noise reasons
+
+A noise point's reason is one or more of the following names. A point that
+trips several checks at once lists all of them, separated by `|` and in
+this order (e.g. `poor_accuracy|min_movement`):
+
+| Name | Meaning |
+|---|---|
+| `poor_accuracy` | reported accuracy worse than the threshold — see [Location sampling](#location-sampling) |
+| `implausible_jump` | implied speed from the previous accepted point above the cap — see [Location sampling](#location-sampling) |
+| `min_movement` | less than the minimum-movement threshold from the previous accepted point — see [Distance calculation](#distance-calculation) |
+| `before_movement` | recorded while waiting for movement to be confirmed — see [Start gating](#start-gating) |
+| `paused` | arrived while the session was paused — see [Session lifecycle](#session-lifecycle) |
+
+While waiting for movement, only `poor_accuracy` (when the fix's accuracy
+was also too poor) and `before_movement` apply — the other two checks need
+an accepted previous point, which doesn't exist yet. Likewise while paused,
+only `poor_accuracy` and `paused` apply: a paused fix is never compared
+against the track.
+
 ## Distance calculation
 
 - Distance is the sum of the great-circle (haversine) distance between
   each consecutive pair of non-noise points in a session.
-- Points recorded while paused are excluded from the track entirely (not
-  just from the distance sum) — pausing should leave a visible gap, not a
-  straight line jump, when the route is drawn later.
+- Points that arrive while paused are noise (see [Noise](#noise)), so
+  they're excluded from the track entirely (not just from the distance
+  sum) — pausing should leave a visible gap, not a straight line jump,
+  when the route is drawn later.
 - A fix less than a minimum-movement threshold (a few meters) from the
   previous accepted point is noise (see [Noise](#noise)) rather than
   being added to the distance sum — otherwise GPS jitter would accumulate

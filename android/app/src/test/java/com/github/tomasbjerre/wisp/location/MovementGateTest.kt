@@ -87,6 +87,29 @@ class MovementGateTest {
         assertThat(startedMoving).isFalse()
     }
 
+    @Test
+    fun `cumulative-only mode ignores a fast hop from the anchor that isn't much ground`() {
+        // ~2.2m in 1s => ~2.2 m/s from the anchor — enough for the default gate, but not
+        // real ground covered, which is all cumulative-only mode looks at.
+        val gate = MovementGate(cumulativeDistanceOnly = true)
+        gate.hasStartedMoving(fix(lat = 59.00000, lon = 18.0, t = 0))
+
+        val startedMoving = gate.hasStartedMoving(fix(lat = 59.00002, lon = 18.0, t = 1_000))
+
+        assertThat(startedMoving).isFalse()
+    }
+
+    @Test
+    fun `cumulative-only mode confirms movement once enough real ground is covered`() {
+        val gate = MovementGate(cumulativeDistanceOnly = true)
+        gate.hasStartedMoving(fix(lat = 59.0000, lon = 18.0, t = 0))
+
+        // ~11m per step: 11m, 22m, then 33m — past the ~30m threshold on the third.
+        assertThat(gate.hasStartedMoving(fix(lat = 59.0001, lon = 18.0, t = 5_000))).isFalse()
+        assertThat(gate.hasStartedMoving(fix(lat = 59.0002, lon = 18.0, t = 10_000))).isFalse()
+        assertThat(gate.hasStartedMoving(fix(lat = 59.0003, lon = 18.0, t = 15_000))).isTrue()
+    }
+
     private fun fix(
         lat: Double,
         lon: Double,

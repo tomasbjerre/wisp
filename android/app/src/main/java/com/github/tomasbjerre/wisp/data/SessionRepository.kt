@@ -33,6 +33,8 @@ class SessionRepository(
         steps: Long = 0,
         heartRateBpm: Int? = null,
         isNoise: Boolean = false,
+        noiseReason: String? = null,
+        pauseCause: String? = null,
     ) {
         trackPointDao.insert(
             TrackPoint(
@@ -47,6 +49,8 @@ class SessionRepository(
                 steps = steps,
                 heartRateBpm = heartRateBpm,
                 isNoise = isNoise,
+                noiseReason = noiseReason,
+                pauseCause = pauseCause,
             ),
         )
     }

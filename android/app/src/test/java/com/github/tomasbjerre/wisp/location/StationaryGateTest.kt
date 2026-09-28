@@ -66,15 +66,40 @@ class StationaryGateTest {
         assertThat(shouldAutoPause).isFalse()
     }
 
+    @Test
+    fun `a poor-accuracy fix never triggers auto-pause, however long since the last movement`() {
+        val gate = StationaryGate()
+        gate.onFix(fix(lat = 59.0, lon = 18.0, t = 0))
+
+        val shouldAutoPause =
+            gate.onFix(fix(lat = 59.0, lon = 18.0, t = StationaryGate.IDLE_THRESHOLD_MILLIS * 4, accuracy = 45f))
+
+        assertThat(shouldAutoPause).isFalse()
+    }
+
+    @Test
+    fun `a poor-accuracy fix restarts the idle clock instead of counting toward it`() {
+        val gate = StationaryGate()
+        gate.onFix(fix(lat = 59.0, lon = 18.0, t = 0))
+        gate.onFix(fix(lat = 59.0, lon = 18.0, t = StationaryGate.IDLE_THRESHOLD_MILLIS - 1_000, accuracy = 45f))
+
+        // A good fix that on its own would have completed the idle threshold since t=0, but
+        // only 1s has passed since the last time stillness couldn't be ruled in or out.
+        val shouldAutoPause = gate.onFix(fix(lat = 59.0, lon = 18.0, t = StationaryGate.IDLE_THRESHOLD_MILLIS))
+
+        assertThat(shouldAutoPause).isFalse()
+    }
+
     private fun fix(
         lat: Double,
         lon: Double,
         t: Long,
         speedMps: Float? = null,
+        accuracy: Float = 5f,
     ) = LocationFix(
         latitude = lat,
         longitude = lon,
-        accuracyMeters = 5f,
+        accuracyMeters = accuracy,
         speedMps = speedMps,
         timestampMillis = t,
     )

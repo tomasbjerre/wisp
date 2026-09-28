@@ -110,6 +110,61 @@ class TrackRecorderTest {
     }
 
     @Test
+    fun `a point that isn't noise has no noise reason`() {
+        val recorder = TrackRecorder()
+
+        assertThat(recorder.accept(fix(lat = 59.0, lon = 18.0, accuracy = 5f, t = 0)).noiseReason).isNull()
+    }
+
+    @Test
+    fun `poor accuracy is recorded as the reason`() {
+        val recorder = TrackRecorder()
+
+        val recorded = recorder.accept(fix(lat = 59.0, lon = 18.0, accuracy = 45f, t = 0))
+
+        assertThat(recorded.noiseReason).isEqualTo("poor_accuracy")
+    }
+
+    @Test
+    fun `an implausible jump is recorded as the reason`() {
+        val recorder = TrackRecorder()
+        recorder.accept(fix(lat = 59.0000, lon = 18.0000, accuracy = 5f, t = 0))
+
+        val jump = recorder.accept(fix(lat = 59.0045, lon = 18.0000, accuracy = 5f, t = 1_000))
+
+        assertThat(jump.noiseReason).isEqualTo("implausible_jump")
+    }
+
+    @Test
+    fun `gps jitter is recorded as min_movement`() {
+        val recorder = TrackRecorder()
+        recorder.accept(fix(lat = 59.00000, lon = 18.00000, accuracy = 5f, t = 0))
+
+        val jitter = recorder.accept(fix(lat = 59.00001, lon = 18.00000, accuracy = 5f, t = 1_000))
+
+        assertThat(jitter.noiseReason).isEqualTo("min_movement")
+    }
+
+    @Test
+    fun `a fix failing several checks lists every reason in a fixed order`() {
+        val recorder = TrackRecorder()
+        recorder.accept(fix(lat = 59.00000, lon = 18.00000, accuracy = 5f, t = 0))
+
+        // Poor accuracy *and* under a meter from the previous point.
+        val both = recorder.accept(fix(lat = 59.00001, lon = 18.00000, accuracy = 45f, t = 1_000))
+
+        assertThat(both.noiseReason).isEqualTo("poor_accuracy|min_movement")
+    }
+
+    @Test
+    fun `NoiseReason join orders by declaration, drops duplicates, and is null when empty`() {
+        val unordered = listOf(NoiseReason.BEFORE_MOVEMENT, NoiseReason.POOR_ACCURACY, NoiseReason.POOR_ACCURACY)
+
+        assertThat(NoiseReason.join(unordered)).isEqualTo("poor_accuracy|before_movement")
+        assertThat(NoiseReason.join(emptyList())).isNull()
+    }
+
+    @Test
     fun `speed uses the platform-reported value when available`() {
         val recorder = TrackRecorder()
         recorder.accept(fix(lat = 59.0, lon = 18.0, accuracy = 5f, t = 0, speedMps = 3f))
