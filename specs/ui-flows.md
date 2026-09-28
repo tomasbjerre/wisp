@@ -59,13 +59,25 @@ Opened from the **Weight** action on [Home](#1-home). See
 Entered by tapping Start on Home. Stays active in the background/locked
 screen while recording.
 
-- The system/gesture back action behaves exactly like tapping Stop (see
-  [Navigation](#navigation) below) — same finalize-or-discard logic, same
-  destination (that session's Detail screen, or Home if movement was
-  never confirmed). It does not simply return to Home on its own: leaving
-  the session's recording ongoing but no longer reachable from the UI
-  would leave it to linger unfinished — see
-  [Tracking](tracking.md#what-must-survive-interruption).
+- The system/gesture back action asks for confirmation first, in a dialog
+  titled **Stop recording?**, with **Stop** and **Keep recording**. It never
+  stops the session by itself, so a stray back tap can't end a recording.
+  - **Keep recording** (or dismissing the dialog, e.g. with back again)
+    changes nothing: the session carries on and Tracking stays open.
+  - **Stop** behaves exactly like tapping Stop (see
+    [Navigation](#navigation) below) — same finalize-or-discard logic, same
+    destination (that session's Detail screen, or Home if movement was
+    never confirmed).
+  - The dialog says what stopping will do: that the activity will be saved,
+    or — while still waiting for movement (see
+    [Tracking](tracking.md#start-gating)) — that nothing has been recorded
+    yet, so it will be discarded.
+  - Back never simply returns to Home with the recording left running:
+    leaving the session ongoing but no longer reachable from the UI would
+    leave it to linger unfinished — see
+    [Tracking](tracking.md#what-must-survive-interruption).
+  - The Stop control itself is unchanged: it stops at once, without a
+    confirmation step.
 - Entering this screen doesn't show the map and controls right away — see
   [Tracking](tracking.md#start-gating) for the "locating" (a loading
   state, no map yet) and "waiting for movement" states shown first, each

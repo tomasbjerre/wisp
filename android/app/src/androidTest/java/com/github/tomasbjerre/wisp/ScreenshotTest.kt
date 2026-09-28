@@ -217,7 +217,24 @@ class ScreenshotTest {
         composeRule.waitForIdle()
         screenshot("5-tracking-paused")
 
+        captureStopConfirmation()
+
         composeRule.onNodeWithText("Stop").performClick()
+        composeRule.waitForIdle()
+    }
+
+    /**
+     * See specs/ui-flows.md#2-tracking-active-recording: back asks first. Unnumbered, same
+     * reasoning as captureKmSplits: the Play listing slots are already spent.
+     */
+    private fun captureStopConfirmation() {
+        device.pressBack()
+        composeRule.waitUntil(timeoutMillis = LOCATE_TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Stop recording?").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.waitForIdle()
+        screenshot("tracking-stop-confirm")
+        composeRule.onNodeWithText("Keep recording").performClick()
         composeRule.waitForIdle()
     }
 

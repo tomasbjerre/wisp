@@ -176,10 +176,15 @@ A few more things on this screen:
   still on the "waiting for movement" step), there's nothing meaningful
   to save, so the activity is discarded and you're returned to Home
   instead.
-- **Back** — the system/gesture back action does exactly what Stop does
-  (finalize the activity and navigate on) rather than silently leaving
-  it running in the background — there's no way to abandon a recording
-  session with a stray back tap.
+- **Back** — the system/gesture back action never stops a recording by
+  itself. It asks **Stop recording?** first — **Stop** does exactly what the
+  Stop button does (finalize the activity and navigate on), **Keep
+  recording** carries on as if nothing happened. The dialog says whether the
+  activity will be saved, or discarded because you haven't started moving yet.
+  So there's no way to end or abandon a recording with a stray back tap:
+
+  <img src="screenshots/tracking-stop-confirm.jpg" alt="Dialog asking Stop recording? with Stop and Keep recording" width="300">
+
 - **Voice feedback settings** — the gear icon opens a settings screen for
   optional spoken announcements (handy with earbuds, so you get progress
   updates without looking at your phone):

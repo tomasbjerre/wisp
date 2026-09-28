@@ -1,5 +1,8 @@
 package com.github.tomasbjerre.wisp
 
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -11,17 +14,19 @@ import androidx.test.uiautomator.UiDevice
 import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.ui.TestTags
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Verifies specs/ui-flows.md#2-tracking-active-recording: back behaves like Stop, not
- * like leaving the screen. Only exercises the "never moved" half of that (back before
- * movement is confirmed discards the session and returns to Home) — the "moved, back
- * finalizes to Detail" half shares the exact same TrackingService.stop() call the Stop
- * button already uses (see ScreenshotTest/InstructionVideoTest), so it isn't a distinct
- * code path worth a second, movement-dependent test here.
+ * Verifies specs/ui-flows.md#2-tracking-active-recording: back asks for confirmation first,
+ * Keep recording changes nothing, and confirming Stop behaves like Stop, not like leaving the
+ * screen. Only exercises the "never moved" half of that (confirming before movement is
+ * confirmed discards the session and returns to Home) — the "moved, Stop finalizes to Detail"
+ * half shares the exact same TrackingService.stop() call the Stop button already uses (see
+ * ScreenshotTest/InstructionVideoTest), so it isn't a distinct code path worth a second,
+ * movement-dependent test here.
  */
 @RunWith(AndroidJUnit4::class)
 class TrackingBackButtonTest {
@@ -49,7 +54,30 @@ class TrackingBackButtonTest {
             composeRule.onAllNodesWithText("Stop").fetchSemanticsNodes().isNotEmpty()
         }
 
-        UiDevice.getInstance(instrumentation).pressBack()
+        val device = UiDevice.getInstance(instrumentation)
+        device.pressBack()
+
+        // Asked first, and it says what will happen (nothing has been recorded yet).
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Stop recording?").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Nothing has been recorded yet", substring = true).assertExists()
+        assertTrue(TrackingService.state.value.isRecording)
+
+        // Keep recording: nothing changes, still on Tracking with the session running.
+        composeRule.onNodeWithText("Keep recording").performClick()
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Stop recording?").fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onNodeWithText("Stop").assertExists()
+        assertTrue(TrackingService.state.value.isRecording)
+
+        // Back again, and this time confirm.
+        device.pressBack()
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Stop recording?").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(hasText("Stop") and hasAnyAncestor(isDialog())).performClick()
 
         // Back on Home, not stuck on Tracking — Start visible again.
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
