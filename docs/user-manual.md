@@ -29,7 +29,7 @@ This is what you see when you open Wisp. It has:
   metric regardless of this setting — see the user manual's Detail
   section below.
 - **Your history** — every past activity, most recent first, each row
-  showing its date, nearest city (when known), distance, duration, and
+  showing its date, place name (when known — a neighborhood if one is found, otherwise the city), distance, duration, and
   average speed. Tap a row to open that activity's [Detail](#detail)
   screen.
 - **Delete** — the trash icon on each row deletes that activity directly
@@ -168,7 +168,7 @@ just-finished:
 
   <img src="screenshots/detail-satellite.jpg" alt="Detail screen with the satellite map view" width="300">
 
-- **Summary stats** — date/time, nearest city, distance, duration,
+- **Summary stats** — date/time, place name, distance, duration,
   average and max speed, (when available) steps/minute, max heart rate
   (when a heart rate was recorded), and (once
   you've completed at least one kilometer) your average time per

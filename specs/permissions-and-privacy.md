@@ -52,12 +52,13 @@
 - All data (sessions, points) stays on-device. Nothing is uploaded anywhere
   by default — there is no backend in scope for Wisp (see
   [Overview](overview.md)).
-- One exception: looking up the nearest city name for a finished session
-  (see [Data Model](data-model.md#session)) sends that session's start
+- One exception: looking up the place name for a finished session
+  (see [Data Model](data-model.md#place-name)) sends that session's start
   coordinates to the platform's geocoding service, which on most devices
   means a Google server. This is best-effort — if it fails (no network, no
-  geocoding backend on the device) the session simply has no city name,
-  nothing else about it is affected.
+  geocoding backend on the device) the session simply has no place name,
+  nothing else about it is affected. No other geocoding service or API is
+  added to make up for that.
 - Location keeps being read for as long as a recording is open, including
   while it's paused (see [Tracking](tracking.md#session-lifecycle)), so
   that what happened during a pause isn't lost and an automatic pause can

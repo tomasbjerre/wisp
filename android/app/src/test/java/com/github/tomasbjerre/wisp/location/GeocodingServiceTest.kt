@@ -15,6 +15,41 @@ import java.util.Locale
 @RunWith(RobolectricTestRunner::class)
 class GeocodingServiceTest {
     @Test
+    fun `a sub-locality is preferred over the locality`() {
+        val address =
+            Address(Locale.getDefault()).apply {
+                subLocality = "Trossö"
+                locality = "Karlskrona"
+                adminArea = "Blekinge"
+            }
+
+        assertThat(pickCityName(listOf(address))).isEqualTo("Trossö")
+    }
+
+    @Test
+    fun `a sub-locality on a later candidate beats a locality on the closest match`() {
+        val closest = Address(Locale.getDefault()).apply { locality = "Karlskrona" }
+        val nearby =
+            Address(Locale.getDefault()).apply {
+                subLocality = "Trossö"
+                locality = "Karlskrona"
+            }
+
+        assertThat(pickCityName(listOf(closest, nearby))).isEqualTo("Trossö")
+    }
+
+    @Test
+    fun `a blank sub-locality falls back to the locality`() {
+        val address =
+            Address(Locale.getDefault()).apply {
+                subLocality = " "
+                locality = "Karlskrona"
+            }
+
+        assertThat(pickCityName(listOf(address))).isEqualTo("Karlskrona")
+    }
+
+    @Test
     fun `a locality is preferred over broader place names`() {
         val address =
             Address(Locale.getDefault()).apply {
