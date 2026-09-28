@@ -5,12 +5,14 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
+import com.github.tomasbjerre.wisp.data.ActivityType
 import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.ui.TestTags
@@ -57,13 +59,26 @@ class ScreenshotTest {
         runBlocking {
             // A real recorded activity (issue #121) - varying pace, so Detail's km splits
             // (see captureKmSplits) have something to compare, and real GPS noise besides.
-            seedRealSession(app, daysAgo = 1)
+            // Recorded as a run with a weight, so Home, Detail and Tracking show calories
+            // (see specs/calories.md).
+            seedRealSession(app, daysAgo = 1, activityType = ActivityType.RUNNING, weightKg = SCREENSHOT_WEIGHT_KG)
             // The first part of the same recording, as a shorter earlier activity, so the
             // history isn't a real row next to an obviously synthetic one.
-            seedRealSession(app, daysAgo = 4, pointCount = SECOND_SESSION_POINTS)
+            seedRealSession(
+                app,
+                daysAgo = 4,
+                pointCount = SECOND_SESSION_POINTS,
+                activityType = ActivityType.RUNNING,
+                weightKg = SCREENSHOT_WEIGHT_KG,
+            )
         }
+        // What the live Tracking captures below are recorded with.
+        app.weightPreferences.setWeightKg(SCREENSHOT_WEIGHT_KG)
+        app.activityTypePreferences.setActivityType(ActivityType.RUNNING)
         composeRule.waitForIdle()
         screenshot("2-home-history")
+
+        captureWeight()
 
         composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).onFirst().performClick()
         composeRule.waitForIdle()
@@ -86,6 +101,21 @@ class ScreenshotTest {
         composeRule.waitForIdle()
 
         captureTrackingStates()
+    }
+
+    /**
+     * See specs/ui-flows.md#1a-weight. Unnumbered, same reasoning as captureKmSplits: the Play
+     * listing slots are already spent.
+     */
+    private fun captureWeight() {
+        composeRule.onNodeWithTag(TestTags.WEIGHT_BUTTON).performClick()
+        composeRule.waitUntil(timeoutMillis = LOCATE_TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(TestTags.WEIGHT_FIELD).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.waitForIdle()
+        screenshot("home-weight")
+        composeRule.onNodeWithContentDescription("Back").performClick()
+        composeRule.waitForIdle()
     }
 
     /**
@@ -234,6 +264,7 @@ class ScreenshotTest {
         // id of the app under test instead of hard-coding it.
         val APP_PACKAGE: String get() = InstrumentationRegistry.getInstrumentation().targetContext.packageName
         const val SCREENSHOT_DIR = "/sdcard/wisp-screenshots"
+        const val SCREENSHOT_WEIGHT_KG = 72.0
         const val SECOND_SESSION_POINTS = 600 // ~3.5 km of the real ~7.85 km recording
         const val MAP_TILE_SETTLE_MILLIS = 3_000L
         const val LOCATE_TIMEOUT_MILLIS = 15_000L

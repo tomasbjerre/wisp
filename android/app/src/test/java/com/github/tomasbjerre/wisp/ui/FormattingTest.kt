@@ -52,4 +52,26 @@ class FormattingTest {
     fun `durations of an hour or more include the hours component`() {
         assertThat(Formatting.duration(3605)).isEqualTo("1:00:05")
     }
+
+    @Test
+    fun `calories are whole kilocalories`() {
+        assertThat(Formatting.calories(311.6)).isEqualTo("312\u00A0kcal")
+    }
+
+    @Test
+    fun `a weight is shown in kilograms under metric and pounds under imperial`() {
+        assertThat(Formatting.weightForEditing(70.0, UnitSystem.METRIC)).isEqualTo("70")
+        assertThat(Formatting.weightForEditing(70.5, UnitSystem.METRIC)).isEqualTo("70.5")
+        assertThat(Formatting.weightForEditing(70.0, UnitSystem.IMPERIAL)).isEqualTo("154.3")
+    }
+
+    @Test
+    fun `a weight entered in pounds is stored in kilograms`() {
+        assertThat(UnitSystem.IMPERIAL.displayToKilograms(154.3)).isEqualTo(
+            70.0,
+            org.assertj.core.api.Assertions
+                .within(0.05),
+        )
+        assertThat(UnitSystem.METRIC.displayToKilograms(70.0)).isEqualTo(70.0)
+    }
 }

@@ -215,26 +215,38 @@ private fun TrackingStatsPanel(
                     style = MaterialTheme.typography.bodyLarge,
                 )
             }
-            // See specs/tracking.md#km-splits: only the latest split, not the full list
-            // Detail shows — there's no room for a growing list on this screen, and
-            // "how was that last km" is what's actually useful mid-run.
-            state.latestKmSplitSeconds?.let { seconds ->
-                Text(
-                    "Last ${unit.distanceWordSingular}: ${Formatting.duration(seconds)}",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            }
-            // See specs/tracking.md#km-splits: null until a second complete split exists
-            // to compare against, same threshold as Detail/Km splits' fastest/slowest.
-            state.fastestKmSplitSeconds?.let { seconds ->
-                Text(
-                    "Fastest ${unit.distanceWordSingular}: ${Formatting.duration(seconds)}",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
+            KmSplitLines(state, unit)
+            // See specs/calories.md#where-it-is-shown: omitted when the session has none.
+            state.kilocalories?.let {
+                Text("Calories: ${Formatting.calories(it)}", style = MaterialTheme.typography.bodyLarge)
             }
             HeartRateSection(state, heartRatePreferences)
             TrackingControls(isPaused = state.isPaused, isWaitingForMovement = state.isWaitingForMovement)
         }
+    }
+}
+
+@Composable
+private fun KmSplitLines(
+    state: TrackingUiState,
+    unit: UnitSystem,
+) {
+    // See specs/tracking.md#km-splits: only the latest split, not the full list
+    // Detail shows — there's no room for a growing list on this screen, and
+    // "how was that last km" is what's actually useful mid-run.
+    state.latestKmSplitSeconds?.let { seconds ->
+        Text(
+            "Last ${unit.distanceWordSingular}: ${Formatting.duration(seconds)}",
+            style = MaterialTheme.typography.bodyLarge,
+        )
+    }
+    // See specs/tracking.md#km-splits: null until a second complete split exists
+    // to compare against, same threshold as Detail/Km splits' fastest/slowest.
+    state.fastestKmSplitSeconds?.let { seconds ->
+        Text(
+            "Fastest ${unit.distanceWordSingular}: ${Formatting.duration(seconds)}",
+            style = MaterialTheme.typography.bodyLarge,
+        )
     }
 }
 

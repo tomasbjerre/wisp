@@ -225,6 +225,43 @@ class WispDatabaseMigrationTest {
     private companion object {
         const val DB_NAME = "wisp.db"
     }
+
+    @Test
+    fun `MIGRATION_7_8 preserves sessions and points and adds activity type and weight defaulting to none`() =
+        runTest {
+            val legacyDb = Room.databaseBuilder(context, LegacyDatabaseV7::class.java, DB_NAME).build()
+            val sessionId =
+                legacyDb.dao().insertSession(
+                    LegacySessionV5(startedAt = 1_000, endedAt = 2_000, steps = 99, maxHeartRateBpm = 150),
+                )
+            legacyDb.dao().insertPoint(
+                LegacyTrackPointV7(
+                    sessionId = sessionId,
+                    sequence = 0,
+                    timestamp = 1_000,
+                    latitude = 59.3293,
+                    longitude = 18.0686,
+                    accuracyMeters = 5f,
+                    speedMps = 2.5f,
+                    segmentStart = true,
+                    pauseCause = "manual",
+                ),
+            )
+            legacyDb.close()
+
+            val database = WispDatabase.build(context)
+            val session = database.sessionDao().getById(sessionId)
+            val points = database.trackPointDao().getForSession(sessionId)
+            database.close()
+
+            assertThat(session!!.steps).isEqualTo(99L)
+            assertThat(session.maxHeartRateBpm).isEqualTo(150)
+            // Neither existed then, so an old session never shows calories.
+            assertThat(session.activityType).isNull()
+            assertThat(session.weightKg).isNull()
+            assertThat(session.kilocalories()).isNull()
+            assertThat(points.single().pauseCause).isEqualTo("manual")
+        }
 }
 
 @Entity(tableName = "sessions")
@@ -473,4 +510,50 @@ internal interface LegacyV6Dao {
 @Database(entities = [LegacySessionV5::class, LegacyTrackPointV6::class], version = 6, exportSchema = false)
 internal abstract class LegacyDatabaseV6 : RoomDatabase() {
     abstract fun dao(): LegacyV6Dao
+}
+
+// TrackPoint as it was at schema version 7 (with noiseReason and pauseCause). Sessions didn't
+// change between versions 5 and 7, so this reuses LegacySessionV5.
+@Entity(
+    tableName = "track_points",
+    foreignKeys = [
+        ForeignKey(
+            entity = LegacySessionV5::class,
+            parentColumns = ["id"],
+            childColumns = ["sessionId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sessionId")],
+)
+internal data class LegacyTrackPointV7(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val sessionId: Long,
+    val sequence: Int,
+    val timestamp: Long,
+    val latitude: Double,
+    val longitude: Double,
+    val accuracyMeters: Float,
+    val speedMps: Float?,
+    val segmentStart: Boolean,
+    val steps: Long = 0,
+    val heartRateBpm: Int? = null,
+    val isNoise: Boolean = false,
+    val noiseReason: String? = null,
+    val pauseCause: String? = null,
+)
+
+@Dao
+internal interface LegacyV7Dao {
+    @Insert
+    suspend fun insertSession(session: LegacySessionV5): Long
+
+    @Insert
+    suspend fun insertPoint(point: LegacyTrackPointV7): Long
+}
+
+// Mirrors WispDatabase exactly as it was at schema version 7.
+@Database(entities = [LegacySessionV5::class, LegacyTrackPointV7::class], version = 7, exportSchema = false)
+internal abstract class LegacyDatabaseV7 : RoomDatabase() {
+    abstract fun dao(): LegacyV7Dao
 }

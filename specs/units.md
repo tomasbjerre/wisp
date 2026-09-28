@@ -64,6 +64,12 @@ Everything measured in distance or speed, everywhere it's shown:
 - The map itself — a route's shape and the standard/satellite toggle
   don't depend on units.
 
+- **Body weight** — entered and shown on the
+  [Weight](ui-flows.md#1a-weight) view in kilograms under metric and
+  pounds under imperial; stored in kilograms either way (see
+  [Calories burned](calories.md#weight)). Calories themselves are
+  kilocalories under both.
+
 ## Persistence
 
 The chosen unit system persists locally across app restarts, the same

@@ -19,6 +19,8 @@ class MainActivity : ComponentActivity() {
                     voiceFeedbackPreferences = app.voiceFeedbackPreferences,
                     unitPreferences = app.unitPreferences,
                     heartRatePreferences = app.heartRatePreferences,
+                    weightPreferences = app.weightPreferences,
+                    activityTypePreferences = app.activityTypePreferences,
                 )
             }
         }

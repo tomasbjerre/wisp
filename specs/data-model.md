@@ -19,6 +19,8 @@ One recorded activity.
 | `maxSpeedMps` | number | highest recorded current-speed sample |
 | `nearestCity` | text, nullable | name of the place nearest the session's start point, as specific as the geocoding service can give: a neighborhood or district if it names one, otherwise the city, otherwise a broader area such as a county or region (see [Place name](#place-name)); null until resolved, or if it couldn't be resolved (see [Permissions & Privacy](permissions-and-privacy.md#data-handling)) |
 | `steps` | integer | total steps counted during the session, excluding paused time (see [Tracking](tracking.md#step-count)); 0 if no step sensor/permission was available, or the session was recovered after an interruption |
+| `activityType` | text, nullable | `walking`, `running` or `cycling` — see [Calories burned](calories.md#activity-type); null on a session recorded before this existed |
+| `weightKg` | number, nullable | the body weight in kilograms in effect when the session started — see [Calories burned](calories.md#weight); null if none was configured then, and on a session recorded before this existed |
 | `maxHeartRateBpm` | integer, nullable | highest heart rate reading during the session, excluding paused time (see [Heart rate](heart-rate.md#recording)); null if no reading was ever received |
 
 `distanceMeters`, `durationSeconds`, `averageSpeedMps`, and `maxSpeedMps`

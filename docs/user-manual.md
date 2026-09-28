@@ -21,6 +21,11 @@ This is what you see when you open Wisp. It has:
 - **Start** — the button at the top. Tap it to begin recording a new
   activity (run, ride, walk, anything). See [Tracking](#tracking) below
   for what happens next.
+- **Walking / Running / Cycling** — what you are about to record, chosen
+  before you tap Start. It is remembered for next time (Walking the first
+  time). It only decides how calories are estimated — see
+  [Weight and calories](#weight-and-calories) — and doesn't change how
+  anything is recorded.
 - **Metric / Imperial** — switches every distance, speed, and pace Wisp
   shows between kilometers/km per hour and miles/mph, everywhere it's
   shown (Home, Tracking, Detail, Km splits — which becomes Mile splits
@@ -29,11 +34,15 @@ This is what you see when you open Wisp. It has:
   metric regardless of this setting — see the user manual's Detail
   section below.
 - **Your history** — every past activity, most recent first, each row
-  showing its date, place name (when known — a neighborhood if one is found, otherwise the city), distance, duration, and
-  average speed. Tap a row to open that activity's [Detail](#detail)
+  showing its date, place name (when known — a neighborhood if one is
+  found, otherwise the city), distance, duration, average speed, and
+  calories burned (when the activity has them). Tap a row to open that activity's [Detail](#detail)
   screen.
 - **Delete** — the trash icon on each row deletes that activity directly
   from Home, without having to open it first. You'll be asked to confirm.
+- **Weight** — the person icon in the top-right opens the
+  [Weight](#weight-and-calories) view, where you enter your weight so Wisp
+  can estimate calories.
 - **Export CSV** — the share icon in the top-right exports your whole
   history as two CSV files (one row per activity, and one with every
   recorded GPS point). Tapping it offers a choice: **Share** (through
@@ -56,6 +65,29 @@ The first time you open Wisp, before you've recorded anything, the
 history list is replaced with a short empty-state message instead:
 
 <img src="screenshots/1-home-empty.jpg" alt="Home screen with no activities yet" width="300">
+
+## Weight and calories
+
+<img src="screenshots/home-weight.jpg" alt="Weight view with a weight entered" width="300">
+
+Wisp can estimate the calories an activity burned, but only once it knows
+your weight. Tap the person icon on Home to open the **Weight** view and type
+your weight — in kilograms, or pounds if you've chosen Imperial. It's saved as
+you type, and clearing the field turns calories off again.
+
+- **Which weight is used:** the weight you had when you tapped Start is saved
+  with that activity, and its calories are always worked out from that. Change
+  your weight later and earlier activities keep their calories. An activity
+  you started before entering a weight never shows calories, even if you enter
+  one afterwards.
+- **How it's calculated:** calories = MET × your weight in kg × hours, where
+  the MET (how demanding the activity is) depends on whether you chose Walking,
+  Running or Cycling and on your average speed. It's an estimate, not a
+  measurement. Time spent paused doesn't count.
+- **Where you see it:** in each row of your history on Home, live while
+  recording on Tracking, and in the summary on Detail — as `Calories: 312 kcal`.
+  It isn't part of the CSV exports.
+- Activities recorded before this existed have no calories.
 
 ## Tracking
 
@@ -99,6 +131,8 @@ A few more things on this screen:
   completed a second one) your fastest kilometer so far. (Not every
   phone has a step-count sensor — if yours doesn't, or the permission
   wasn't granted, the steps line simply doesn't appear.)
+- **Calories** — `Calories: 312 kcal` so far, when your weight was set when you
+  tapped Start (see [Weight and calories](#weight-and-calories)).
 - **Heart rate monitor** — a switch above the Pause / Stop buttons, off
   by default, that stays as you left it the next time you record. Turn it
   on to record your heart rate from a Bluetooth heart rate monitor (a
@@ -170,7 +204,8 @@ just-finished:
 
 - **Summary stats** — date/time, place name, distance, duration,
   average and max speed, (when available) steps/minute, max heart rate
-  (when a heart rate was recorded), and (once
+  (when a heart rate was recorded), calories burned (when the activity has
+  them), and (once
   you've completed at least one kilometer) your average time per
   kilometer, plus your fastest one once you've completed a second.
 

@@ -49,6 +49,18 @@ object Formatting {
         return "%.0f steps/min".format(perMinute)
     }
 
+    /**
+     * See specs/calories.md#calculation: whole kilocalories. A non-breaking space, so the unit
+     * never wraps onto another line than its number.
+     */
+    fun calories(kilocalories: Double): String = "%.0f\u00A0kcal".format(kilocalories)
+
+    /** A weight for the Weight field: no trailing zeros, at most one decimal — see specs/units.md. */
+    fun weightForEditing(
+        kilograms: Double,
+        unit: UnitSystem,
+    ): String = "%.1f".format(Locale.US, unit.kilogramsToDisplay(kilograms)).removeSuffix(".0")
+
     /** See specs/heart-rate.md#display. */
     fun heartRate(bpm: Int): String = "$bpm bpm"
 
