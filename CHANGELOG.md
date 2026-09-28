@@ -1,3 +1,13 @@
+## 0.10.0 (2026-09-28)
+
+### Features
+
+-  add elapsed time per kilometer and total elapsed time voice options (#151) ([b10b6](https://github.com/tomasbjerre/wisp/commit/b10b6508d09b977) Tomas Bjerre)  
+
+### Bug Fixes
+
+-  keep the splits link on Detail for sessions under one full unit (#150) ([07d5c](https://github.com/tomasbjerre/wisp/commit/07d5c91268d3291) Tomas Bjerre)  
+
 ## 0.9.0 (2026-09-27)
 
 ### Features
