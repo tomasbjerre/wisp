@@ -1,6 +1,5 @@
 package com.github.tomasbjerre.wisp
 
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -51,15 +50,16 @@ class ActivityTypeOnTrackingTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("Start").performClick()
-        // The stats panel, with the choice, appears once a first position is known.
-        composeRule.waitUntil(TIMEOUT_MILLIS) {
-            composeRule.onAllNodesWithTag(TestTags.activityTypeOption("cycling")).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithTag(TestTags.activityTypeOption("running")).assertIsSelected()
+        // The stats panel, with the choice, appears once a first position is known, already
+        // selected on "running" — waited for as one condition, not a separate wait-then-assert:
+        // with the walk replaying continuously (see #167), state keeps changing every couple of
+        // seconds, so a wait that only checked the node existed could still race the very next
+        // assertion against a state that had already moved on by then.
+        composeRule.waitUntil(TIMEOUT_MILLIS) { isSelected("running") }
 
         composeRule.onNodeWithTag(TestTags.activityTypeOption("cycling")).performClick()
+        composeRule.waitUntil(TIMEOUT_MILLIS) { isSelected("cycling") }
 
-        composeRule.onNodeWithTag(TestTags.activityTypeOption("cycling")).assertIsSelected()
         composeRule.waitUntil(TIMEOUT_MILLIS) {
             val id = TrackingService.state.value.sessionId
             id != null && runBlocking { app.repository.getSession(id)?.activityType } == "cycling"
@@ -73,12 +73,21 @@ class ActivityTypeOnTrackingTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("Start").performClick()
-        composeRule.waitUntil(TIMEOUT_MILLIS) {
-            composeRule.onAllNodesWithTag(TestTags.activityTypeOption("walking")).fetchSemanticsNodes().isNotEmpty()
-        }
+        // See the comment on the other test: one condition, not wait-then-assert.
+        composeRule.waitUntil(TIMEOUT_MILLIS) { isSelected("walking") }
 
-        composeRule.onNodeWithTag(TestTags.activityTypeOption("walking")).assertIsSelected()
         composeRule.onNodeWithText("Stop").performClick()
+    }
+
+    /**
+     * True once exactly one [id]'s node exists and is selected — checked as a single condition
+     * (see the comment above) so a [androidx.compose.ui.test.junit4.ComposeTestRule.waitUntil]
+     * on it can never succeed on a frame that a follow-up assertion then finds already stale.
+     */
+    private fun isSelected(id: String): Boolean {
+        val nodes = composeRule.onAllNodesWithTag(TestTags.activityTypeOption(id)).fetchSemanticsNodes()
+        val node = nodes.singleOrNull() ?: return false
+        return node.config.getOrElse(androidx.compose.ui.semantics.SemanticsProperties.Selected) { false }
     }
 
     private companion object {

@@ -15,6 +15,12 @@ defaults:
 jobs:
   screenshots:
     runs-on: ubuntu-latest
+    # A normal run (emulator boot + both retry attempts + teardown) takes well under 10
+    # minutes — this caps a stuck run (e.g. android-emulator-runner's own teardown
+    # spinning on a dead emulator, observed retrying "could not connect to TCP port
+    # 5554" indefinitely) at a fast, visible failure instead of GitHub's 360-minute
+    # default job timeout.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 

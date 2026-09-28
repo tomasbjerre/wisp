@@ -20,13 +20,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Verifies specs/ui-flows.md#2-tracking-active-recording: back asks for confirmation first,
- * Keep recording changes nothing, and confirming Stop behaves like Stop, not like leaving the
- * screen. Only exercises the "never moved" half of that (confirming before movement is
- * confirmed discards the session and returns to Home) — the "moved, Stop finalizes to Detail"
- * half shares the exact same TrackingService.stop() call the Stop button already uses (see
- * ScreenshotTest/InstructionVideoTest), so it isn't a distinct code path worth a second,
- * movement-dependent test here.
+ * Verifies specs/ui-flows.md#2-tracking-active-recording: back asks for confirmation first
+ * (never stops on its own), the dialog says what will happen, Keep recording changes nothing,
+ * and confirming Stop behaves exactly like the Stop button. Deliberately doesn't assume the
+ * session is still "waiting for movement" by the time it checks — the suite-wide replayed walk
+ * (see the CI workflow) plays continuously in the background at real running pace with no
+ * per-test way to pause it, so movement can confirm during this test's own UI interaction; both
+ * outcomes are asserted for, rather than picking one and risking a flake if the other happens.
  */
 @RunWith(AndroidJUnit4::class)
 class TrackingBackButtonTest {
@@ -34,7 +34,7 @@ class TrackingBackButtonTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun backBeforeMovementIsConfirmedDiscardsTheSessionAndReturnsToHome() {
+    fun backAsksFirstAndConfirmingStopFinalizesOrDiscardsExactlyLikeTheStopButton() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.ACCESS_FINE_LOCATION")
         // Granted up front too, so its system dialog (see TrackingScreen) never covers the app.
@@ -43,7 +43,7 @@ class TrackingBackButtonTest {
         composeRule.waitForIdle()
         // Not assumed to be zero, even though every test now starts from a cleared app
         // (see clearPackageData in app/build.gradle.kts) — this only needs the count to
-        // be unchanged, not empty, so it doesn't depend on that.
+        // be unchanged-or-plus-one, not empty, so it doesn't depend on that.
         val historyCountBefore = composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).fetchSemanticsNodes().size
         composeRule.onNodeWithText("Start").performClick()
         composeRule.waitForIdle()
@@ -57,11 +57,18 @@ class TrackingBackButtonTest {
         val device = UiDevice.getInstance(instrumentation)
         device.pressBack()
 
-        // Asked first, and it says what will happen (nothing has been recorded yet).
+        // Asked first, and it says what will happen — whichever is true right now, since
+        // movement may or may not have confirmed already (see the class doc comment).
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
             composeRule.onAllNodesWithText("Stop recording?").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Nothing has been recorded yet", substring = true).assertExists()
+        val expectedText =
+            if (TrackingService.state.value.isWaitingForMovement) {
+                "Nothing has been recorded yet"
+            } else {
+                "The activity will be saved"
+            }
+        composeRule.onNodeWithText(expectedText, substring = true).assertExists()
         assertTrue(TrackingService.state.value.isRecording)
 
         // Keep recording: nothing changes, still on Tracking with the session running.
@@ -79,24 +86,42 @@ class TrackingBackButtonTest {
         }
         composeRule.onNode(hasText("Stop") and hasAnyAncestor(isDialog())).performClick()
 
-        // Back on Home, not stuck on Tracking — Start visible again.
+        // Stopped — same as tapping Stop directly — landing on Home (never moved, discarded) or
+        // Detail (moved, finalized), whichever the same race above resolved to.
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
-            composeRule.onAllNodesWithText("Start").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Start").fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodesWithText("Export CSV").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
             !TrackingService.state.value.isRecording
         }
-        // No phantom entry (see #56/#59): same history count as before this test ever
-        // touched Start, not "zero" — see the comment on historyCountBefore above.
         composeRule.waitForIdle()
-        val historyCountAfter = composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).fetchSemanticsNodes().size
-        assertEquals(historyCountBefore, historyCountAfter)
+        val onHome = composeRule.onAllNodesWithText("Start").fetchSemanticsNodes().isNotEmpty()
+        val historyCountAfter =
+            if (onHome) {
+                composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).fetchSemanticsNodes().size
+            } else {
+                // Detail doesn't list history rows itself — back to Home to count it there.
+                composeRule.onNodeWithText("Back").performClick()
+                composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+                    composeRule.onAllNodesWithText("Start").fetchSemanticsNodes().isNotEmpty()
+                }
+                composeRule.waitForIdle()
+                composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).fetchSemanticsNodes().size
+            }
+        // No phantom entry either way (see #56/#59): discarded means the same count as before
+        // this test ever touched Start; finalized means exactly one new row, this session's own.
+        assertEquals(if (onHome) historyCountBefore else historyCountBefore + 1, historyCountAfter)
     }
 
     private companion object {
         // The debug build has an application id suffix (see app/build.gradle.kts), so read the
         // id of the app under test instead of hard-coding it.
         val APP_PACKAGE: String get() = InstrumentationRegistry.getInstrumentation().targetContext.packageName
-        const val TIMEOUT_MILLIS = 15_000L
+
+        // Longer than the single-step 15s used elsewhere in this suite: this test does two full
+        // back → dialog → decision round trips plus the initial Start → Tracking wait, real
+        // wall-clock work that can occasionally run past 15s under CI load.
+        const val TIMEOUT_MILLIS = 30_000L
     }
 }
