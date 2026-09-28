@@ -338,6 +338,22 @@ class SessionRepositoryTest {
         }
 
     @Test
+    fun `a session that is about to be continued is left unfinished by recovery`() =
+        runTest {
+            // See specs/tracking.md#what-must-survive-interruption: the OS is restarting the
+            // recording, so ending it at its last point now would cut it short.
+            val continuing = repository.startSession(startedAt = 0)
+            repository.appendPoint(continuing, 0, 0, 59.0, 18.0, 5f, null, segmentStart = true)
+            val abandoned = repository.startSession(startedAt = 10_000)
+            repository.appendPoint(abandoned, 0, 10_000, 59.0, 18.0, 5f, null, segmentStart = true)
+
+            val recovered = repository.recoverUnfinishedSessions(skipSessionId = continuing)
+
+            assertThat(recovered.map { it.id }).containsExactly(abandoned)
+            assertThat(repository.getSession(continuing)!!.endedAt).isNull()
+        }
+
+    @Test
     fun `a session can be discarded by id`() =
         runTest {
             val sessionId = repository.startSession(startedAt = 0)

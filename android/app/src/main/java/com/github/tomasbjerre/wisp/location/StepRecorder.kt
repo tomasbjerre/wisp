@@ -7,12 +7,16 @@ package com.github.tomasbjerre.wisp.location
  * types, no I/O, so it can be unit tested directly against
  * specs/tracking.md#step-count without mocks.
  *
- * One instance covers exactly one recording session.
+ * One instance covers exactly one recording session. [initialSteps] is the count a
+ * session had already reached when it is continued after the app was killed — see
+ * specs/tracking.md#what-must-survive-interruption.
  */
-class StepRecorder {
+class StepRecorder(
+    initialSteps: Long = 0,
+) {
     private var lastTotalSteps: Long? = null
     private var isPaused = false
-    private var sessionSteps = 0L
+    private var sessionSteps = initialSteps
 
     val steps: Long get() = sessionSteps
 

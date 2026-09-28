@@ -66,4 +66,16 @@ class HeartRateRecorderTest {
         assertThat(recorder.currentBpm(nowMillis = 3_000)).isEqualTo(110)
         assertThat(recorder.maxBpm).isEqualTo(130)
     }
+
+    @Test
+    fun `a continued session keeps the maximum it had already reached`() {
+        // See specs/tracking.md#what-must-survive-interruption.
+        val recorder = HeartRateRecorder(initialMaxBpm = 170)
+
+        recorder.onReading(150, nowMillis = 1_000)
+
+        assertThat(recorder.maxBpm).isEqualTo(170)
+        recorder.onReading(180, nowMillis = 2_000)
+        assertThat(recorder.maxBpm).isEqualTo(180)
+    }
 }

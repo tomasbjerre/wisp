@@ -4,13 +4,17 @@ package com.github.tomasbjerre.wisp.location
  * Pure decision logic for a session's heart rate — see specs/heart-rate.md#recording:
  * the current reading (lost after [STALE_AFTER_MILLIS] without a new one) and the
  * session's maximum, excluding paused time. Mirrors [StepRecorder]: no Android types,
- * no I/O. One instance covers exactly one recording session.
+ * no I/O. One instance covers exactly one recording session. [initialMaxBpm] is the
+ * maximum a session had already reached when it is continued after the app was killed —
+ * see specs/tracking.md#what-must-survive-interruption.
  */
-class HeartRateRecorder {
+class HeartRateRecorder(
+    initialMaxBpm: Int? = null,
+) {
     private var latestBpm: Int? = null
     private var latestAtMillis = 0L
     private var isPaused = false
-    private var max: Int? = null
+    private var max: Int? = initialMaxBpm
 
     /** Highest reading so far, or null if none was ever received. */
     val maxBpm: Int? get() = max

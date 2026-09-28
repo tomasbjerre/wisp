@@ -8,12 +8,14 @@ import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.os.SystemClock
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.github.tomasbjerre.wisp.MainActivity
 import com.github.tomasbjerre.wisp.R
 import com.github.tomasbjerre.wisp.WispApplication
+import com.github.tomasbjerre.wisp.data.TrackPoint
 import com.github.tomasbjerre.wisp.ui.splits.KmSplitRows
 import com.github.tomasbjerre.wisp.util.GeoUtils
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +41,7 @@ class TrackingService : LifecycleService() {
     private val voiceFeedbackPreferences by lazy { (application as WispApplication).voiceFeedbackPreferences }
     private val unitPreferences by lazy { (application as WispApplication).unitPreferences }
     private val heartRatePreferences by lazy { (application as WispApplication).heartRatePreferences }
+    private val activeRecordingStore by lazy { (application as WispApplication).activeRecordingStore }
     private val heartRateMonitor by lazy { HeartRateMonitor(this) }
     private var heartRateRecorder = HeartRateRecorder()
     private var heartRateSettingJob: Job? = null
@@ -79,6 +82,9 @@ class TrackingService : LifecycleService() {
         startId: Int,
     ): Int {
         super.onStartCommand(intent, flags, startId)
+        // A null intent means the OS restarted this service after killing the process (see
+        // START_STICKY below): continue the recording that was cut short.
+        if (intent == null) resumeAfterKill()
         when (intent?.action) {
             ACTION_START -> start()
             ACTION_FORCE_START -> forceStart()
@@ -107,12 +113,89 @@ class TrackingService : LifecycleService() {
         lifecycleScope.launch {
             val id = repository.startSession(System.currentTimeMillis())
             sessionId = id
+            activeRecordingStore.sessionId = id
             _state.value =
                 TrackingUiState(isRecording = true, isLocating = true, isWaitingForMovement = true, sessionId = id)
             locationTracker.start(::onLocation)
             // Ticker starts once movement is confirmed, not here — see onLocation and
             // specs/tracking.md#start-gating.
         }
+    }
+
+    /**
+     * See specs/tracking.md#what-must-survive-interruption: the OS restarted this service
+     * after killing the process mid-recording, so carry on with the same session. The gap
+     * is marked on the first point recorded afterwards ([RecordingResume.PAUSE_CAUSE_INTERRUPTED]).
+     * A session that never confirmed movement is discarded instead.
+     */
+    private fun resumeAfterKill() {
+        ensureNotificationChannel()
+        try {
+            startForeground(NOTIFICATION_ID, buildNotification(_state.value))
+        } catch (e: IllegalStateException) {
+            // The OS won't let a restarted service go foreground (e.g. Android 12+ background
+            // start limits). WispApplication ends the session at its last point instead.
+            Log.w(TAG, "Could not resume recording in the foreground", e)
+            stopSelf()
+            return
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Could not resume recording, missing permission", e)
+            stopSelf()
+            return
+        }
+        val id = activeRecordingStore.sessionId
+        lifecycleScope.launch {
+            val session = id?.let { repository.getSession(it) }
+            val points = if (id != null && session?.endedAt == null) repository.getPoints(id) else emptyList()
+            val plan = RecordingResume.plan(points)
+            if (id == null || plan == null) {
+                activeRecordingStore.sessionId = null
+                if (id != null && session != null && session.endedAt == null) repository.deleteSessionById(id)
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
+                return@launch
+            }
+            continueSession(id, plan, points.filterNot { it.isNoise })
+        }
+    }
+
+    private fun continueSession(
+        id: Long,
+        plan: ResumePlan,
+        acceptedPoints: List<TrackPoint>,
+    ) {
+        recorder = TrackRecorder()
+        movementGate = MovementGate()
+        stepRecorder = StepRecorder(plan.steps)
+        heartRateRecorder = HeartRateRecorder(plan.maxHeartRateBpm)
+        observeHeartRateSetting()
+        stationaryGate = StationaryGate()
+        voiceFeedbackSpeaker = VoiceFeedbackSpeaker(this)
+        val splits = GeoUtils.kmSplits(acceptedPoints, unitPreferences.unit.value)
+        announcedCompleteKmCount = splits.completeSeconds.size
+        sessionId = id
+        sequence = plan.nextSequence
+        pendingPauseCause = RecordingResume.PAUSE_CAUSE_INTERRUPTED
+        pauseWatcher = null
+        pausedAccumulatedMillis = 0L
+        // Time already recorded, not counting the gap while nothing was recording.
+        recordingStartElapsedRealtime = SystemClock.elapsedRealtime() - plan.elapsedSeconds * 1_000
+        _state.value =
+            TrackingUiState(
+                isRecording = true,
+                sessionId = id,
+                distanceMeters = plan.distanceMeters,
+                elapsedSeconds = plan.elapsedSeconds,
+                route = acceptedPoints.map { LatLon(it.latitude, it.longitude) },
+                steps = plan.steps,
+                latestKmSplitSeconds = splits.completeSeconds.lastOrNull(),
+                fastestKmSplitSeconds = KmSplitRows.fastestSeconds(splits.completeSeconds),
+                maxHeartRateBpm = plan.maxHeartRateBpm,
+            )
+        locationTracker.start(::onLocation)
+        stepCounterTracker.start(stepRecorder::onStepCounterChanged)
+        startHeartRateMonitor()
+        startTicker()
     }
 
     /**
@@ -189,6 +272,8 @@ class TrackingService : LifecycleService() {
     }
 
     private fun stop() {
+        // Before anything else: a recording that is being stopped must never be continued.
+        activeRecordingStore.sessionId = null
         locationTracker.stop()
         stepCounterTracker.stop()
         heartRateMonitor.stop()
@@ -491,6 +576,7 @@ class TrackingService : LifecycleService() {
     companion object {
         private const val CHANNEL_ID = "tracking"
         private const val NOTIFICATION_ID = 1
+        private const val TAG = "TrackingService"
 
         const val ACTION_START = "com.github.tomasbjerre.wisp.action.START"
         const val ACTION_FORCE_START = "com.github.tomasbjerre.wisp.action.FORCE_START"

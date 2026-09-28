@@ -15,6 +15,8 @@ class SessionRepository(
 
     fun observeSession(id: Long): Flow<Session?> = sessionDao.observeById(id)
 
+    suspend fun getSession(id: Long): Session? = sessionDao.getById(id)
+
     suspend fun getPoints(sessionId: Long): List<TrackPoint> = trackPointDao.getForSession(sessionId)
 
     suspend fun startSession(startedAt: Long): Long = sessionDao.insert(Session(startedAt = startedAt))
@@ -112,11 +114,13 @@ class SessionRepository(
      * point (still "locating" or "waiting for movement" — see
      * specs/tracking.md#start-gating) has nothing to recover, and finishing it anyway
      * would leave a broken zero-point entry in history — discard it instead, same as a
-     * live Stop during that window (see TrackingService.stop).
+     * live Stop during that window (see TrackingService.stop). [skipSessionId] is left
+     * alone: a session the OS is about to continue recording — see
+     * specs/tracking.md#what-must-survive-interruption.
      */
-    suspend fun recoverUnfinishedSessions(): List<Session> {
+    suspend fun recoverUnfinishedSessions(skipSessionId: Long? = null): List<Session> {
         val recovered = mutableListOf<Session>()
-        for (unfinished in sessionDao.findAllUnfinished()) {
+        for (unfinished in sessionDao.findAllUnfinished().filterNot { it.id == skipSessionId }) {
             // See specs/tracking.md#noise: a session with only noise points never
             // actually recorded anything real, same as one with no points at all.
             val points = trackPointDao.getForSession(unfinished.id).filterNot { it.isNoise }

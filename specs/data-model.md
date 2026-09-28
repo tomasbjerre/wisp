@@ -51,7 +51,7 @@ One accepted GPS fix belonging to a session.
 | `heartRateBpm` | integer, nullable | the current heart rate when this point was recorded (see [Heart rate](heart-rate.md#recording)); null if there was none, or the point predates this field |
 | `isNoise` | boolean | see [Tracking](tracking.md#noise); false for every point recorded before this field existed, since only non-noise points were ever stored back then |
 | `noiseReason` | text, nullable | why the point was flagged noise — one or more of the reason names in [Tracking](tracking.md#noise-reasons), `\|`-separated; null on a non-noise point, and on a noise point recorded before this field existed |
-| `pauseCause` | text, nullable | on a point that starts a new segment after a pause (see below): `manual` if the user paused, `auto` if [auto-pause](tracking.md#auto-pause) did; null on every other point, including the session's first, and on any point recorded before this field existed |
+| `pauseCause` | text, nullable | on a point that starts a new segment after a pause (see below): `manual` if the user paused, `auto` if [auto-pause](tracking.md#auto-pause) did, `interrupted` if recording was cut short by the app being killed and then [continued](tracking.md#what-must-survive-interruption); null on every other point, including the session's first, and on any point recorded before this field existed |
 
 A fix that arrives while a session is paused is stored only as a noise
 point (reason `paused`) and is never part of the track — see
