@@ -32,6 +32,8 @@ class TrackingBackButtonTest {
     fun backBeforeMovementIsConfirmedDiscardsTheSessionAndReturnsToHome() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.ACCESS_FINE_LOCATION")
+        // Granted up front too, so its system dialog (see TrackingScreen) never covers the app.
+        instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.POST_NOTIFICATIONS")
 
         composeRule.waitForIdle()
         // Not assumed to be zero, even though every test now starts from a cleared app

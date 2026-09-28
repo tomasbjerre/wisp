@@ -101,6 +101,7 @@ class TrackingService : LifecycleService() {
             ACTION_PAUSE -> pause(PAUSE_CAUSE_MANUAL)
             ACTION_RESUME -> resume()
             ACTION_STOP -> stop()
+            ACTION_REFRESH_NOTIFICATION -> updateNotification()
         }
         return START_STICKY
     }
@@ -574,30 +575,24 @@ class TrackingService : LifecycleService() {
     }
 
     private fun buildNotification(state: TrackingUiState): Notification {
-        val openApp =
+        // See specs/permissions-and-privacy.md#required-access: opens Tracking, not Home.
+        val openTracking =
             PendingIntent.getActivity(
                 this,
                 0,
-                Intent(this, MainActivity::class.java),
-                PendingIntent.FLAG_IMMUTABLE,
+                Intent(this, MainActivity::class.java)
+                    .putExtra(MainActivity.EXTRA_OPEN_TRACKING, true)
+                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
-        val distanceKm = state.distanceMeters / 1000.0
-        val minutes = state.elapsedSeconds / 60
-        val seconds = state.elapsedSeconds % 60
-        val suffix =
-            when {
-                state.isWaitingForMovement -> " · waiting to move"
-                state.isPaused -> " · paused"
-                else -> ""
-            }
-        val text = "%.2f km · %d:%02d%s".format(distanceKm, minutes, seconds, suffix)
+        val text = TrackingNotificationText.forState(state, unitPreferences.unit.value)
         return NotificationCompat
             .Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.notification_tracking_title))
             .setContentText(text)
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
             .setOngoing(true)
-            .setContentIntent(openApp)
+            .setContentIntent(openTracking)
             .build()
     }
 
@@ -611,6 +606,7 @@ class TrackingService : LifecycleService() {
         const val ACTION_PAUSE = "com.github.tomasbjerre.wisp.action.PAUSE"
         const val ACTION_RESUME = "com.github.tomasbjerre.wisp.action.RESUME"
         const val ACTION_STOP = "com.github.tomasbjerre.wisp.action.STOP"
+        const val ACTION_REFRESH_NOTIFICATION = "com.github.tomasbjerre.wisp.action.REFRESH_NOTIFICATION"
 
         // Stored on TrackPoint.pauseCause — see specs/data-model.md#trackpoint.
         private const val PAUSE_CAUSE_MANUAL = "manual"
@@ -633,5 +629,12 @@ class TrackingService : LifecycleService() {
         fun resume(context: Context) = context.startService(intent(context, ACTION_RESUME))
 
         fun stop(context: Context) = context.startService(intent(context, ACTION_STOP))
+
+        /**
+         * Posts the recording notification again. One posted while notifications were not allowed
+         * was dropped, and nothing else posts it again until the next location fix — which a
+         * user standing still may not produce for a while.
+         */
+        fun refreshNotification(context: Context) = context.startService(intent(context, ACTION_REFRESH_NOTIFICATION))
     }
 }

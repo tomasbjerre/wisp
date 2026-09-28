@@ -129,6 +129,11 @@ screen while recording.
 - If location permission is missing or denied, this screen must explain
   what's needed and offer a way to grant it, rather than silently
   recording nothing (see [Permissions & Privacy](permissions-and-privacy.md)).
+- If notifications are turned off for Wisp, this screen says so and offers
+  a way to turn them on (see
+  [Permissions & Privacy](permissions-and-privacy.md#required-access)) —
+  advisory, not blocking. The recording notification is what a user swipes
+  down to see, and what opens this screen again.
 - If Wisp isn't exempt from battery optimization, this screen says so and
   offers a way to fix it (see
   [Permissions & Privacy](permissions-and-privacy.md#required-access)) —

@@ -46,6 +46,8 @@ class ScreenshotTest {
         // Granted up front, like InstructionVideoTest, so Tracking below shows the real
         // screen instead of the system permission dialog.
         instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.ACCESS_FINE_LOCATION")
+        // Granted up front too, so its system dialog (see TrackingScreen) never covers the app.
+        instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.POST_NOTIFICATIONS")
         instrumentation.uiAutomation.grantRuntimePermission(
             APP_PACKAGE,
             "android.permission.ACCESS_BACKGROUND_LOCATION",

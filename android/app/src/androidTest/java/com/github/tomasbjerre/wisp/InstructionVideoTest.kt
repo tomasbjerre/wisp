@@ -36,6 +36,8 @@ class InstructionVideoTest {
     fun recordWalkthrough() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.ACCESS_FINE_LOCATION")
+        // Granted up front too, so its system dialog (see TrackingScreen) never covers the app.
+        instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.POST_NOTIFICATIONS")
         instrumentation.uiAutomation.grantRuntimePermission(
             APP_PACKAGE,
             "android.permission.ACCESS_BACKGROUND_LOCATION",

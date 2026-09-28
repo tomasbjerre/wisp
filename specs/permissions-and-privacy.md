@@ -13,8 +13,19 @@
   foreground/long-running-task mechanism with a persistent, low-noise
   notification showing "Recording — <distance> · <time>"). The user should
   be able to tap that notification to return to the Tracking screen.
+  - The notification shows the distance in the user's chosen unit (see
+    [Units](units.md)) and the elapsed time, followed by "paused" or
+    "waiting to move" while the session is in either state. It stays until
+    the recording stops.
+  - Tapping it opens [Tracking](ui-flows.md#2-tracking-active-recording)
+    on the session being recorded — not Home — whatever the app was
+    showing, or whether it was in the background.
 - Notification permission, on platforms that require it to show that
-  in-progress-recording indicator.
+  in-progress-recording indicator. Without it the notification is not
+  shown, so it is requested together with the location access when the
+  user starts a recording — and, for a user who granted location before
+  this was asked for, the next time [Tracking](ui-flows.md#2-tracking-active-recording)
+  opens. It is advisory: recording works without it.
 - An exemption from the platform's battery optimization for the app, since
   aggressive battery management is a common real-world cause of
   background recording being paused or killed even with the above in

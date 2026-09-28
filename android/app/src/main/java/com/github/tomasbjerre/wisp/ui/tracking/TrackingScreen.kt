@@ -69,6 +69,7 @@ fun TrackingScreen(
 ) {
     val context = LocalContext.current
     val permissions = rememberLocationPermissionState()
+    val notifications = rememberNotificationState(askOnEntry = permissions.hasForeground)
     val state by TrackingService.state.collectAsStateWithLifecycle()
     val unit by unitPreferences.unit.collectAsStateWithLifecycle()
 
@@ -145,23 +146,31 @@ fun TrackingScreen(
                 // — easy to miss or to hit the notification shade instead (see #55).
                 modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp),
             )
-            // See specs/ui-flows.md#2a-voice-feedback-settings and specs/voice-feedback.md.
-            Surface(
+            VoiceFeedbackSettingsButton(
+                onClick = onOpenVoiceFeedbackSettings,
                 modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(12.dp),
-                shape = CircleShape,
-                tonalElevation = 4.dp,
-            ) {
-                IconButton(onClick = onOpenVoiceFeedbackSettings) {
-                    Icon(Icons.Filled.Settings, contentDescription = "Voice feedback settings")
-                }
-            }
+            )
         }
         TrackingStatsPanel(
             state = state,
             permissions = permissions,
+            notifications = notifications,
             unit = unit,
             heartRatePreferences = heartRatePreferences,
         )
+    }
+}
+
+/** See specs/ui-flows.md#2a-voice-feedback-settings and specs/voice-feedback.md. */
+@Composable
+private fun VoiceFeedbackSettingsButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(modifier = modifier, shape = CircleShape, tonalElevation = 4.dp) {
+        IconButton(onClick = onClick) {
+            Icon(Icons.Filled.Settings, contentDescription = "Voice feedback settings")
+        }
     }
 }
 
@@ -169,6 +178,7 @@ fun TrackingScreen(
 private fun TrackingStatsPanel(
     state: TrackingUiState,
     permissions: LocationPermissionState,
+    notifications: NotificationState,
     unit: UnitSystem,
     heartRatePreferences: HeartRatePreferences,
 ) {
@@ -176,24 +186,7 @@ private fun TrackingStatsPanel(
         // navigationBarsPadding: MainActivity draws edge-to-edge, so without this
         // Pause/Stop end up underneath the system nav bar (3-button or gesture).
         Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp)) {
-            if (!permissions.hasBackground) {
-                Text(
-                    "Recording may stop if you leave the app — background location isn't granted.",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            if (!permissions.hasBatteryExemption) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        "Battery optimization may pause recording in the background.",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.weight(1f),
-                    )
-                    TextButton(onClick = permissions::requestBatteryExemption) {
-                        Text("Fix")
-                    }
-                }
-            }
+            PermissionAdvisories(permissions, notifications)
             if (state.isWaitingForMovement) {
                 Text(
                     "Start moving to begin recording — it starts automatically once " +
@@ -222,6 +215,44 @@ private fun TrackingStatsPanel(
             }
             HeartRateSection(state, heartRatePreferences)
             TrackingControls(isPaused = state.isPaused, isWaitingForMovement = state.isWaitingForMovement)
+        }
+    }
+}
+
+/** Advisory lines, none blocking — see specs/ui-flows.md#2-tracking-active-recording. */
+@Composable
+private fun PermissionAdvisories(
+    permissions: LocationPermissionState,
+    notifications: NotificationState,
+) {
+    if (!permissions.hasBackground) {
+        Text(
+            "Recording may stop if you leave the app — background location isn't granted.",
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+    if (!permissions.hasBatteryExemption) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Battery optimization may pause recording in the background.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = permissions::requestBatteryExemption) {
+                Text("Fix")
+            }
+        }
+    }
+    if (!notifications.isAllowed) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Notifications are off — you won't see the recording when you swipe down.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = notifications::openSettings) {
+                Text("Fix")
+            }
         }
     }
 }
