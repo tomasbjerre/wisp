@@ -21,11 +21,6 @@ This is what you see when you open Wisp. It has:
 - **Start** — the button at the top. Tap it to begin recording a new
   activity (run, ride, walk, anything). See [Tracking](#tracking) below
   for what happens next.
-- **Walking / Running / Cycling** — what you are about to record, chosen
-  before you tap Start. It is remembered for next time (Walking the first
-  time). It only decides how calories are estimated — see
-  [Weight and calories](#weight-and-calories) — and doesn't change how
-  anything is recorded.
 - **Metric / Imperial** — switches every distance, speed, and pace Wisp
   shows between kilometers/km per hour and miles/mph, everywhere it's
   shown (Home, Tracking, Detail, Km splits — which becomes Mile splits
@@ -35,7 +30,8 @@ This is what you see when you open Wisp. It has:
   section below.
 - **Your history** — every past activity, most recent first, each row
   showing its date, place name (when known — a neighborhood if one is
-  found, otherwise the city), distance, duration, average speed, and
+  found, otherwise the city), what kind of activity it was (Walking,
+  Running or Cycling — when known), distance, duration, average speed, and
   calories burned (when the activity has them). Tap a row to open that activity's [Detail](#detail)
   screen.
 - **Delete** — the trash icon on each row deletes that activity directly
@@ -82,7 +78,7 @@ you type, and clearing the field turns calories off again.
   one afterwards.
 - **How it's calculated:** calories = MET × your weight in kg × hours, where
   the MET (how demanding the activity is) depends on whether you chose Walking,
-  Running or Cycling and on your average speed. It's an estimate, not a
+  Running or Cycling on Tracking and on your average speed. It's an estimate, not a
   measurement. Time spent paused doesn't count.
 - **Where you see it:** in each row of your history on Home, live while
   recording on Tracking, and in the summary on Detail — as `Calories: 312 kcal`.
@@ -141,6 +137,12 @@ A few more things on this screen:
   completed a second one) your fastest kilometer so far. (Not every
   phone has a step-count sensor — if yours doesn't, or the permission
   wasn't granted, the steps line simply doesn't appear.)
+- **Walking / Running / Cycling** — what you are doing. It starts on the type
+  of your last activity (Walking if you have none) and you can change it
+  at any point while recording, paused or waiting to move included. It only
+  decides how calories are estimated — see
+  [Weight and calories](#weight-and-calories) — and doesn't change how
+  anything is recorded. Once you stop, it can't be changed.
 - **Calories** — `Calories: 312 kcal` so far, when your weight was set when you
   tapped Start (see [Weight and calories](#weight-and-calories)).
 - **Heart rate monitor** — a switch above the Pause / Stop buttons, off
@@ -214,8 +216,8 @@ just-finished:
 
 - **Summary stats** — date/time, place name, distance, duration,
   average and max speed, (when available) steps/minute, max heart rate
-  (when a heart rate was recorded), calories burned (when the activity has
-  them), and (once
+  (when a heart rate was recorded), the activity type and calories burned
+  (when the activity has them), and (once
   you've completed at least one kilometer) your average time per
   kilometer, plus your fastest one once you've completed a second.
 

@@ -3,7 +3,6 @@ package com.github.tomasbjerre.wisp
 import android.app.Application
 import android.content.Context
 import com.github.tomasbjerre.wisp.data.ActiveRecordingStore
-import com.github.tomasbjerre.wisp.data.ActivityTypePreferences
 import com.github.tomasbjerre.wisp.data.HeartRatePreferences
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.UnitPreferences
@@ -33,8 +32,6 @@ class WispApplication : Application() {
         private set
     lateinit var weightPreferences: WeightPreferences
         private set
-    lateinit var activityTypePreferences: ActivityTypePreferences
-        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -45,7 +42,6 @@ class WispApplication : Application() {
         heartRatePreferences = HeartRatePreferences(this)
         activeRecordingStore = ActiveRecordingStore(this)
         weightPreferences = WeightPreferences(this)
-        activityTypePreferences = ActivityTypePreferences(this)
 
         val osmdroidPrefs = getSharedPreferences("osmdroid", Context.MODE_PRIVATE)
         Configuration.getInstance().load(this, osmdroidPrefs)

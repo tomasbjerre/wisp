@@ -92,6 +92,22 @@ class SessionRepository(
         )
     }
 
+    /**
+     * See specs/calories.md#activity-type: what a new session starts as — the type of the most
+     * recent session that has one, so a deleted or discarded session no longer counts. Null when
+     * there is none.
+     */
+    suspend fun latestActivityType(): ActivityType? = ActivityType.fromId(sessionDao.latestActivityType())
+
+    /** See specs/calories.md#activity-type: changed while the session is being recorded. */
+    suspend fun updateActivityType(
+        sessionId: Long,
+        activityType: ActivityType,
+    ) {
+        val session = sessionDao.getById(sessionId) ?: return
+        sessionDao.update(session.copy(activityType = activityType.id))
+    }
+
     suspend fun deleteSession(session: Session) = sessionDao.delete(session)
 
     suspend fun deleteSessionById(sessionId: Long) {

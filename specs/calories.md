@@ -16,11 +16,25 @@ Every session has an **activity type**: **walking**, **running** or
 **cycling**. It picks the MET table below, and nothing else — it does not
 change how a session is recorded.
 
-- Chosen on [Home](ui-flows.md#1-home) before tapping Start.
-- The last choice is remembered between recordings. The first time,
-  **walking** is selected.
-- Stored on the session (see [Data Model](data-model.md#session)) when it
-  is started. A session recorded before this existed has no activity type.
+- Chosen on [Tracking](ui-flows.md#2-tracking-active-recording), where the
+  session is recorded — not on Home, which only shows it.
+- A new session starts with the activity type of the most recent session
+  that has one — so it is the type of your last activity, and if that
+  activity was deleted, of the one before it. **Walking** when there is
+  none. Nothing else is remembered: a session that was discarded (see
+  [Tracking](tracking.md#start-gating)) never counts, whatever type it had.
+  It can be changed at any time while the session is being recorded,
+  waiting for movement and paused included.
+- Stored on the session (see [Data Model](data-model.md#session)) as soon as
+  the session exists, and again whenever it is changed, so a session that
+  continues after the app was killed (see
+  [Tracking](tracking.md#what-must-survive-interruption)) keeps it. Once
+  the session has stopped it cannot be changed: [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session)
+  shows it.
+- A session recorded before this existed has no activity type.
+- Its calories are always calculated for the whole session from its
+  current type (see [Calculation](#calculation)) — changing the type
+  halfway re-estimates the session as if it had been that type throughout.
 
 ## Weight
 
@@ -79,7 +93,13 @@ calories (kcal) = MET × weight (kg) × time (hours)
 
 ## Where it is shown
 
-Only for a session that has an activity type and a stored weight:
+The activity type itself is shown on
+[Home](ui-flows.md#1-home)'s history rows and on
+[Detail](ui-flows.md#3-detail-a-past-or-just-finished-session) for every
+session that has one, whether or not it has a weight.
+
+Calories are shown only for a session that has an activity type and a
+stored weight:
 
 - [Home](ui-flows.md#1-home)'s history rows, after the average speed.
 - [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session)'s summary.

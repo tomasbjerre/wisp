@@ -54,6 +54,7 @@ import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.location.TrackingUiState
 import com.github.tomasbjerre.wisp.ui.Formatting
 import com.github.tomasbjerre.wisp.ui.TestTags
+import com.github.tomasbjerre.wisp.ui.common.ActivityTypeChoice
 import com.github.tomasbjerre.wisp.ui.common.MapType
 import com.github.tomasbjerre.wisp.ui.common.MapTypeToggle
 import com.github.tomasbjerre.wisp.ui.common.RouteMap
@@ -195,24 +196,8 @@ private fun TrackingStatsPanel(
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
-            Text(Formatting.speed(state.currentSpeedMps, unit), style = MaterialTheme.typography.displaySmall)
-            Text(
-                "${Formatting.distance(state.distanceMeters, unit)} · ${Formatting.duration(state.elapsedSeconds)}",
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            // See specs/tracking.md#step-count: omitted entirely with no step count, same
-            // rule as Detail — most sessions on most devices will never have one.
-            if (state.steps > 0) {
-                Text(
-                    Formatting.stepsPerMinute(state.steps, state.elapsedSeconds),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            }
-            KmSplitLines(state, unit)
-            // See specs/calories.md#where-it-is-shown: omitted when the session has none.
-            state.kilocalories?.let {
-                Text("Calories: ${Formatting.calories(it)}", style = MaterialTheme.typography.bodyLarge)
-            }
+            TrackingStatLines(state, unit)
+            ActivityTypeSection(state)
             HeartRateSection(state, heartRatePreferences)
             TrackingControls(isPaused = state.isPaused, isWaitingForMovement = state.isWaitingForMovement)
         }
@@ -255,6 +240,42 @@ private fun PermissionAdvisories(
             }
         }
     }
+}
+
+@Composable
+private fun TrackingStatLines(
+    state: TrackingUiState,
+    unit: UnitSystem,
+) {
+    Text(Formatting.speed(state.currentSpeedMps, unit), style = MaterialTheme.typography.displaySmall)
+    Text(
+        "${Formatting.distance(state.distanceMeters, unit)} · ${Formatting.duration(state.elapsedSeconds)}",
+        style = MaterialTheme.typography.bodyLarge,
+    )
+    // See specs/tracking.md#step-count: omitted entirely with no step count, same
+    // rule as Detail — most sessions on most devices will never have one.
+    if (state.steps > 0) {
+        Text(
+            Formatting.stepsPerMinute(state.steps, state.elapsedSeconds),
+            style = MaterialTheme.typography.bodyLarge,
+        )
+    }
+    KmSplitLines(state, unit)
+    // See specs/calories.md#where-it-is-shown: omitted when the session has none.
+    state.kilocalories?.let {
+        Text("Calories: ${Formatting.calories(it)}", style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+/** See specs/calories.md#activity-type: chosen here, in any state, and remembered for next time. */
+@Composable
+private fun ActivityTypeSection(state: TrackingUiState) {
+    val context = LocalContext.current
+    ActivityTypeChoice(
+        selected = state.activityType,
+        onSelect = { TrackingService.setActivityType(context, it) },
+        modifier = Modifier.padding(vertical = 8.dp),
+    )
 }
 
 @Composable

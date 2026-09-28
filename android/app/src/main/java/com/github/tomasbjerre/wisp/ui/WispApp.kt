@@ -13,7 +13,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.github.tomasbjerre.wisp.data.ActivityTypePreferences
 import com.github.tomasbjerre.wisp.data.HeartRatePreferences
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.UnitPreferences
@@ -64,7 +63,6 @@ fun WispApp(
     unitPreferences: UnitPreferences,
     heartRatePreferences: HeartRatePreferences,
     weightPreferences: WeightPreferences,
-    activityTypePreferences: ActivityTypePreferences,
     openTrackingRequests: Int = 0,
 ) {
     val navController = rememberNavController()
@@ -88,7 +86,6 @@ fun WispApp(
             HomeScreen(
                 repository = repository,
                 unitPreferences = unitPreferences,
-                activityTypePreferences = activityTypePreferences,
                 onStart = { navController.navigate(ROUTE_TRACKING) },
                 onOpenSession = { id -> navController.navigate("detail/$id") },
                 onOpenWeight = { navController.navigate(ROUTE_WEIGHT) },

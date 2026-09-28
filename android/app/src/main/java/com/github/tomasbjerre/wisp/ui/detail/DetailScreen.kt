@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.github.tomasbjerre.wisp.data.ActivityType
 import com.github.tomasbjerre.wisp.data.Session
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.TrackPoint
@@ -177,6 +178,10 @@ private fun DetailMap(
 /** Stats a session may not have — each omitted entirely rather than shown empty. */
 @Composable
 private fun OptionalStatLines(session: Session?) {
+    // See specs/calories.md#where-it-is-shown: displayed here, chosen on Tracking.
+    ActivityType.fromId(session?.activityType)?.let {
+        Text("Activity: ${it.label}", style = MaterialTheme.typography.bodyLarge)
+    }
     // See specs/tracking.md#step-count. Omitted entirely with no step count, not just
     // empty — most sessions on most devices will never have one.
     if (session != null && session.steps > 0) {

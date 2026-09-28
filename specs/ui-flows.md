@@ -19,16 +19,15 @@ the right screen, and go stale silently otherwise.
 The app's entry point.
 
 - A prominent **Start** button/action, always available when idle.
-- Directly below it, an **activity type** choice — **Walking**, **Running**
-  or **Cycling** (see [Calories burned](calories.md#activity-type)) — with
-  the last used one selected.
 - A **Weight** action that opens the [Weight](#1a-weight) view, in the top
   bar next to Export and the information dialog.
 - A list of past sessions (most recent first), each row showing:
   date/time, place name if known (see
-  [Data Model](data-model.md#place-name)), distance, duration, average speed,
-  and calories when the session has them (see
-  [Calories burned](calories.md#where-it-is-shown)).
+  [Data Model](data-model.md#place-name)), the activity type if the session
+  has one (see [Calories burned](calories.md#activity-type)), distance,
+  duration, average speed, and calories when the session has them (see
+  [Calories burned](calories.md#where-it-is-shown)). The type is only
+  displayed here — it is chosen on Tracking.
 - Tapping a row opens that session's **Detail** screen.
 - Each row also has a **Delete** action of its own (e.g. a trash icon),
   with the same confirmation step as Detail's Delete, so a session can be
@@ -86,6 +85,12 @@ screen while recording.
   only lasts for this viewing of the screen — it isn't remembered between
   recordings. The same control, with the same behavior, is offered on
   Detail's map (below).
+- An **activity type** choice — **Walking**, **Running** or **Cycling** (see
+  [Calories burned](calories.md#activity-type)) — in the stats panel,
+  available in every state (waiting for movement, recording, paused). It
+  starts on the type of the user's last activity (see
+  [Calories burned](calories.md#activity-type)) and changing it takes
+  effect immediately, including on the calories shown.
 - A settings control over another corner of the map opens
   [Voice feedback settings](#2a-voice-feedback-settings) — see
   [Voice feedback](voice-feedback.md).
@@ -169,7 +174,9 @@ full contract.
   one's own time (see [Tracking](tracking.md#km-splits) — average
   omitted with no complete km at all, fastest omitted with fewer than
   two), max heart rate (see [Heart rate](heart-rate.md#display) —
-  omitted when the session has none), and calories burned (see
+  omitted when the session has none), the activity type (see
+  [Calories burned](calories.md#activity-type) — omitted when the session
+  has none, and not editable here), and calories burned (see
   [Calories burned](calories.md#where-it-is-shown) — omitted when the
   session has none).
 - Below the summary stats, a **Km splits (N)** link — N being the number
