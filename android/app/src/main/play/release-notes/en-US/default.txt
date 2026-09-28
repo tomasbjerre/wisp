@@ -1,8 +1,9 @@
-wisp 0.10.0
+wisp 0.11.0
+- feat(tracking): export noise diagnostics, keep fixes while paused, auto-resume (#152)
+- chore(changelog): updating changelog
+- chore(android): update screenshots and play listing
 - feat: add elapsed time per kilometer and total elapsed time voice options (#151)
 - fix: keep the splits link on Detail for sessions under one full unit (#150)
 - chore(changelog): updating changelog
 - chore(android): update screenshots and play listing
-- ci: publish releases to closed testing instead of internal track
-- feat: add a Save to device option to every export (#147)
-- feat: store every recorded measurement, flagging noise instead of di
+- ci: publish r
