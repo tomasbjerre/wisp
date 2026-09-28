@@ -254,7 +254,10 @@ best-effort: with no monitor or permission, recording is unaffected.
   taken while reaching for Stop — there's no partial split at all,
   regardless of unit.
 - A session under one full unit (1 km metric, 1 mile imperial) has no
-  splits to show.
+  complete splits, but its partial split is still reachable from
+  Detail's [splits link](ui-flows.md#3-detail-a-past-or-just-finished-session)
+  — otherwise a 1.2 km session would show splits under metric and
+  nothing under imperial.
 - **Steps per split**: each split (and the partial one) also has the
   number of steps taken over it — the difference between the running
   step counts recorded on the points (see
