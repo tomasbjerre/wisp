@@ -53,6 +53,24 @@ object KmSplitRows {
     }
 
     /**
+     * Detail's link to the splits view — see specs/ui-flows.md#3-detail. "Km splits (5)"
+     * counts complete splits only; with just the partial one (a session under one full
+     * unit) there is no count to show. Null with no rows at all.
+     * Relabelled "Mile splits" under imperial — see specs/units.md.
+     */
+    fun linkLabel(
+        splits: GeoUtils.KmSplits,
+        unit: UnitSystem,
+    ): String? {
+        val name = if (unit == UnitSystem.METRIC) "Km splits" else "Mile splits"
+        return when {
+            splits.completeSeconds.isNotEmpty() -> "$name (${splits.completeSeconds.size})"
+            splits.partial != null -> name
+            else -> null
+        }
+    }
+
+    /**
      * Null with fewer than two complete kilometers — nothing to compare. The partial
      * kilometer never counts: over a short distance its pace is too noisy to call it
      * the fastest or slowest.
