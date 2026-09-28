@@ -58,6 +58,11 @@
   means a Google server. This is best-effort — if it fails (no network, no
   geocoding backend on the device) the session simply has no city name,
   nothing else about it is affected.
+- Location keeps being read for as long as a recording is open, including
+  while it's paused (see [Tracking](tracking.md#session-lifecycle)), so
+  that what happened during a pause isn't lost and an automatic pause can
+  end by itself. Those fixes are stored on the device like any other and
+  are excluded from the session's stats.
 - No analytics or crash reporting that transmits location data.
 - Deleting a session (see [UI Flows](ui-flows.md)) must remove its points
   too — no orphaned data left behind.

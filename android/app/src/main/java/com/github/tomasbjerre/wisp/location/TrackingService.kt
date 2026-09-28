@@ -57,6 +57,14 @@ class TrackingService : LifecycleService() {
     private var sessionId: Long? = null
     private var sequence = 0
 
+    // See specs/data-model.md#trackpoint (pauseCause): why the most recent pause happened,
+    // stamped on the point(s) that start the segment after it, cleared once one is accepted.
+    private var pendingPauseCause: String? = null
+
+    // See specs/tracking.md#session-lifecycle: what to do with fixes arriving while paused.
+    // Non-null exactly while paused.
+    private var pauseWatcher: PauseWatcher? = null
+
     // Elapsed time is a wall-clock ticker independent of GPS fix arrival — see
     // specs/tracking.md#location-sampling: fixes can be seconds apart, which made the
     // on-screen time look frozen between them rather than ticking like a stopwatch.
@@ -74,7 +82,7 @@ class TrackingService : LifecycleService() {
         when (intent?.action) {
             ACTION_START -> start()
             ACTION_FORCE_START -> forceStart()
-            ACTION_PAUSE -> pause()
+            ACTION_PAUSE -> pause(PAUSE_CAUSE_MANUAL)
             ACTION_RESUME -> resume()
             ACTION_STOP -> stop()
         }
@@ -93,6 +101,8 @@ class TrackingService : LifecycleService() {
         voiceFeedbackSpeaker = VoiceFeedbackSpeaker(this)
         announcedCompleteKmCount = 0
         sequence = 0
+        pendingPauseCause = null
+        pauseWatcher = null
         pausedAccumulatedMillis = 0L
         lifecycleScope.launch {
             val id = repository.startSession(System.currentTimeMillis())
@@ -122,8 +132,12 @@ class TrackingService : LifecycleService() {
             }
     }
 
-    private fun pause() {
-        locationTracker.stop()
+    private fun pause(cause: String) {
+        pendingPauseCause = cause
+        // Location updates deliberately keep running — see specs/tracking.md#session-lifecycle:
+        // what happens during a pause is stored as noise, and an automatic pause needs them
+        // to notice movement resuming.
+        pauseWatcher = PauseWatcher(autoResume = cause == PAUSE_CAUSE_AUTO)
         recorder.pause()
         stepRecorder.pause()
         heartRateRecorder.pause()
@@ -137,7 +151,7 @@ class TrackingService : LifecycleService() {
     private fun resume() {
         pausedAccumulatedMillis += SystemClock.elapsedRealtime() - pauseStartedElapsedRealtime
         _state.update { it.copy(isPaused = false) }
-        locationTracker.start(::onLocation)
+        pauseWatcher = null
         stepRecorder.resume()
         heartRateRecorder.resume()
         startHeartRateMonitor()
@@ -246,15 +260,17 @@ class TrackingService : LifecycleService() {
             )
 
         if (handleStartGating(fix, id)) return
+        if (_state.value.isPaused && handlePausedFix(fix, id)) return
 
         // See specs/tracking.md#auto-pause: a sustained lack of movement while actively
         // recording pauses the session automatically, exactly like a manual Pause tap.
-        if (stationaryGate.onFix(fix)) {
-            pause()
-            return
-        }
+        // The fix that trips auto-pause is still a fix like any other: recorded below (as
+        // noise or not, per TrackRecorder) before the pause takes effect, never dropped.
+        val shouldAutoPause = stationaryGate.onFix(fix)
 
         val recorded = recorder.accept(fix)
+        val pauseCause = if (recorded.segmentStart) pendingPauseCause else null
+        if (!recorded.isNoise) pendingPauseCause = null
 
         lifecycleScope.launch {
             val seq = sequence++
@@ -272,6 +288,8 @@ class TrackingService : LifecycleService() {
                 steps = stepRecorder.steps,
                 heartRateBpm = currentHeartRate(),
                 isNoise = recorded.isNoise,
+                noiseReason = recorded.noiseReason,
+                pauseCause = pauseCause,
             )
             // See specs/tracking.md#noise: noise points are stored but never count
             // toward what the app itself computes or shows.
@@ -291,6 +309,8 @@ class TrackingService : LifecycleService() {
             announceNewlyCompletedKm(splits)
             updateNotification()
         }
+
+        if (shouldAutoPause) pause(PAUSE_CAUSE_AUTO)
     }
 
     /** See specs/voice-feedback.md. [VoiceFeedbackAnnouncement] decides what (if
@@ -309,6 +329,26 @@ class TrackingService : LifecycleService() {
     }
 
     /**
+     * See specs/tracking.md#session-lifecycle and #auto-pause. Returns true if [fix] has been
+     * fully handled — stored as a noise point, because the session is still paused — or false
+     * if it just ended an automatic pause, in which case the caller carries on and records it
+     * as the first point of the resumed segment, exactly like any other fix.
+     */
+    private fun handlePausedFix(
+        fix: LocationFix,
+        id: Long,
+    ): Boolean {
+        val watcher = pauseWatcher ?: PauseWatcher(autoResume = false).also { pauseWatcher = it }
+        val outcome = watcher.onFix(fix)
+        if (outcome.shouldResume) {
+            resume()
+            return false
+        }
+        recordNoisePoint(fix, id, outcome.noiseReason)
+        return true
+    }
+
+    /**
      * See specs/tracking.md#start-gating. Returns true once this [fix] has been fully
      * handled by start-gating and the caller should stop processing it further — either
      * it was rejected by the accuracy filter, or movement still isn't confirmed yet. A
@@ -321,14 +361,15 @@ class TrackingService : LifecycleService() {
     ): Boolean {
         if (!_state.value.isWaitingForMovement) return false
         if (fix.accuracyMeters > TrackRecorder.MAX_ACCEPTABLE_ACCURACY_METERS) {
-            recordNoisePoint(fix, id)
+            val reasons = listOf(NoiseReason.POOR_ACCURACY, NoiseReason.BEFORE_MOVEMENT)
+            recordNoisePoint(fix, id, NoiseReason.join(reasons))
             return true
         }
 
         val startedMoving = movementGate.hasStartedMoving(fix)
         _state.update { it.copy(isLocating = false, route = listOf(LatLon(fix.latitude, fix.longitude))) }
         if (!startedMoving) {
-            recordNoisePoint(fix, id)
+            recordNoisePoint(fix, id, NoiseReason.join(listOf(NoiseReason.BEFORE_MOVEMENT)))
             updateNotification()
             return true
         }
@@ -346,6 +387,7 @@ class TrackingService : LifecycleService() {
     private fun recordNoisePoint(
         fix: LocationFix,
         id: Long,
+        noiseReason: String?,
     ) {
         lifecycleScope.launch {
             val seq = sequence++
@@ -358,7 +400,10 @@ class TrackingService : LifecycleService() {
                 accuracyMeters = fix.accuracyMeters,
                 speedMps = fix.speedMps,
                 segmentStart = seq == 0,
+                // The running count, so a stretch walked while paused (or waiting) is visible.
+                steps = stepRecorder.steps,
                 isNoise = true,
+                noiseReason = noiseReason,
             )
         }
     }
@@ -452,6 +497,10 @@ class TrackingService : LifecycleService() {
         const val ACTION_PAUSE = "com.github.tomasbjerre.wisp.action.PAUSE"
         const val ACTION_RESUME = "com.github.tomasbjerre.wisp.action.RESUME"
         const val ACTION_STOP = "com.github.tomasbjerre.wisp.action.STOP"
+
+        // Stored on TrackPoint.pauseCause — see specs/data-model.md#trackpoint.
+        private const val PAUSE_CAUSE_MANUAL = "manual"
+        private const val PAUSE_CAUSE_AUTO = "auto"
 
         private val _state = MutableStateFlow(TrackingUiState())
         val state: StateFlow<TrackingUiState> = _state

@@ -11,8 +11,15 @@ import com.github.tomasbjerre.wisp.util.GeoUtils
  *
  * One instance covers exactly one "waiting for movement" wait — construct a
  * fresh one per session.
+ *
+ * With [cumulativeDistanceOnly], the anchor-relative speed check is skipped and only
+ * the cumulative-distance one can confirm movement — the stricter signal
+ * specs/tracking.md#auto-pause uses to end an automatic pause, where a false positive
+ * would flap between paused and recording.
  */
-class MovementGate {
+class MovementGate(
+    private val cumulativeDistanceOnly: Boolean = false,
+) {
     private var anchor: LocationFix? = null
     private var previousFix: LocationFix? = null
     private var cumulativeDistanceMeters = 0.0
@@ -55,7 +62,8 @@ class MovementGate {
         if (movedFromPreviousMeters >= MIN_STEP_METERS) cumulativeDistanceMeters += movedFromPreviousMeters
         previousFix = fix
 
-        return impliedSpeedMps >= MIN_WALKING_SPEED_MPS || cumulativeDistanceMeters >= MIN_CUMULATIVE_DISTANCE_METERS
+        val fastEnough = !cumulativeDistanceOnly && impliedSpeedMps >= MIN_WALKING_SPEED_MPS
+        return fastEnough || cumulativeDistanceMeters >= MIN_CUMULATIVE_DISTANCE_METERS
     }
 
     companion object {

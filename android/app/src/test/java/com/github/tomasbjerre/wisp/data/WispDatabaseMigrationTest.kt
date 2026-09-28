@@ -181,6 +181,47 @@ class WispDatabaseMigrationTest {
             assertThat(point.isNoise).isFalse()
         }
 
+    @Test
+    fun `MIGRATION_6_7 preserves points and adds noiseReason and pauseCause defaulting to none`() =
+        runTest {
+            val legacyDb = Room.databaseBuilder(context, LegacyDatabaseV6::class.java, DB_NAME).build()
+            val sessionId =
+                legacyDb.dao().insertSession(
+                    LegacySessionV5(startedAt = 1_000, endedAt = 2_000, steps = 99, maxHeartRateBpm = 150),
+                )
+            legacyDb.dao().insertPoint(
+                LegacyTrackPointV6(
+                    sessionId = sessionId,
+                    sequence = 0,
+                    timestamp = 1_000,
+                    latitude = 59.3293,
+                    longitude = 18.0686,
+                    accuracyMeters = 45f,
+                    speedMps = 2.5f,
+                    segmentStart = true,
+                    steps = 42,
+                    heartRateBpm = 140,
+                    isNoise = true,
+                ),
+            )
+            legacyDb.close()
+
+            val database = WispDatabase.build(context)
+            val session = database.sessionDao().getById(sessionId)
+            val points = database.trackPointDao().getForSession(sessionId)
+            database.close()
+
+            assertThat(session!!.steps).isEqualTo(99L)
+            val point = points.single()
+            assertThat(point.latitude).isEqualTo(59.3293)
+            assertThat(point.accuracyMeters).isEqualTo(45f)
+            assertThat(point.steps).isEqualTo(42L)
+            assertThat(point.heartRateBpm).isEqualTo(140)
+            assertThat(point.isNoise).isTrue()
+            assertThat(point.noiseReason).isNull()
+            assertThat(point.pauseCause).isNull()
+        }
+
     private companion object {
         const val DB_NAME = "wisp.db"
     }
@@ -388,4 +429,48 @@ internal interface LegacyV5Dao {
 @Database(entities = [LegacySessionV5::class, LegacyTrackPointV5::class], version = 5, exportSchema = false)
 internal abstract class LegacyDatabaseV5 : RoomDatabase() {
     abstract fun dao(): LegacyV5Dao
+}
+
+// TrackPoint as it was at schema version 6 (with isNoise, before noiseReason/pauseCause).
+// Sessions didn't change between versions 5 and 6, so this reuses LegacySessionV5.
+@Entity(
+    tableName = "track_points",
+    foreignKeys = [
+        ForeignKey(
+            entity = LegacySessionV5::class,
+            parentColumns = ["id"],
+            childColumns = ["sessionId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sessionId")],
+)
+internal data class LegacyTrackPointV6(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val sessionId: Long,
+    val sequence: Int,
+    val timestamp: Long,
+    val latitude: Double,
+    val longitude: Double,
+    val accuracyMeters: Float,
+    val speedMps: Float?,
+    val segmentStart: Boolean,
+    val steps: Long = 0,
+    val heartRateBpm: Int? = null,
+    val isNoise: Boolean = false,
+)
+
+@Dao
+internal interface LegacyV6Dao {
+    @Insert
+    suspend fun insertSession(session: LegacySessionV5): Long
+
+    @Insert
+    suspend fun insertPoint(point: LegacyTrackPointV6): Long
+}
+
+// Mirrors WispDatabase exactly as it was at schema version 6.
+@Database(entities = [LegacySessionV5::class, LegacyTrackPointV6::class], version = 6, exportSchema = false)
+internal abstract class LegacyDatabaseV6 : RoomDatabase() {
+    abstract fun dao(): LegacyV6Dao
 }

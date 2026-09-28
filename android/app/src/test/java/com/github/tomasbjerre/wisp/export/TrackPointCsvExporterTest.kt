@@ -7,10 +7,13 @@ import org.junit.jupiter.api.Test
 
 /** Verifies specs/export.md#format. */
 class TrackPointCsvExporterTest {
+    private val header =
+        "session_started_at,timestamp,latitude,longitude,speed_kmh,is_noise," +
+            "accuracy_m,noise_reason,segment_start,pause_cause,steps\r\n"
+
     @Test
     fun `no sessions is just the header row`() {
-        assertThat(TrackPointCsvExporter.toCsv(emptyList()))
-            .isEqualTo("session_started_at,timestamp,latitude,longitude,speed_kmh,is_noise\r\n")
+        assertThat(TrackPointCsvExporter.toCsv(emptyList())).isEqualTo(header)
     }
 
     @Test
@@ -33,13 +36,12 @@ class TrackPointCsvExporterTest {
         val csv = TrackPointCsvExporter.toCsv(listOf(session to listOf(point)))
 
         assertThat(csv).isEqualTo(
-            "session_started_at,timestamp,latitude,longitude,speed_kmh,is_noise\r\n" +
-                "2026-09-26T14:03:00Z,2026-09-26T14:03:05Z,59.334591,18.063240,7.2,false\r\n",
+            header + "2026-09-26T14:03:00Z,2026-09-26T14:03:05Z,59.334591,18.063240,7.2,false,5.0,,true,,0\r\n",
         )
     }
 
     @Test
-    fun `a noise point's is_noise column is true`() {
+    fun `a noise point exports is_noise, its accuracy and why it was flagged`() {
         val session = Session(id = 1, startedAt = 0)
         val point =
             TrackPoint(
@@ -52,11 +54,54 @@ class TrackPointCsvExporterTest {
                 speedMps = null,
                 segmentStart = true,
                 isNoise = true,
+                noiseReason = "poor_accuracy|min_movement",
             )
 
         val csv = TrackPointCsvExporter.toCsv(listOf(session to listOf(point)))
 
-        assertThat(csv).endsWith(",true\r\n")
+        assertThat(csv).endsWith(",,true,45.0,poor_accuracy|min_movement,true,,0\r\n")
+    }
+
+    @Test
+    fun `a segment start after a pause exports its cause, and steps export as the running count`() {
+        val session = Session(id = 1, startedAt = 0)
+        val point =
+            TrackPoint(
+                sessionId = 1,
+                sequence = 7,
+                timestamp = 0,
+                latitude = 0.0,
+                longitude = 0.0,
+                accuracyMeters = 8.25f,
+                speedMps = null,
+                segmentStart = true,
+                steps = 1234,
+                pauseCause = "auto",
+            )
+
+        val csv = TrackPointCsvExporter.toCsv(listOf(session to listOf(point)))
+
+        assertThat(csv).endsWith(",,false,8.3,,true,auto,1234\r\n")
+    }
+
+    @Test
+    fun `a mid-segment point exports segment_start false and no pause cause`() {
+        val session = Session(id = 1, startedAt = 0)
+        val point =
+            TrackPoint(
+                sessionId = 1,
+                sequence = 1,
+                timestamp = 0,
+                latitude = 0.0,
+                longitude = 0.0,
+                accuracyMeters = 5f,
+                speedMps = null,
+                segmentStart = false,
+            )
+
+        val csv = TrackPointCsvExporter.toCsv(listOf(session to listOf(point)))
+
+        assertThat(csv).endsWith(",false,5.0,,false,,0\r\n")
     }
 
     @Test
@@ -76,7 +121,7 @@ class TrackPointCsvExporterTest {
 
         val csv = TrackPointCsvExporter.toCsv(listOf(session to listOf(point)))
 
-        assertThat(csv).endsWith("0.000000,0.000000,,false\r\n")
+        assertThat(csv).endsWith("0.000000,0.000000,,false,5.0,,true,,0\r\n")
     }
 
     @Test

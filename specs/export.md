@@ -100,6 +100,17 @@ recent session first) and in recorded order within each session:
 | `longitude` | `TrackPoint.longitude` | number, degrees, 6 decimals |
 | `speed_kmh` | `TrackPoint.speedMps` | number, ×3.6, 1 decimal; blank if the platform didn't report a speed for that point |
 | `is_noise` | `TrackPoint.isNoise` | `true`/`false` — see [Tracking](tracking.md#noise). Every point Wisp ever recorded is exported, not just the ones it trusts; this column lets a user's own tooling decide what to include. A file exported before this column existed has no way to tell — treat a missing column the same as `false` (every point in it was already noise-filtered, the only kind that existed then) |
+| `accuracy_m` | `TrackPoint.accuracyMeters` | number, meters, 1 decimal — the platform's reported accuracy radius for that fix. Exported so a user can see whether a `poor_accuracy` flag was borderline or hopeless |
+| `noise_reason` | `TrackPoint.noiseReason` | the reason name(s), `\|`-separated — see [Tracking](tracking.md#noise-reasons); blank on a non-noise point, and on a noise point recorded before Wisp kept reasons |
+| `segment_start` | `TrackPoint.segmentStart` | `true`/`false` — true on the session's first point and on the first point(s) after a pause, i.e. where the route is broken and no distance is counted from the previous point |
+| `pause_cause` | `TrackPoint.pauseCause` | `manual` or `auto` on a point that starts a segment after a pause, blank otherwise — see [Tracking](tracking.md#auto-pause) |
+| `steps` | `TrackPoint.steps` | integer — the session's running step count when the point was recorded, so a stretch with steps but no distance is visible |
+
+These last five exist for troubleshooting and tuning the noise filter
+(see [Tracking](tracking.md#noise)): with them, an export alone is enough
+to tell why a stretch of a run went uncounted. They come after `is_noise`,
+so the earlier columns keep their positions; a file exported before they
+existed simply doesn't have them.
 
 ## Single activity as CSV
 

@@ -41,4 +41,8 @@ data class TrackPoint(
      * can decide what to do with it.
      */
     val isNoise: Boolean = false,
+    /** Why [isNoise] is true — see specs/tracking.md#noise-reasons. Null on a non-noise point. */
+    val noiseReason: String? = null,
+    /** "manual" or "auto" on a point starting a segment after a pause — see specs/data-model.md#trackpoint. */
+    val pauseCause: String? = null,
 )

@@ -19,7 +19,31 @@ data class RecordedPoint(
     val segmentStart: Boolean,
     /** See specs/tracking.md#noise. */
     val isNoise: Boolean,
+    /** See specs/tracking.md#noise-reasons. Null on a non-noise point. */
+    val noiseReason: String? = null,
 )
+
+/** See specs/tracking.md#noise-reasons. Declaration order is the order reasons are listed in. */
+enum class NoiseReason(
+    val token: String,
+) {
+    POOR_ACCURACY("poor_accuracy"),
+    IMPLAUSIBLE_JUMP("implausible_jump"),
+    MIN_MOVEMENT("min_movement"),
+    BEFORE_MOVEMENT("before_movement"),
+    PAUSED("paused"),
+    ;
+
+    companion object {
+        /** The stored form of [reasons]: their tokens `|`-separated, or null if there are none. */
+        fun join(reasons: Collection<NoiseReason>): String? =
+            reasons
+                .distinct()
+                .sortedBy { it.ordinal }
+                .joinToString("|") { it.token }
+                .ifEmpty { null }
+    }
+}
 
 /**
  * Pure decision logic for turning raw location fixes into recorded track
@@ -59,10 +83,8 @@ class TrackRecorder {
             }
         val elapsedSeconds = if (previous != null) (fix.timestampMillis - previous.timestampMillis) / 1000.0 else 0.0
 
-        val isNoise =
-            fix.accuracyMeters > MAX_ACCEPTABLE_ACCURACY_METERS ||
-                (!isSegmentStart && isImplausibleJump(movedMeters, elapsedSeconds)) ||
-                (!isSegmentStart && movedMeters < MIN_MOVEMENT_METERS)
+        val reasons = noiseReasons(fix, isSegmentStart, movedMeters, elapsedSeconds)
+        val isNoise = reasons.isNotEmpty()
 
         if (!isNoise) {
             segmentPending = false
@@ -87,10 +109,28 @@ class TrackRecorder {
                 timestampMillis = fix.timestampMillis,
                 segmentStart = isSegmentStart,
                 isNoise = isNoise,
+                noiseReason = NoiseReason.join(reasons),
             )
         if (!isNoise) lastAccepted = recorded
         return recorded
     }
+
+    /**
+     * Every check [fix] fails — see specs/tracking.md#noise-reasons; empty means it's not
+     * noise. The jump and minimum-movement checks only compare against the previous point
+     * within the same segment, so a segment's first point is exempt from both.
+     */
+    private fun noiseReasons(
+        fix: LocationFix,
+        isSegmentStart: Boolean,
+        movedMeters: Double,
+        elapsedSeconds: Double,
+    ): List<NoiseReason> =
+        buildList {
+            if (fix.accuracyMeters > MAX_ACCEPTABLE_ACCURACY_METERS) add(NoiseReason.POOR_ACCURACY)
+            if (!isSegmentStart && isImplausibleJump(movedMeters, elapsedSeconds)) add(NoiseReason.IMPLAUSIBLE_JUMP)
+            if (!isSegmentStart && movedMeters < MIN_MOVEMENT_METERS) add(NoiseReason.MIN_MOVEMENT)
+        }
 
     /**
      * See specs/tracking.md#location-sampling: a jump this fast is a GPS glitch, not real

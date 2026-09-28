@@ -58,7 +58,20 @@ internal val MIGRATION_5_6 =
         }
     }
 
-@Database(entities = [Session::class, TrackPoint::class], version = 6, exportSchema = false)
+/**
+ * Adds TrackPoint.noiseReason and TrackPoint.pauseCause (see specs/tracking.md#noise-reasons
+ * and specs/data-model.md#trackpoint). Both nullable with no default: existing points simply
+ * have no recorded reason or cause, the same as a point that has none to record.
+ */
+internal val MIGRATION_6_7 =
+    object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE track_points ADD COLUMN noiseReason TEXT")
+            db.execSQL("ALTER TABLE track_points ADD COLUMN pauseCause TEXT")
+        }
+    }
+
+@Database(entities = [Session::class, TrackPoint::class], version = 7, exportSchema = false)
 abstract class WispDatabase : RoomDatabase() {
     abstract fun sessionDao(): SessionDao
 
@@ -68,7 +81,7 @@ abstract class WispDatabase : RoomDatabase() {
         fun build(context: Context): WispDatabase =
             Room
                 .databaseBuilder(context.applicationContext, WispDatabase::class.java, "wisp.db")
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 // Safety net only, not the primary path — see
                 // specs/data-model.md#data-integrity-on-start. Every schema change that has
                 // actually shipped to real users has an explicit Migration above; this only

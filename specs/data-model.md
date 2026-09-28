@@ -50,9 +50,13 @@ One accepted GPS fix belonging to a session.
 | `steps` | integer | the session's step count so far when this point was recorded (see [Tracking](tracking.md#step-count)) — a running total, so the steps between any two points are the difference between theirs; 0 on every point if no step sensor/permission was available, or the point predates this field |
 | `heartRateBpm` | integer, nullable | the current heart rate when this point was recorded (see [Heart rate](heart-rate.md#recording)); null if there was none, or the point predates this field |
 | `isNoise` | boolean | see [Tracking](tracking.md#noise); false for every point recorded before this field existed, since only non-noise points were ever stored back then |
+| `noiseReason` | text, nullable | why the point was flagged noise — one or more of the reason names in [Tracking](tracking.md#noise-reasons), `\|`-separated; null on a non-noise point, and on a noise point recorded before this field existed |
+| `pauseCause` | text, nullable | on a point that starts a new segment after a pause (see below): `manual` if the user paused, `auto` if [auto-pause](tracking.md#auto-pause) did; null on every other point, including the session's first, and on any point recorded before this field existed |
 
-Points recorded while a session is paused are never created — see
-[Tracking](tracking.md). `segmentStart` marks where a pause broke the track,
+A fix that arrives while a session is paused is stored only as a noise
+point (reason `paused`) and is never part of the track — see
+[Tracking](tracking.md#session-lifecycle). `segmentStart` marks where a
+pause broke the track,
 so distance/duration/route-drawing never bridge across a pause: the point
 pair `(previous point, a `segmentStart` point)` is never connected by a
 line, and the time/distance between them is never added to the session's

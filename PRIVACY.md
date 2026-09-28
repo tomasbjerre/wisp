@@ -1,6 +1,6 @@
 # Wisp — Privacy Policy
 
-_Last updated: 2026-09-24_
+_Last updated: 2026-09-28_
 
 Wisp is a GPS tracker for any activity — running, cycling, walking, or
 anything else. This page explains what data it accesses and what happens
@@ -11,7 +11,10 @@ which is the source of truth for Wisp's data-handling behavior.
 ## Data Wisp accesses
 
 - **Precise location**, while you're recording an activity, to draw your
-  route.
+  route. This includes while a recording is paused: Wisp keeps reading
+  your location, stores it on your device, and leaves it out of your
+  activity's distance and stats — so an automatic pause can end by itself
+  once you're moving again.
 - **Background location** ("allow all the time"), only while a recording
   is active, so tracking continues with the screen off or the app in the
   background.
