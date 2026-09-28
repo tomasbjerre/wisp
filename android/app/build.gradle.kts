@@ -76,6 +76,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Installs next to the Play Store version instead of replacing it, with its own
+            // database and settings — see android/README.md#local-development-setup. The launcher label
+            // is overridden in src/debug/res/values/strings.xml.
+            applicationIdSuffix = ".debug"
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(

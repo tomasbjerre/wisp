@@ -100,7 +100,9 @@ class InstructionVideoTest {
     }
 
     private companion object {
-        const val APP_PACKAGE = "com.github.tomasbjerre.wisp"
+        // The debug build has an application id suffix (see app/build.gradle.kts), so read the
+        // id of the app under test instead of hard-coding it.
+        val APP_PACKAGE: String get() = InstrumentationRegistry.getInstrumentation().targetContext.packageName
         const val PAUSE_MILLIS = 1_500L
         const val MAP_TILE_SETTLE_MILLIS = 3_000L
         const val TRACKING_SETTLE_MILLIS = 4_000L
