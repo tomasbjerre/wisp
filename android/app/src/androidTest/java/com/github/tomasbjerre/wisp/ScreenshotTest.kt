@@ -1,6 +1,7 @@
 package com.github.tomasbjerre.wisp
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -173,6 +174,22 @@ class ScreenshotTest {
         if (TrackingService.state.value.isWaitingForMovement) {
             composeRule.waitForIdle()
             screenshot("3-tracking-waiting")
+
+            // See specs/ui-flows.md#2-tracking-active-recording: the info icon next to
+            // "Waiting for movement". Still racing the same movement window as above, so
+            // only captured if the dialog's own trigger is actually still on screen.
+            val infoIconStillShowing =
+                composeRule
+                    .onAllNodesWithContentDescription("About waiting for movement")
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
+            if (infoIconStillShowing) {
+                composeRule.onNodeWithContentDescription("About waiting for movement").performClick()
+                composeRule.waitForIdle()
+                screenshot("tracking-waiting-info")
+                composeRule.onNodeWithText("Close").performClick()
+                composeRule.waitForIdle()
+            }
         }
 
         // Recording, with a real route on the map (specs/tracking.md#start-gating).
