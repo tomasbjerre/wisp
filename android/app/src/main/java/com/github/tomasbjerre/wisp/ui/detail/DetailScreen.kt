@@ -14,11 +14,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -53,7 +58,6 @@ import com.github.tomasbjerre.wisp.export.ImageShareIntent
 import com.github.tomasbjerre.wisp.export.TrackPointCsvExporter
 import com.github.tomasbjerre.wisp.location.LatLon
 import com.github.tomasbjerre.wisp.ui.Formatting
-import com.github.tomasbjerre.wisp.ui.common.ExportMenu
 import com.github.tomasbjerre.wisp.ui.common.MapType
 import com.github.tomasbjerre.wisp.ui.common.MapTypeToggle
 import com.github.tomasbjerre.wisp.ui.common.RouteMap
@@ -99,6 +103,10 @@ fun DetailScreen(
                         } ?: "",
                     )
                 },
+                // See specs/export.md#trigger: one action offering both formats, the same
+                // single-export-entry-point pattern Home uses (see #173) — rather than a
+                // separate button per format taking up the button row below.
+                actions = { ExportButton(exportActions, enabled = session != null) },
             )
         },
     ) { padding ->
@@ -117,7 +125,6 @@ fun DetailScreen(
                 unit = unit,
                 onOpenKmSplits = onOpenKmSplits,
                 onBack = onBack,
-                exportActions = exportActions,
                 onDeleteClick = { showDeleteConfirm = true },
             )
         }
@@ -205,7 +212,6 @@ private fun SessionSummaryPanel(
     unit: UnitSystem,
     onOpenKmSplits: () -> Unit,
     onBack: () -> Unit,
-    exportActions: ExportActions,
     onDeleteClick: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
@@ -232,51 +238,83 @@ private fun SessionSummaryPanel(
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
             }
         }
-        // Two rows of two, not one row of four (see #60) — four equal-weight buttons in
-        // one row left barely enough width each for "Export Image"/"Export CSV" to fit
-        // without wrapping into an unreadable stack on a narrow phone. FilledTonalButton,
-        // not OutlinedButton: a visible fill reads as a button against the map behind it,
-        // where a thin outline alone did not.
-        // Export actions on top, navigation/destructive below (see #112): the two
-        // buttons someone taps repeatedly while reviewing an activity sit together,
-        // above the two taps that leave the screen either way (back to the list, or
-        // gone for good).
-        Column(
+        // See #173: export now lives in the top bar (see ExportButton), leaving just
+        // this one row — FilledTonalButton, not OutlinedButton: a visible fill reads as
+        // a button against the map behind it, where a thin outline alone did not.
+        Row(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // See specs/export.md#single-activity-as-csv and #trigger.
-                ExportMenu(
-                    onShare = exportActions.onShareCsv,
-                    onSaveToDevice = exportActions.onSaveCsvToDevice,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    FilledTonalButton(onClick = it, enabled = session != null, modifier = Modifier.fillMaxWidth()) {
-                        Text("Export CSV")
-                    }
-                }
-                // See specs/export.md#single-activity-as-an-image and #trigger.
-                ExportMenu(
-                    onShare = exportActions.onShareImage,
-                    onSaveToDevice = exportActions.onSaveImageToDevice,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    FilledTonalButton(onClick = it, enabled = session != null, modifier = Modifier.fillMaxWidth()) {
-                        Text("Export Image")
-                    }
-                }
+            FilledTonalButton(onClick = onBack, modifier = Modifier.weight(1f)) {
+                Text("Back")
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilledTonalButton(onClick = onBack, modifier = Modifier.weight(1f)) {
-                    Text("Back")
-                }
-                FilledTonalButton(onClick = onDeleteClick, modifier = Modifier.weight(1f)) {
-                    Text("Delete")
-                }
+            FilledTonalButton(onClick = onDeleteClick, modifier = Modifier.weight(1f)) {
+                Text("Delete")
             }
         }
     }
+}
+
+/**
+ * See specs/export.md#trigger: one icon in the top bar offering both export formats — the
+ * same single-export-entry-point pattern ExportMenu/Home uses, extended with a CSV/Image
+ * choice first since Detail (unlike Home) has two formats to offer. Disabled until the
+ * session has loaded, same as the two export buttons this replaced (see #173).
+ */
+@Composable
+private fun ExportButton(
+    exportActions: ExportActions,
+    enabled: Boolean,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }, enabled = enabled) {
+            Icon(Icons.Filled.Share, contentDescription = "Export this activity")
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            ExportFormatGroup(
+                label = "CSV",
+                onShare = exportActions.onShareCsv,
+                onSaveToDevice = exportActions.onSaveCsvToDevice,
+                onDismiss = { expanded = false },
+            )
+            HorizontalDivider()
+            ExportFormatGroup(
+                label = "Image",
+                onShare = exportActions.onShareImage,
+                onSaveToDevice = exportActions.onSaveImageToDevice,
+                onDismiss = { expanded = false },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExportFormatGroup(
+    label: String,
+    onShare: () -> Unit,
+    onSaveToDevice: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelMedium,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+    )
+    DropdownMenuItem(
+        text = { Text("Share") },
+        onClick = {
+            onDismiss()
+            onShare()
+        },
+    )
+    DropdownMenuItem(
+        text = { Text("Save to device") },
+        onClick = {
+            onDismiss()
+            onSaveToDevice()
+        },
+    )
 }
 
 /** See specs/export.md#trigger — a **Share** and a **Save to device** action for each export. */

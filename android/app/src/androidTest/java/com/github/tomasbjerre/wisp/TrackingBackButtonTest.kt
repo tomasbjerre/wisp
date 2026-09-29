@@ -132,7 +132,7 @@ class TrackingBackButtonTest {
         // by the time Stop is confirmed.
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
             composeRule.onAllNodesWithText("Start").fetchSemanticsNodes().isNotEmpty() ||
-                composeRule.onAllNodesWithText("Export CSV").fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodesWithText("Back").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) { !TrackingService.state.value.isRecording }
         composeRule.waitForIdle()

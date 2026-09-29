@@ -121,9 +121,11 @@ row, and a track points file with just that session's points.
 
 ### Trigger
 
-An "Export CSV" action on [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session),
-alongside Export Image and Delete. Not available for an activity still
-in progress, same as Export Image.
+An **Export** action on [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session)'s
+top bar, offering a choice of CSV or Image before the Share/Save to
+device choice described above — one entry point for both formats
+(see #173), rather than a separate button per format. Not available for
+an activity still in progress, same as the image export below.
 
 ## Single activity as an image
 
@@ -133,9 +135,10 @@ social, saving to photos).
 
 ### Trigger
 
-An "Export Image" action on [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session),
-alongside Delete. Not available for an activity still in progress — export
-a finished one from its Detail screen (the same screen Stop lands on).
+The same **Export** action on [Detail](ui-flows.md#3-detail-a-past-or-just-finished-session)'s
+top bar described above, choosing Image instead of CSV. Not available
+for an activity still in progress — export a finished one from its
+Detail screen (the same screen Stop lands on).
 
 ### Content
 

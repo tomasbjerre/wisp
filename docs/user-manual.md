@@ -110,7 +110,9 @@ short steps first:
    no need to tap anything. Don't want to wait? Tap **Force start**,
    shown in place of Pause during this step, to begin recording right
    away. Tap the ⓘ icon next to "Waiting for movement" for this same
-   explanation, any time you want a reminder.
+   explanation, any time you want a reminder:
+
+   <img src="screenshots/tracking-waiting-info.jpg" alt="Dialog explaining the waiting-for-movement step" width="300">
 
 Once recording is underway, the screen shows your route being drawn live
 on the map, along with your current speed, distance, and elapsed time:
@@ -241,24 +243,30 @@ just-finished:
 - **Km splits (N)** — opens the [Km splits](#km-splits) view, N being
   the number of complete kilometers. Shown only once you've covered at
   least 1 km.
-- **Export CSV** — offers the same Share/Save to device choice as Home's
-  Export CSV (above), for this one activity's data as two CSV files (one
-  row summarizing the activity, one with every recorded GPS point).
-  Useful for importing into a spreadsheet or another tool. The GPS
-  points file includes every fix Wisp received — even ones it didn't
-  count — with each fix's accuracy, whether it was flagged as noise and
-  why, and where a pause broke the route (and whether you or auto-pause
-  caused it), so you can see exactly why a stretch wasn't counted. Both files —
-  and the Export Image file — are named after the activity's start time,
-  e.g. `wisp-activity-2026-09-25_06-51-12.csv`, so exports of different
-  activities never get mixed up. Always in metric, regardless of Home's
-  Metric/Imperial setting — a predictable unit for spreadsheets and other
-  tools, whatever's on screen at the time.
-- **Export Image** — the same Share/Save to device choice, for a
-  snapshot of the route map and stats as an image (save it, send it,
-  post it — your choice, same as sharing a photo from any other app).
-  Follows Home's Metric/Imperial setting, unlike Export CSV — it's a picture of
-  what's already on screen.
+- **Export** — the share icon in the top-right, next to the date. Tap it
+  to choose **CSV** or **Image**, then the same Share/Save to device
+  choice as Home's Export CSV — one button for both formats, rather than
+  a separate one for each:
+
+  <img src="screenshots/detail-export-menu.jpg" alt="Export menu on Detail, choosing between CSV and Image" width="300">
+
+  - **CSV** — this one activity's data as two CSV files (one row
+    summarizing the activity, one with every recorded GPS point).
+    Useful for importing into a spreadsheet or another tool. The GPS
+    points file includes every fix Wisp received — even ones it didn't
+    count — with each fix's accuracy, whether it was flagged as noise
+    and why, and where a pause broke the route (and whether you or
+    auto-pause caused it), so you can see exactly why a stretch wasn't
+    counted. Both files — and the Image export — are named after the
+    activity's start time, e.g. `wisp-activity-2026-09-25_06-51-12.csv`,
+    so exports of different activities never get mixed up. Always in
+    metric, regardless of Home's Metric/Imperial setting — a predictable
+    unit for spreadsheets and other tools, whatever's on screen at the
+    time.
+  - **Image** — a snapshot of the route map and stats as an image (save
+    it, send it, post it — your choice, same as sharing a photo from
+    any other app). Follows Home's Metric/Imperial setting, unlike CSV
+    — it's a picture of what's already on screen.
 - **Back** — returns to wherever you came from (Home, or straight here
   after finishing a recording).
 - **Delete** — removes the activity permanently. Asks you to confirm
