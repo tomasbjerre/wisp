@@ -1,7 +1,7 @@
-wisp 0.12.0
-- test(android): fix two CI-only test races and cap the workflow's timeout
-- feat(tracking): confirm before back stops a recording
-- fix(ci): replay the whole recorded walk, not just its first 200 points (#167)
-- chore(deps): update dependency androidx.navigation:navigation-compose to v2.10.2 (#28)
-- feat(android): choose the activity type on Tracking, default to the last one (#165)
-- chore(deps): update dependency androidx.core:core-ktx to v1.19
+wisp 0.13.0
+- feat: consolidate Detail's Export CSV/Image buttons into one export icon (#182)
+- feat: collapse the waiting-for-movement text into an info dialog (#181)
+- feat: move weight and heart rate monitor setting into a general Settings screen (#180)
+- feat: configure weight only on Tracking, live per-session like activity type (#179)
+- fix: no stop-recording dialog on back before recording has started (#178)
+- fix: discard a session that ends with no 
