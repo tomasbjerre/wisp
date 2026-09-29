@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -29,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -44,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -191,6 +194,7 @@ private fun TrackingStatsPanel(
             }
             TrackingStatLines(state, unit)
             ActivityTypeSection(state)
+            WeightSection(state, unit)
             HeartRateSection(state, heartRatePreferences)
             TrackingControls(isPaused = state.isPaused, isWaitingForMovement = state.isWaitingForMovement)
         }
@@ -310,6 +314,39 @@ private fun ActivityTypeSection(state: TrackingUiState) {
         selected = state.activityType,
         onSelect = { TrackingService.setActivityType(context, it) },
         modifier = Modifier.padding(vertical = 8.dp),
+    )
+}
+
+/**
+ * See specs/calories.md#weight: entered here, in any state, same as [ActivityTypeSection] —
+ * takes effect on this session immediately and is remembered as the default for next time.
+ */
+@Composable
+private fun WeightSection(
+    state: TrackingUiState,
+    unit: UnitSystem,
+) {
+    val context = LocalContext.current
+    // What is typed, kept as typed: reformatting the stored kilograms on every keystroke would
+    // fight the user (and turn 70 lb into 69.9). Reset when the unit changes, since the same
+    // typed digits would otherwise be shown under the wrong unit.
+    var text by remember(unit) {
+        mutableStateOf(state.weightKg?.let { Formatting.weightForEditing(it, unit) } ?: "")
+    }
+    OutlinedTextField(
+        value = text,
+        onValueChange = { typed ->
+            text = typed
+            val value = typed.replace(',', '.').toDoubleOrNull()
+            when {
+                typed.isBlank() -> TrackingService.setWeightKg(context, null)
+                value != null && value > 0 -> TrackingService.setWeightKg(context, unit.displayToKilograms(value))
+            }
+        },
+        label = { Text("Weight (${unit.weightAbbreviation})") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag(TestTags.WEIGHT_FIELD),
     )
 }
 

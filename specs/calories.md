@@ -38,15 +38,28 @@ change how a session is recorded.
 
 ## Weight
 
-- Entered on the [Weight](ui-flows.md#1a-weight) view, opened from
-  [Home](ui-flows.md#1-home). Shown and entered in kilograms under metric
+- Entered on [Tracking](ui-flows.md#2-tracking-active-recording), where
+  the session is recorded — same as [activity type](#activity-type), and
+  for the same reason: it's the one place that already has the session
+  whose calories it affects, rather than a separate settings screen with
+  no session to apply it to. Shown and entered in kilograms under metric
   and pounds under imperial (see [Units](units.md)); stored in kilograms.
 - Empty means not configured. Clearing the field removes the weight.
-- The weight in effect when a session **starts** is stored on that session
-  (see [Data Model](data-model.md#session)), and that stored weight is what
-  the session's calories are always calculated from. Changing the weight
-  later never changes the calories of a session that already exists, and a
-  session started with no weight configured never has calories, even if a
+- Stored on the session (see [Data Model](data-model.md#session)) as soon
+  as the session exists, and again whenever it is changed — same as
+  activity type — so a session that continues after the app was killed
+  (see [Tracking](tracking.md#what-must-survive-interruption)) keeps it.
+  It can be changed at any time while the session is being recorded,
+  waiting for movement and paused included, taking effect immediately on
+  the calories shown. Once the session has stopped it cannot be changed.
+- Also remembered as the default the next session starts with (unlike
+  activity type, which instead starts as the previous session's own type
+  — see [Activity type](#activity-type)), so a session started with no
+  weight ever entered has none, but one recorded after a weight was set
+  — on this session or an earlier one — starts with it already filled
+  in.
+- A session recorded before this existed, or stopped before any weight
+  was ever configured, has no weight and never has calories, even if a
   weight is entered afterwards.
 
 ## Calculation

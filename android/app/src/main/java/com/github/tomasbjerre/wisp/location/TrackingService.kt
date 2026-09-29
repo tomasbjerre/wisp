@@ -103,6 +103,7 @@ class TrackingService : LifecycleService() {
             ACTION_REFRESH_NOTIFICATION -> updateNotification()
             ACTION_SET_ACTIVITY_TYPE ->
                 ActivityType.fromId(intent.getStringExtra(EXTRA_ACTIVITY_TYPE))?.let(::setActivityType)
+            ACTION_SET_WEIGHT -> setWeightKg(intent.getStringExtra(EXTRA_WEIGHT_KG)?.toDoubleOrNull())
         }
         return START_STICKY
     }
@@ -142,6 +143,7 @@ class TrackingService : LifecycleService() {
                     sessionId = id,
                     // As it is now, not as it was at start: it may have been changed since.
                     activityType = activityType,
+                    weightKg = weightKg,
                 )
             locationTracker.start(::onLocation)
             // Ticker starts once movement is confirmed, not here — see onLocation and
@@ -222,6 +224,7 @@ class TrackingService : LifecycleService() {
                 fastestKmSplitSeconds = KmSplitRows.fastestSeconds(splits.completeSeconds),
                 maxHeartRateBpm = plan.maxHeartRateBpm,
                 activityType = activityType,
+                weightKg = weightKg,
                 kilocalories = currentKilocalories(plan.distanceMeters, plan.elapsedSeconds),
             )
         locationTracker.start(::onLocation)
@@ -311,6 +314,21 @@ class TrackingService : LifecycleService() {
             it.copy(activityType = type, kilocalories = currentKilocalories(it.distanceMeters, it.elapsedSeconds))
         }
         sessionId?.let { id -> lifecycleScope.launch { repository.updateActivityType(id, type) } }
+        updateNotification()
+    }
+
+    /**
+     * See specs/calories.md#weight: same as [setActivityType] — stored on this session as soon
+     * as it exists and reflected in the calories now. Also persisted as the app-wide default
+     * (see [WeightPreferences]) so the next session starts with it, same as it does today.
+     */
+    private fun setWeightKg(newWeightKg: Double?) {
+        weightKg = newWeightKg
+        weightPreferences.setWeightKg(newWeightKg)
+        _state.update {
+            it.copy(weightKg = newWeightKg, kilocalories = currentKilocalories(it.distanceMeters, it.elapsedSeconds))
+        }
+        sessionId?.let { id -> lifecycleScope.launch { repository.updateWeight(id, newWeightKg) } }
         updateNotification()
     }
 
@@ -645,6 +663,12 @@ class TrackingService : LifecycleService() {
         const val ACTION_SET_ACTIVITY_TYPE = "com.github.tomasbjerre.wisp.action.SET_ACTIVITY_TYPE"
         private const val EXTRA_ACTIVITY_TYPE = "com.github.tomasbjerre.wisp.extra.ACTIVITY_TYPE"
 
+        const val ACTION_SET_WEIGHT = "com.github.tomasbjerre.wisp.action.SET_WEIGHT"
+
+        // A string, not a double extra: Intent has no nullable-double extra, and a null here
+        // means "clear the weight" — same reasoning as WeightPreferences' own storage.
+        private const val EXTRA_WEIGHT_KG = "com.github.tomasbjerre.wisp.extra.WEIGHT_KG"
+
         // Stored on TrackPoint.pauseCause — see specs/data-model.md#trackpoint.
         private const val PAUSE_CAUSE_MANUAL = "manual"
         private const val PAUSE_CAUSE_AUTO = "auto"
@@ -676,6 +700,12 @@ class TrackingService : LifecycleService() {
             context: Context,
             type: ActivityType,
         ) = context.startService(intent(context, ACTION_SET_ACTIVITY_TYPE).putExtra(EXTRA_ACTIVITY_TYPE, type.id))
+
+        /** See specs/calories.md#weight. Null clears it. */
+        fun setWeightKg(
+            context: Context,
+            weightKg: Double?,
+        ) = context.startService(intent(context, ACTION_SET_WEIGHT).putExtra(EXTRA_WEIGHT_KG, weightKg?.toString()))
 
         fun refreshNotification(context: Context) = context.startService(intent(context, ACTION_REFRESH_NOTIFICATION))
     }

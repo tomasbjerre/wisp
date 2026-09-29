@@ -17,17 +17,14 @@ import com.github.tomasbjerre.wisp.data.HeartRatePreferences
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.UnitPreferences
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
-import com.github.tomasbjerre.wisp.data.WeightPreferences
 import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.ui.detail.DetailScreen
 import com.github.tomasbjerre.wisp.ui.home.HomeScreen
-import com.github.tomasbjerre.wisp.ui.home.WeightScreen
 import com.github.tomasbjerre.wisp.ui.splits.KmSplitsScreen
 import com.github.tomasbjerre.wisp.ui.tracking.TrackingScreen
 import com.github.tomasbjerre.wisp.ui.tracking.VoiceFeedbackSettingsScreen
 
 private const val ROUTE_HOME = "home"
-private const val ROUTE_WEIGHT = "home/weight"
 private const val ROUTE_TRACKING = "tracking"
 private const val ROUTE_VOICE_FEEDBACK_SETTINGS = "tracking/voice-feedback"
 private const val ROUTE_DETAIL = "detail/{sessionId}"
@@ -81,7 +78,6 @@ fun WispApp(
     voiceFeedbackPreferences: VoiceFeedbackPreferences,
     unitPreferences: UnitPreferences,
     heartRatePreferences: HeartRatePreferences,
-    weightPreferences: WeightPreferences,
     openTrackingRequests: Int = 0,
 ) {
     val navController = rememberNavController()
@@ -108,14 +104,6 @@ fun WispApp(
                 unitPreferences = unitPreferences,
                 onStart = { navController.navigate(ROUTE_TRACKING) },
                 onOpenSession = { id -> navController.navigate("detail/$id") },
-                onOpenWeight = { navController.navigate(ROUTE_WEIGHT) },
-            )
-        }
-        composable(ROUTE_WEIGHT) {
-            WeightScreen(
-                weightPreferences = weightPreferences,
-                unitPreferences = unitPreferences,
-                onBack = { navController.popBackStack() },
             )
         }
         composable(ROUTE_TRACKING) {

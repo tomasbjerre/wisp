@@ -1,9 +1,8 @@
 # UI Flows
 
 Wisp has three main screens — Home, Tracking, Detail — plus a Km splits
-view reached from Detail, a Weight view reached from Home (see
-[Calories burned](calories.md)), and a Voice feedback settings view reached
-from Tracking (see [Voice feedback](voice-feedback.md), and
+view reached from Detail, and a Voice feedback settings view reached from
+Tracking (see [Voice feedback](voice-feedback.md), and
 [Overview](overview.md#design-principle) for why this one narrow
 exception exists). No onboarding wizard, no account/login — simplicity
 is a feature.
@@ -19,8 +18,6 @@ the right screen, and go stale silently otherwise.
 The app's entry point.
 
 - A prominent **Start** button/action, always available when idle.
-- A **Weight** action that opens the [Weight](#1a-weight) view, in the top
-  bar next to Export and the information dialog.
 - A list of past sessions (most recent first), each row showing:
   date/time, place name if known (see
   [Data Model](data-model.md#place-name)), the activity type if the session
@@ -39,20 +36,6 @@ The app's entry point.
 - If there's an interrupted session recovered on launch (see
   [Tracking](tracking.md)), it simply appears in the list like any other
   finished session — no special dialog or interruption.
-
-## 1a. Weight
-
-Opened from the **Weight** action on [Home](#1-home). See
-[Calories burned](calories.md#weight).
-
-- A title and a back control returning to Home (system back does the
-  same).
-- One numeric field, labelled with its unit (kg, or lb under imperial),
-  and a line explaining that the weight is used to calculate calories and
-  that calories are not shown while it is empty.
-- The field reflects and immediately persists what is typed — no separate
-  Save action. A value that is not a positive number is not stored;
-  clearing the field removes the weight.
 
 ## 2. Tracking (active recording)
 
@@ -114,6 +97,14 @@ screen while recording.
   starts on the type of the user's last activity (see
   [Calories burned](calories.md#activity-type)) and changing it takes
   effect immediately, including on the calories shown.
+- A **weight** field (see [Calories burned](calories.md#weight)) — the
+  only place weight is configured, right below the activity type choice,
+  available in every state the same way. Labelled with its unit (kg, or
+  lb under imperial), reflects and immediately persists what is typed —
+  no separate Save action — and takes effect on the session being
+  recorded right away, the same as the activity type. A value that is
+  not a positive number is not stored; clearing the field removes the
+  weight and turns calories off for this session.
 - A settings control over another corner of the map opens
   [Voice feedback settings](#2a-voice-feedback-settings) — see
   [Voice feedback](voice-feedback.md).
@@ -280,6 +271,4 @@ Home ──(tap Start)──▶ Tracking ──(tap Stop)──▶ Detail ──
   │             Voice feedback settings              │
   │                                                 ▲
   └──────────────────(tap a history row)────────────┘
-
-Home ──(tap Weight)──▶ Weight ──(back)──▶ Home
 ```

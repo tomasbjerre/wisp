@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -80,7 +79,6 @@ fun HomeScreen(
     unitPreferences: UnitPreferences,
     onStart: () -> Unit,
     onOpenSession: (Long) -> Unit,
-    onOpenWeight: () -> Unit,
 ) {
     val viewModel: HomeViewModel =
         viewModel(factory = viewModelFactory { initializer { HomeViewModel(repository) } })
@@ -95,7 +93,6 @@ fun HomeScreen(
                 sessions = sessions,
                 loadPointsBySession = viewModel::loadPointsBySession,
                 onInfoClick = { showInfo = true },
-                onWeightClick = onOpenWeight,
             )
         },
     ) { padding ->
@@ -138,7 +135,6 @@ private fun HomeTopBar(
     sessions: List<Session>,
     loadPointsBySession: suspend () -> List<Pair<Session, List<TrackPoint>>>,
     onInfoClick: () -> Unit,
-    onWeightClick: () -> Unit,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -181,10 +177,6 @@ private fun HomeTopBar(
                 IconButton(onClick = onClick, enabled = sessions.isNotEmpty()) {
                     Icon(Icons.Filled.Share, contentDescription = "Export history as CSV")
                 }
-            }
-            // See specs/ui-flows.md#1a-weight.
-            IconButton(onClick = onWeightClick, modifier = Modifier.testTag(TestTags.WEIGHT_BUTTON)) {
-                Icon(Icons.Filled.Person, contentDescription = "Weight, used to calculate calories")
             }
             // See specs/ui-flows.md#feedback-and-support.
             IconButton(onClick = onInfoClick) {
