@@ -55,6 +55,25 @@ private fun OpenTrackingOnNotificationTap(
     }
 }
 
+/**
+ * See specs/ui-flows.md#navigation: (re)launching the app while a session is being recorded
+ * opens Tracking directly, the same as tapping the recording notification would — the user
+ * left a session running, so landing on Home first (with no cue a recording exists other than
+ * the notification) would look like it had stopped. Runs once per composition, independent of
+ * [OpenTrackingOnNotificationTap]'s tap-driven navigation above.
+ */
+@Composable
+private fun OpenTrackingIfAlreadyRecording(navController: NavController) {
+    LaunchedEffect(Unit) {
+        if (TrackingService.state.value.isRecording) {
+            navController.navigate(ROUTE_TRACKING) {
+                popUpTo(ROUTE_HOME)
+                launchSingleTop = true
+            }
+        }
+    }
+}
+
 /** See specs/ui-flows.md#navigation. */
 @Composable
 fun WispApp(
@@ -68,6 +87,7 @@ fun WispApp(
     val navController = rememberNavController()
 
     OpenTrackingOnNotificationTap(navController, openTrackingRequests)
+    OpenTrackingIfAlreadyRecording(navController)
 
     // Every screen's map/panel boundary sits at a different height (see
     // specs/ui-flows.md), so the library's default crossfade briefly composes both

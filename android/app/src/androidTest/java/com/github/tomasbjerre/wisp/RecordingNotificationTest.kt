@@ -14,7 +14,9 @@ import org.junit.runner.RunWith
 /**
  * Verifies specs/permissions-and-privacy.md#required-access for the recording notification:
  * tapping it opens Tracking on the session being recorded, and does nothing when nothing is
- * being recorded. Against the real activity and service, not mocks — see AGENTS.md.
+ * being recorded. Also verifies specs/ui-flows.md#navigation: a plain (re)launch of the app
+ * behaves the same way when a session is already recording. Against the real activity and
+ * service, not mocks — see AGENTS.md.
  */
 @RunWith(AndroidJUnit4::class)
 class RecordingNotificationTest {
@@ -65,6 +67,32 @@ class RecordingNotificationTest {
 
         assert(composeRule.onAllNodesWithText("Start").fetchSemanticsNodes().isNotEmpty())
         assert(!TrackingService.state.value.isRecording)
+    }
+
+    @Test
+    fun relaunchingTheAppWhileRecordingOpensTrackingInsteadOfHome() {
+        composeRule.waitForIdle()
+        // A recording running in the service, with the activity that started it gone — e.g. the
+        // task was swiped away in recents — so reopening the app is a plain cold launch, not a
+        // notification tap.
+        TrackingService.start(context)
+        composeRule.waitUntil(TIMEOUT_MILLIS) { TrackingService.state.value.isRecording }
+        composeRule.runOnUiThread { composeRule.activity.finish() }
+
+        composeRule.runOnUiThread {
+            context.startActivity(
+                Intent(context, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+
+        composeRule.waitUntil(TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Finding your location…").fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodesWithText("Stop").fetchSemanticsNodes().isNotEmpty()
+        }
+        assert(TrackingService.state.value.isRecording)
+
+        TrackingService.stop(context)
     }
 
     // What the notification's content intent does — see TrackingService.buildNotification.

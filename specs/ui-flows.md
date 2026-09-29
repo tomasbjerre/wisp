@@ -252,6 +252,15 @@ that needs one; a dialog over Home is enough. It shows:
 
 ## Navigation
 
+Launching or reopening the app while a session is being recorded opens
+Tracking directly instead of Home — the same destination tapping the
+recording notification goes to (see
+[Permissions & Privacy](permissions-and-privacy.md#required-access)) —
+regardless of whether the app was opened via that notification, the
+launcher icon, or the task switcher. Landing on Home first, with no other
+cue a recording exists, would read as the session having stopped on its
+own.
+
 ```
 Home ──(tap Start)──▶ Tracking ──(tap Stop)──▶ Detail ──(tap Km splits)──▶ Km splits
   │                       │  ▲                    ▲
