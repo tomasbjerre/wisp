@@ -87,6 +87,7 @@ class ScreenshotTest {
         Thread.sleep(MAP_TILE_SETTLE_MILLIS)
         screenshot("7-detail")
 
+        captureExportMenu()
         captureDetailSatellite()
         captureDeleteConfirm()
         captureKmSplits()
@@ -101,6 +102,20 @@ class ScreenshotTest {
         composeRule.waitForIdle()
 
         captureTrackingStates()
+    }
+
+    /**
+     * See specs/export.md#trigger and #173. Unnumbered, same reasoning as captureKmSplits:
+     * the Play listing slots are already spent by "7-detail".
+     */
+    private fun captureExportMenu() {
+        composeRule.onNodeWithContentDescription("Export this activity").performClick()
+        composeRule.waitForIdle()
+        screenshot("detail-export-menu")
+        // Dismiss by tapping outside the menu rather than a Close button — DropdownMenu
+        // (unlike the AlertDialogs elsewhere in this suite) has none of its own.
+        device.pressBack()
+        composeRule.waitForIdle()
     }
 
     /**
@@ -174,22 +189,7 @@ class ScreenshotTest {
         if (TrackingService.state.value.isWaitingForMovement) {
             composeRule.waitForIdle()
             screenshot("3-tracking-waiting")
-
-            // See specs/ui-flows.md#2-tracking-active-recording: the info icon next to
-            // "Waiting for movement". Still racing the same movement window as above, so
-            // only captured if the dialog's own trigger is actually still on screen.
-            val infoIconStillShowing =
-                composeRule
-                    .onAllNodesWithContentDescription("About waiting for movement")
-                    .fetchSemanticsNodes()
-                    .isNotEmpty()
-            if (infoIconStillShowing) {
-                composeRule.onNodeWithContentDescription("About waiting for movement").performClick()
-                composeRule.waitForIdle()
-                screenshot("tracking-waiting-info")
-                composeRule.onNodeWithText("Close").performClick()
-                composeRule.waitForIdle()
-            }
+            captureWaitingForMovementInfoIfStillShowing()
         }
 
         // Recording, with a real route on the map (specs/tracking.md#start-gating).
@@ -220,6 +220,30 @@ class ScreenshotTest {
 
         composeRule.onNodeWithText("Stop").performClick()
         composeRule.waitForIdle()
+    }
+
+    /**
+     * See specs/ui-flows.md#2-tracking-active-recording: the info icon next to "Waiting for
+     * movement" and its dialog. Best-effort, same movement-timing race as "3-tracking-waiting"
+     * above (see the class doc comment) — but the walk can confirm movement, and unmount this
+     * whole notice, at any point during this sequence too, not just before it starts, so
+     * existence is re-checked before each step rather than assumed from the first check.
+     */
+    private fun captureWaitingForMovementInfoIfStillShowing() {
+        val infoIconShowing =
+            composeRule
+                .onAllNodesWithContentDescription("About waiting for movement")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        if (!infoIconShowing) return
+        composeRule.onNodeWithContentDescription("About waiting for movement").performClick()
+        composeRule.waitForIdle()
+        if (composeRule.onAllNodesWithText("Close").fetchSemanticsNodes().isEmpty()) return
+        screenshot("tracking-waiting-info")
+        if (composeRule.onAllNodesWithText("Close").fetchSemanticsNodes().isNotEmpty()) {
+            composeRule.onNodeWithText("Close").performClick()
+            composeRule.waitForIdle()
+        }
     }
 
     /**

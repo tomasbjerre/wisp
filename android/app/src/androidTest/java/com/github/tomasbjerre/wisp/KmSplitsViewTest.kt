@@ -55,7 +55,7 @@ class KmSplitsViewTest {
 
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
-            composeRule.onAllNodesWithText("Export CSV").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Back").fetchSemanticsNodes().isNotEmpty()
         }
     }
 

@@ -187,6 +187,11 @@ recording.
 
 ## 3. Detail (a past or just-finished session)
 
+- An **Export** action in the top bar (see [Export](export.md)), offering
+  a choice of CSV or Image before the Share/Save to device choice every
+  export in Wisp offers — one entry point for both formats, the same
+  pattern [Home](#1-home)'s own Export CSV action uses, rather than a
+  separate button per format taking up room below.
 - A map showing the full recorded route, with start and end markers (see
   [Accessibility](accessibility.md#map-markers-and-route)), and the same
   standard/satellite toggle described under [Tracking](#2-tracking-active-recording)
@@ -216,11 +221,7 @@ recording.
   is what an imperial user sees for a 1–1.6 km session, instead of the
   link vanishing. Omitted entirely only when there is no partial split
   either (under 10 m).
-- Below that, two rows of two controls: **Export CSV** (see
-  [Export](export.md#single-activity-as-csv)) and **Export Image** (see
-  [Export](export.md#single-activity-as-an-image)) on top, **Back** and
-  **Delete** below — the two actions taken while reviewing an activity
-  grouped together, above the two that leave the screen either way.
+- Below that, one row of two controls: **Back** and **Delete**.
 - Delete has a confirmation step before it actually deletes.
 
 ## 4. Km splits
