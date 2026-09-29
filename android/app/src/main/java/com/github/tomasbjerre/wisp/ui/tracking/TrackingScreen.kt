@@ -236,32 +236,34 @@ private fun PermissionAdvisories(
 }
 
 /**
- * See specs/ui-flows.md#2-tracking-active-recording: back asks first, and only Stop in the dialog
- * stops the session — the same as tapping Stop. Without it, system/gesture back would pop
- * straight to Home while the session is still active, orphaning it: TrackingService keeps running
- * against a sessionId no longer reachable from the UI, and a later Start creates a second session
- * on top of it instead of resuming or stopping the first. The existing LaunchedEffects in
- * [TrackingScreen] (watching isRecording/sessionId/wasDiscarded) navigate correctly once
- * TrackingService.stop updates state, the same as if Stop itself had been tapped.
+ * See specs/ui-flows.md#2-tracking-active-recording: back asks first only once recording has
+ * actually started (Force start tapped, or movement confirmed naturally — see
+ * specs/tracking.md#start-gating), and only Stop in the dialog stops the session — the same as
+ * tapping Stop. While still waiting for movement there is nothing recorded yet to lose, so back
+ * stops (and discards) immediately instead, with no confirmation step. Either way, back must
+ * never just pop straight to Home while the session is still active, orphaning it:
+ * TrackingService keeps running against a sessionId no longer reachable from the UI, and a later
+ * Start creates a second session on top of it instead of resuming or stopping the first. The
+ * existing LaunchedEffects in [TrackingScreen] (watching isRecording/sessionId/wasDiscarded)
+ * navigate correctly once TrackingService.stop updates state, the same as if Stop itself had
+ * been tapped.
  */
 @Composable
 private fun StopOnBackAfterConfirmation(state: TrackingUiState) {
     val context = LocalContext.current
     var confirming by remember { mutableStateOf(false) }
-    BackHandler(enabled = state.isRecording) { confirming = true }
+    BackHandler(enabled = state.isRecording) {
+        if (state.isWaitingForMovement) {
+            TrackingService.stop(context)
+        } else {
+            confirming = true
+        }
+    }
     if (confirming) {
         AlertDialog(
             onDismissRequest = { confirming = false },
             title = { Text("Stop recording?") },
-            text = {
-                Text(
-                    if (state.isWaitingForMovement) {
-                        "Nothing has been recorded yet, so this activity will be discarded."
-                    } else {
-                        "The activity will be saved."
-                    },
-                )
-            },
+            text = { Text("The activity will be saved.") },
             confirmButton = {
                 Button(
                     onClick = {

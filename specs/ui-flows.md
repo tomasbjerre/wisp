@@ -60,22 +60,33 @@ Entered by tapping Start on Home. Stays active in the background/locked
 screen while recording.
 
 - The system/gesture back action asks for confirmation first, in a dialog
-  titled **Stop recording?**, with **Stop** and **Keep recording**. It never
-  stops the session by itself, so a stray back tap can't end a recording.
+  titled **Stop recording?**, with **Stop** and **Keep recording** — but
+  only once recording has actually started (Force start tapped, or
+  movement confirmed naturally — see
+  [Tracking](tracking.md#start-gating)). It never stops a session that has
+  started ticking by itself, so a stray back tap can't end a recording
+  with real data in it.
+  - While still waiting for movement — before Force start, before
+    movement is naturally confirmed — back instead stops immediately, the
+    same as tapping Stop, with no confirmation step: nothing has been
+    recorded yet, so there's nothing to lose by asking first.
   - **Keep recording** (or dismissing the dialog, e.g. with back again)
     changes nothing: the session carries on and Tracking stays open.
-  - **Stop** behaves exactly like tapping Stop (see
+  - **Stop** — from the dialog, the Stop control itself, or back while
+    still waiting for movement — behaves exactly like tapping Stop (see
     [Navigation](#navigation) below) — same finalize-or-discard logic, same
     destination (that session's Detail screen, or Home if movement was
     never confirmed).
-  - The dialog says what stopping will do: that the activity will be saved,
-    or — while still waiting for movement (see
-    [Tracking](tracking.md#start-gating)) — that nothing has been recorded
-    yet, so it will be discarded.
+  - The dialog says the activity will be saved — it only ever shows once
+    recording has actually started, so there's no separate "will be
+    discarded" wording to show here (that's the no-dialog case above).
   - Back never simply returns to Home with the recording left running:
     leaving the session ongoing but no longer reachable from the UI would
     leave it to linger unfinished — see
-    [Tracking](tracking.md#what-must-survive-interruption).
+    [Tracking](tracking.md#what-must-survive-interruption). This still
+    holds while waiting for movement: back stops (and, since nothing was
+    recorded yet, discards) the session rather than leaving it running
+    unreachable.
   - The Stop control itself is unchanged: it stops at once, without a
     confirmation step.
 - Entering this screen doesn't show the map and controls right away — see
