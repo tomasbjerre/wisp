@@ -75,7 +75,11 @@ discarded entirely rather than saved — nothing meaningful was recorded
 (zero distance and duration, and every point it does have is noise — see
 [Noise](#noise)), so saving it would only add a broken-looking blank
 entry to history. The user returns to Home, not to that session's Detail
-screen.
+screen. The same applies if [Force start](#force-start) was used to skip
+this gate and Stop is tapped again before any point was actually
+recorded — every point the session has is still noise (or there are none
+at all), so it's discarded exactly as if movement had never been
+confirmed, force-started or not.
 
 ### Force start
 
