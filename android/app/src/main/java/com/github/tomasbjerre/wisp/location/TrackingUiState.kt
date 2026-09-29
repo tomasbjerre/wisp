@@ -37,6 +37,9 @@ data class TrackingUiState(
     val maxHeartRateBpm: Int? = null,
     // See specs/calories.md#activity-type: what is being recorded, changeable while it is.
     val activityType: ActivityType? = null,
+    // See specs/calories.md#weight: same as activityType — starts as the last configured
+    // weight, changeable while recording.
+    val weightKg: Double? = null,
     // See specs/calories.md. Null when the session has no activity type or weight.
     val kilocalories: Double? = null,
 )

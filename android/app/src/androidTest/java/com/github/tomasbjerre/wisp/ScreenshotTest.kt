@@ -5,7 +5,6 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -80,8 +79,6 @@ class ScreenshotTest {
         composeRule.waitForIdle()
         screenshot("2-home-history")
 
-        captureWeight()
-
         composeRule.onAllNodesWithTag(TestTags.HISTORY_ROW).onFirst().performClick()
         composeRule.waitForIdle()
         // osmdroid tiles load asynchronously over the network; give them a moment to
@@ -103,21 +100,6 @@ class ScreenshotTest {
         composeRule.waitForIdle()
 
         captureTrackingStates()
-    }
-
-    /**
-     * See specs/ui-flows.md#1a-weight. Unnumbered, same reasoning as captureKmSplits: the Play
-     * listing slots are already spent.
-     */
-    private fun captureWeight() {
-        composeRule.onNodeWithTag(TestTags.WEIGHT_BUTTON).performClick()
-        composeRule.waitUntil(timeoutMillis = LOCATE_TIMEOUT_MILLIS) {
-            composeRule.onAllNodesWithTag(TestTags.WEIGHT_FIELD).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.waitForIdle()
-        screenshot("home-weight")
-        composeRule.onNodeWithContentDescription("Back").performClick()
-        composeRule.waitForIdle()
     }
 
     /**

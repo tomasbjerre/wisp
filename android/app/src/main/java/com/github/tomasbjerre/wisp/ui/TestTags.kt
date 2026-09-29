@@ -5,7 +5,6 @@ object TestTags {
     const val HISTORY_ROW = "history_row"
     const val ROUTE_MAP = "route_map"
     const val HEART_RATE_SWITCH = "heart_rate_switch"
-    const val WEIGHT_BUTTON = "weight_button"
     const val WEIGHT_FIELD = "weight_field"
 
     fun activityTypeOption(id: String) = "activity_type_$id"

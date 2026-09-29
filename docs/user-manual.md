@@ -36,9 +36,6 @@ This is what you see when you open Wisp. It has:
   screen.
 - **Delete** — the trash icon on each row deletes that activity directly
   from Home, without having to open it first. You'll be asked to confirm.
-- **Weight** — the person icon in the top-right opens the
-  [Weight](#weight-and-calories) view, where you enter your weight so Wisp
-  can estimate calories.
 - **Export CSV** — the share icon in the top-right exports your whole
   history as two CSV files (one row per activity, and one with every
   recorded GPS point). Tapping it offers a choice: **Share** (through
@@ -64,18 +61,22 @@ history list is replaced with a short empty-state message instead:
 
 ## Weight and calories
 
-<img src="screenshots/home-weight.jpg" alt="Weight view with a weight entered" width="300">
-
 Wisp can estimate the calories an activity burned, but only once it knows
-your weight. Tap the person icon on Home to open the **Weight** view and type
-your weight — in kilograms, or pounds if you've chosen Imperial. It's saved as
-you type, and clearing the field turns calories off again.
+your weight. You enter it on [Tracking](#tracking) — the same screen that
+shows the activity type choice — in kilograms, or pounds if you've chosen
+Imperial. It's saved as you type, takes effect on the activity you're
+recording right away, and clearing the field turns calories off again for
+that activity.
 
-- **Which weight is used:** the weight you had when you tapped Start is saved
-  with that activity, and its calories are always worked out from that. Change
-  your weight later and earlier activities keep their calories. An activity
-  you started before entering a weight never shows calories, even if you enter
-  one afterwards.
+- **Which weight is used:** whatever weight is showing on Tracking is what
+  that activity's calories are worked out from, at every point while it's
+  being recorded — change it partway through and the whole activity
+  re-estimates from the new value, the same way changing the activity type
+  does. Once you stop, it's fixed: a later change only affects activities
+  after that point, and doesn't touch this one. An activity you stopped
+  before ever entering a weight never shows calories, even if you enter one
+  afterwards. Whatever you last entered is also what the next activity
+  starts with, so you don't have to retype it every time.
 - **How it's calculated:** calories = MET × your weight in kg × hours, where
   the MET (how demanding the activity is) depends on whether you chose Walking,
   Running or Cycling on Tracking and on your average speed. It's an estimate, not a
@@ -143,8 +144,14 @@ A few more things on this screen:
   decides how calories are estimated — see
   [Weight and calories](#weight-and-calories) — and doesn't change how
   anything is recorded. Once you stop, it can't be changed.
-- **Calories** — `Calories: 312 kcal` so far, when your weight was set when you
-  tapped Start (see [Weight and calories](#weight-and-calories)).
+- **Weight** — right below the activity type choice, the only place you
+  enter your weight (see [Weight and calories](#weight-and-calories)). It
+  starts on whatever you last entered, and you can change it at any point
+  while recording, paused or waiting to move included — it takes effect
+  on this activity's calories right away. Once you stop, it can't be
+  changed.
+- **Calories** — `Calories: 312 kcal` so far, once a weight is set (see
+  [Weight and calories](#weight-and-calories)).
 - **Heart rate monitor** — a switch above the Pause / Stop buttons, off
   by default, that stays as you left it the next time you record. Turn it
   on to record your heart rate from a Bluetooth heart rate monitor (a
@@ -176,12 +183,15 @@ A few more things on this screen:
   still on the "waiting for movement" step), there's nothing meaningful
   to save, so the activity is discarded and you're returned to Home
   instead.
-- **Back** — the system/gesture back action never stops a recording by
-  itself. It asks **Stop recording?** first — **Stop** does exactly what the
-  Stop button does (finalize the activity and navigate on), **Keep
-  recording** carries on as if nothing happened. The dialog says whether the
-  activity will be saved, or discarded because you haven't started moving yet.
-  So there's no way to end or abandon a recording with a stray back tap:
+- **Back** — while you're still on the "waiting for movement" step (before
+  Force start, before you've actually started moving), the system/gesture
+  back action stops immediately with no confirmation — same as tapping
+  Stop at that point, since nothing has been recorded yet. Once recording
+  has actually started, back instead asks **Stop recording?** first —
+  **Stop** does exactly what the Stop button does (finalize the activity
+  and navigate on), **Keep recording** carries on as if nothing happened.
+  So there's no way to end or abandon real recorded data with a stray back
+  tap:
 
   <img src="screenshots/tracking-stop-confirm.jpg" alt="Dialog asking Stop recording? with Stop and Keep recording" width="300">
 

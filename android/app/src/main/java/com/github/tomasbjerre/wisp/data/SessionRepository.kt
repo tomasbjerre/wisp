@@ -121,6 +121,15 @@ class SessionRepository(
         sessionDao.update(session.copy(activityType = activityType.id))
     }
 
+    /** See specs/calories.md#weight: changed while the session is being recorded. */
+    suspend fun updateWeight(
+        sessionId: Long,
+        weightKg: Double?,
+    ) {
+        val session = sessionDao.getById(sessionId) ?: return
+        sessionDao.update(session.copy(weightKg = weightKg))
+    }
+
     suspend fun deleteSession(session: Session) = sessionDao.delete(session)
 
     suspend fun deleteSessionById(sessionId: Long) {

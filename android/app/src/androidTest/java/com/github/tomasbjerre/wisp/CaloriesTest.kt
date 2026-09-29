@@ -5,7 +5,6 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -15,43 +14,61 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.tomasbjerre.wisp.data.ActivityType
 import com.github.tomasbjerre.wisp.data.UnitSystem
+import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.ui.TestTags
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 
 /**
- * Verifies specs/calories.md and specs/ui-flows.md#1a-weight against the real
- * SharedPreferences-backed preferences and database, not mocks — see AGENTS.md.
+ * Verifies specs/calories.md and specs/ui-flows.md#2-tracking-active-recording (the weight
+ * field) against the real SharedPreferences-backed preferences and database, not mocks — see
+ * AGENTS.md.
  */
 @RunWith(AndroidJUnit4::class)
 class CaloriesTest {
+    private val composeRule = createAndroidComposeRule<MainActivity>()
+
+    // Before the activity launches, notifications included so no permission dialog covers it —
+    // needed now that the weight field lives on Tracking rather than a standalone Home view.
     @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val rules: RuleChain =
+        RuleChain
+            .outerRule(
+                GrantPermissionsBeforeLaunch(
+                    "android.permission.ACCESS_FINE_LOCATION",
+                    "android.permission.ACCESS_BACKGROUND_LOCATION",
+                    "android.permission.POST_NOTIFICATIONS",
+                ),
+            ).around(composeRule)
 
     private val app =
         InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as WispApplication
 
     @Test
-    fun theWeightIsEnteredOnItsOwnViewAndKeptAfterLeavingIt() {
+    fun theWeightIsEnteredOnTrackingAndKeptAsTheDefaultForNextTime() {
         app.weightPreferences.setWeightKg(null)
         composeRule.waitForIdle()
 
-        openWeight()
-        composeRule.onNodeWithTag(TestTags.WEIGHT_FIELD).performTextInput("70.5")
-        composeRule.onNodeWithContentDescription("Back").performClick()
+        composeRule.onNodeWithText("Start").performClick()
         composeRule.waitUntil(TIMEOUT_MILLIS) {
-            composeRule.onAllNodesWithTag(TestTags.WEIGHT_BUTTON).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag(TestTags.WEIGHT_FIELD).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(TestTags.WEIGHT_FIELD).performTextInput("70.5")
+        composeRule.waitUntil(TIMEOUT_MILLIS) { app.weightPreferences.weightKg.value == 70.5 }
+
+        // Stored on the session too, same as activity type — see specs/calories.md#weight.
+        composeRule.waitUntil(TIMEOUT_MILLIS) {
+            val id = TrackingService.state.value.sessionId
+            id != null && runBlocking { app.repository.getSession(id)?.weightKg } == 70.5
         }
 
-        assert(app.weightPreferences.weightKg.value == 70.5)
-
-        openWeight()
-        composeRule.onAllNodesWithText("70.5").onFirst().assertExists()
         composeRule.onNodeWithTag(TestTags.WEIGHT_FIELD).performTextClearance()
+        composeRule.waitUntil(TIMEOUT_MILLIS) { app.weightPreferences.weightKg.value == null }
 
-        assert(app.weightPreferences.weightKg.value == null)
+        composeRule.onNodeWithText("Stop").performClick()
     }
 
     @Test
@@ -60,21 +77,29 @@ class CaloriesTest {
         app.weightPreferences.setWeightKg(null)
         composeRule.waitForIdle()
 
-        openWeight()
+        composeRule.onNodeWithText("Start").performClick()
+        composeRule.waitUntil(TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(TestTags.WEIGHT_FIELD).fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithTag(TestTags.WEIGHT_FIELD).performTextInput("154.3")
 
+        composeRule.waitUntil(TIMEOUT_MILLIS) { app.weightPreferences.weightKg.value != null }
         val stored = app.weightPreferences.weightKg.value!!
         assert(kotlin.math.abs(stored - 70.0) < 0.05) { "154.3 lb should be about 70 kg, was $stored" }
+
+        composeRule.onNodeWithText("Stop").performClick()
         app.unitPreferences.setUnit(UnitSystem.METRIC)
     }
 
     @Test
-    fun homeOnlyShowsTheActivityTypeItDoesNotOfferToChooseIt() {
+    fun homeOnlyShowsTheActivityTypeItDoesNotOfferToChooseItOrTheWeightField() {
         composeRule.waitForIdle()
 
         ActivityType.entries.forEach {
             composeRule.onAllNodesWithTag(TestTags.activityTypeOption(it.id)).assertCountEquals(0)
         }
+        // See specs/calories.md#weight: Tracking is the only place weight is configured.
+        composeRule.onAllNodesWithTag(TestTags.WEIGHT_FIELD).assertCountEquals(0)
     }
 
     @Test
@@ -112,13 +137,6 @@ class CaloriesTest {
         }
 
         assert(composeRule.onAllNodesWithText("kcal", substring = true).fetchSemanticsNodes().isEmpty())
-    }
-
-    private fun openWeight() {
-        composeRule.onNodeWithTag(TestTags.WEIGHT_BUTTON).performClick()
-        composeRule.waitUntil(TIMEOUT_MILLIS) {
-            composeRule.onAllNodesWithTag(TestTags.WEIGHT_FIELD).fetchSemanticsNodes().isNotEmpty()
-        }
     }
 
     private companion object {
