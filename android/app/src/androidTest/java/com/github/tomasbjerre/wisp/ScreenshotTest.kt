@@ -146,13 +146,13 @@ class ScreenshotTest {
     }
 
     /**
-     * See specs/ui-flows.md#2a-voice-feedback-settings. Unnumbered, same reasoning as
-     * captureKmSplits: the Play listing slots are already spent by "4-tracking-recording".
+     * See specs/ui-flows.md#2a-settings. Unnumbered, same reasoning as captureKmSplits: the
+     * Play listing slots are already spent by "4-tracking-recording".
      */
-    private fun captureVoiceFeedbackSettings() {
-        composeRule.onNodeWithContentDescription("Voice feedback settings").performClick()
+    private fun captureSettings() {
+        composeRule.onNodeWithContentDescription("Settings").performClick()
         composeRule.waitForIdle()
-        screenshot("tracking-voice-feedback-settings")
+        screenshot("tracking-settings")
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.waitForIdle()
     }
@@ -183,7 +183,7 @@ class ScreenshotTest {
         composeRule.waitForIdle()
         screenshot("4-tracking-recording")
 
-        captureVoiceFeedbackSettings()
+        captureSettings()
 
         // Satellite map toggle (specs/ui-flows.md#2-tracking-active-recording).
         composeRule.onNodeWithText("Satellite").performClick()

@@ -42,8 +42,8 @@ Everything measured in distance or speed, everywhere it's shown:
   setting), and says "kilometers"/"kilometers per hour" or
   "miles"/"miles per hour" to match. The **Steps per kilometer**/
   **Average speed per kilometer**/**Elapsed time per kilometer** switches on
-  [Voice feedback settings](ui-flows.md#2a-voice-feedback-settings) relabel
-  to say "mile" under imperial, same switches, same stored preference.
+  [Settings](ui-flows.md#2a-settings) relabel to say "mile" under imperial,
+  same switches, same stored preference.
 - Changing the setting takes effect immediately, including recomputing a
   session actively being recorded — there's no reason a split already
   computed from raw recorded points needs to "start over" in the new
@@ -65,8 +65,8 @@ Everything measured in distance or speed, everywhere it's shown:
   don't depend on units.
 
 - **Body weight** — entered and shown on
-  [Tracking](ui-flows.md#2-tracking-active-recording) in kilograms under
-  metric and pounds under imperial; stored in kilograms either way (see
+  [Settings](ui-flows.md#2a-settings) in kilograms under metric and
+  pounds under imperial; stored in kilograms either way (see
   [Calories burned](calories.md#weight)). Calories themselves are
   kilocalories under both.
 

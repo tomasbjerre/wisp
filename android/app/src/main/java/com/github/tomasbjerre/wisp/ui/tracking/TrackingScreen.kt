@@ -1,15 +1,6 @@
 package com.github.tomasbjerre.wisp.ui.tracking
 
-import android.bluetooth.BluetoothAdapter
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.content.pm.PackageManager
-import android.os.Build
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +11,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -30,13 +20,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,19 +32,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.tomasbjerre.wisp.data.HeartRatePreferences
 import com.github.tomasbjerre.wisp.data.UnitPreferences
 import com.github.tomasbjerre.wisp.data.UnitSystem
-import com.github.tomasbjerre.wisp.location.HeartRateMonitor
 import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.location.TrackingUiState
 import com.github.tomasbjerre.wisp.ui.Formatting
-import com.github.tomasbjerre.wisp.ui.TestTags
 import com.github.tomasbjerre.wisp.ui.common.ActivityTypeChoice
 import com.github.tomasbjerre.wisp.ui.common.MapType
 import com.github.tomasbjerre.wisp.ui.common.MapTypeToggle
@@ -70,7 +52,7 @@ fun TrackingScreen(
     heartRatePreferences: HeartRatePreferences,
     onStopped: (sessionId: Long) -> Unit,
     onCancelled: () -> Unit,
-    onOpenVoiceFeedbackSettings: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val context = LocalContext.current
     val permissions = rememberLocationPermissionState()
@@ -143,8 +125,8 @@ fun TrackingScreen(
                 // — easy to miss or to hit the notification shade instead (see #55).
                 modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp),
             )
-            VoiceFeedbackSettingsButton(
-                onClick = onOpenVoiceFeedbackSettings,
+            SettingsButton(
+                onClick = onOpenSettings,
                 modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(12.dp),
             )
         }
@@ -158,15 +140,15 @@ fun TrackingScreen(
     }
 }
 
-/** See specs/ui-flows.md#2a-voice-feedback-settings and specs/voice-feedback.md. */
+/** See specs/ui-flows.md#2a-settings. */
 @Composable
-private fun VoiceFeedbackSettingsButton(
+private fun SettingsButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier, shape = CircleShape, tonalElevation = 4.dp) {
         IconButton(onClick = onClick) {
-            Icon(Icons.Filled.Settings, contentDescription = "Voice feedback settings")
+            Icon(Icons.Filled.Settings, contentDescription = "Settings")
         }
     }
 }
@@ -194,8 +176,7 @@ private fun TrackingStatsPanel(
             }
             TrackingStatLines(state, unit)
             ActivityTypeSection(state)
-            WeightSection(state, unit)
-            HeartRateSection(state, heartRatePreferences)
+            HeartRateLiveLine(state, heartRatePreferences)
             TrackingControls(isPaused = state.isPaused, isWaitingForMovement = state.isWaitingForMovement)
         }
     }
@@ -317,39 +298,6 @@ private fun ActivityTypeSection(state: TrackingUiState) {
     )
 }
 
-/**
- * See specs/calories.md#weight: entered here, in any state, same as [ActivityTypeSection] —
- * takes effect on this session immediately and is remembered as the default for next time.
- */
-@Composable
-private fun WeightSection(
-    state: TrackingUiState,
-    unit: UnitSystem,
-) {
-    val context = LocalContext.current
-    // What is typed, kept as typed: reformatting the stored kilograms on every keystroke would
-    // fight the user (and turn 70 lb into 69.9). Reset when the unit changes, since the same
-    // typed digits would otherwise be shown under the wrong unit.
-    var text by remember(unit) {
-        mutableStateOf(state.weightKg?.let { Formatting.weightForEditing(it, unit) } ?: "")
-    }
-    OutlinedTextField(
-        value = text,
-        onValueChange = { typed ->
-            text = typed
-            val value = typed.replace(',', '.').toDoubleOrNull()
-            when {
-                typed.isBlank() -> TrackingService.setWeightKg(context, null)
-                value != null && value > 0 -> TrackingService.setWeightKg(context, unit.displayToKilograms(value))
-            }
-        },
-        label = { Text("Weight (${unit.weightAbbreviation})") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag(TestTags.WEIGHT_FIELD),
-    )
-}
-
 @Composable
 private fun KmSplitLines(
     state: TrackingUiState,
@@ -374,103 +322,24 @@ private fun KmSplitLines(
     }
 }
 
-/** The heart rate line and its switch — see specs/heart-rate.md#setting and #display. */
+/**
+ * The live current/max heart rate — see specs/heart-rate.md#display. The
+ * **Heart rate monitor** setting that drives whether this shows anything now lives on
+ * [SettingsScreen], reached from [SettingsButton] above — this only reads its result.
+ */
 @Composable
-private fun HeartRateSection(
+private fun HeartRateLiveLine(
     state: TrackingUiState,
     heartRatePreferences: HeartRatePreferences,
 ) {
     val enabled by heartRatePreferences.enabled.collectAsStateWithLifecycle()
-    val available = rememberHeartRateAvailable()
-
-    // With nothing to connect to, the setting is switched off (and persisted as off)
-    // rather than left on for a monitor that can't be reached.
-    LaunchedEffect(available, enabled) {
-        if (!available && enabled) heartRatePreferences.setEnabled(false)
+    // Omitted entirely with the setting off; a placeholder, not hidden, while on but
+    // without a current reading, so it's clear Wisp is still looking for a monitor.
+    if (enabled) {
+        val current = state.heartRateBpm?.let(Formatting::heartRate) ?: "—"
+        val max = state.maxHeartRateBpm?.let { " · Max ${Formatting.heartRate(it)}" } ?: ""
+        Text("Heart rate: $current$max", style = MaterialTheme.typography.bodyLarge)
     }
-
-    // Omitted with the setting off; a placeholder, not hidden, while on but without a
-    // current reading, so it's clear Wisp is still looking for a monitor.
-    if (enabled) HeartRateLine(state)
-    HeartRateSwitch(enabled = enabled, available = available, onEnabledChange = heartRatePreferences::setEnabled)
-}
-
-/** Whether Bluetooth can currently reach a monitor, kept current as it's turned on/off. */
-@Composable
-private fun rememberHeartRateAvailable(): Boolean {
-    val context = LocalContext.current
-    var available by remember { mutableStateOf(HeartRateMonitor.isAvailable(context)) }
-    DisposableEffect(context) {
-        val receiver =
-            object : BroadcastReceiver() {
-                override fun onReceive(
-                    context: Context,
-                    intent: Intent,
-                ) {
-                    available = HeartRateMonitor.isAvailable(context)
-                }
-            }
-        ContextCompat.registerReceiver(
-            context,
-            receiver,
-            IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED),
-            ContextCompat.RECEIVER_NOT_EXPORTED,
-        )
-        available = HeartRateMonitor.isAvailable(context)
-        onDispose { context.unregisterReceiver(receiver) }
-    }
-    return available
-}
-
-/**
- * See specs/heart-rate.md#setting. Turning it on first asks for the Bluetooth access it
- * needs (Android 12+ only — earlier versions have it at install time); declined leaves it
- * off. Disabled while there's no Bluetooth to reach a monitor with.
- */
-@Composable
-private fun HeartRateSwitch(
-    enabled: Boolean,
-    available: Boolean,
-    onEnabledChange: (Boolean) -> Unit,
-) {
-    val context = LocalContext.current
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
-            if (result.values.all { it }) onEnabledChange(true)
-        }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            if (available) "Heart rate monitor" else "Heart rate monitor (Bluetooth is off)",
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        Switch(
-            checked = enabled && available,
-            enabled = available,
-            modifier = Modifier.testTag(TestTags.HEART_RATE_SWITCH),
-            onCheckedChange = { wanted ->
-                val missing =
-                    if (wanted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        HeartRateMonitor.REQUIRED_PERMISSIONS_S.filter {
-                            ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
-                        }
-                    } else {
-                        emptyList()
-                    }
-                if (missing.isEmpty()) onEnabledChange(wanted) else launcher.launch(missing.toTypedArray())
-            },
-        )
-    }
-}
-
-@Composable
-private fun HeartRateLine(state: TrackingUiState) {
-    val current = state.heartRateBpm?.let(Formatting::heartRate) ?: "—"
-    val max = state.maxHeartRateBpm?.let { " · Max ${Formatting.heartRate(it)}" } ?: ""
-    Text("Heart rate: $current$max", style = MaterialTheme.typography.bodyLarge)
 }
 
 @Composable

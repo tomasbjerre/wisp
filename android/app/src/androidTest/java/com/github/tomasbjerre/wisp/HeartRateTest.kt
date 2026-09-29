@@ -16,9 +16,10 @@ import org.junit.runner.RunWith
 
 /**
  * Verifies specs/heart-rate.md#setting and #display: the switch isn't on Home (it lives on
- * Tracking, which needs a GPS fix to get past locating), and a session with heart rate shows its maximum on Detail. Connecting to an actual
- * monitor needs hardware — [com.github.tomasbjerre.wisp.location.HeartRateMeasurementTest]
- * and HeartRateRecorderTest cover what it feeds.
+ * Settings, reached from Tracking), and a session with heart rate shows its maximum on Detail.
+ * Connecting to an actual monitor needs hardware —
+ * [com.github.tomasbjerre.wisp.location.HeartRateMeasurementTest] and HeartRateRecorderTest
+ * cover what it feeds.
  */
 @RunWith(AndroidJUnit4::class)
 class HeartRateTest {

@@ -1,11 +1,12 @@
 # UI Flows
 
 Wisp has three main screens — Home, Tracking, Detail — plus a Km splits
-view reached from Detail, and a Voice feedback settings view reached from
-Tracking (see [Voice feedback](voice-feedback.md), and
-[Overview](overview.md#design-principle) for why this one narrow
-exception exists). No onboarding wizard, no account/login — simplicity
-is a feature.
+view reached from Detail, and a Settings view reached from Tracking,
+housing the three deliberate, narrow configuration exceptions
+[Overview](overview.md#design-principle) describes: voice feedback (see
+[Voice feedback](voice-feedback.md)), the heart rate monitor setting,
+and weight. No onboarding wizard, no account/login — simplicity is a
+feature, and this is not a precedent for adding more settings elsewhere.
 
 Whenever a screen/view listed here is added, renamed, or removed, update
 the "which screen" explainer and dropdown in
@@ -96,18 +97,16 @@ screen while recording.
   available in every state (waiting for movement, recording, paused). It
   starts on the type of the user's last activity (see
   [Calories burned](calories.md#activity-type)) and changing it takes
-  effect immediately, including on the calories shown.
-- A **weight** field (see [Calories burned](calories.md#weight)) — the
-  only place weight is configured, right below the activity type choice,
-  available in every state the same way. Labelled with its unit (kg, or
-  lb under imperial), reflects and immediately persists what is typed —
-  no separate Save action — and takes effect on the session being
-  recorded right away, the same as the activity type. A value that is
-  not a positive number is not stored; clearing the field removes the
-  weight and turns calories off for this session.
+  effect immediately, including on the calories shown. Unlike weight and
+  the heart rate monitor setting (below), this stays directly on
+  Tracking rather than on Settings — it's changed often enough mid-run
+  (a walk that turns into a run) that a sub-screen round trip would be
+  the wrong tradeoff.
 - A settings control over another corner of the map opens
-  [Voice feedback settings](#2a-voice-feedback-settings) — see
-  [Voice feedback](voice-feedback.md).
+  [Settings](#2a-settings) — weight (see
+  [Calories burned](calories.md#weight)), the heart rate monitor setting
+  (see [Heart rate](heart-rate.md#setting)), and voice feedback (see
+  [Voice feedback](voice-feedback.md)).
 - A live stats panel below the map (not laid over it — see
   [Accessibility](accessibility.md#text-contrast)): current speed,
   elapsed distance, elapsed time — all zero while waiting for movement.
@@ -119,13 +118,11 @@ screen while recording.
   a growing list on this screen, and "how was that last km, and is it
   my best one" is what's actually useful mid-run.
   Also the current and maximum heart rate when the heart rate monitor
-  setting is on (see [Heart rate](heart-rate.md#display)), and the
-  calories burned so far when the session has them (see
+  setting (on [Settings](#2a-settings) — see
+  [Heart rate](heart-rate.md#setting)) is on (see
+  [Heart rate](heart-rate.md#display)), and the calories burned so far
+  when the session has them (see
   [Calories burned](calories.md#where-it-is-shown)).
-- A **Heart rate monitor** switch, off by default, in the stats panel
-  above the controls, visible while waiting for movement as well as while
-  recording; disabled when no monitor is available (see
-  [Heart rate](heart-rate.md#setting)).
 - A **Pause**/**Continue** control (labeled Continue while paused) and a
   **Stop** control, both visible together at all times once recording has
   actually started — recording or paused, it's always exactly these two
@@ -158,20 +155,33 @@ screen while recording.
   [Permissions & Privacy](permissions-and-privacy.md#required-access)) —
   advisory, not blocking: recording still works either way.
 
-## 2a. Voice feedback settings
+## 2a. Settings
 
 Opened from the settings control on [Tracking](#2-tracking-active-recording)'s
-map, over that screen. See [Voice feedback](voice-feedback.md) for the
-full contract.
+map, over that screen. The one place weight, the heart rate monitor
+setting, and voice feedback are all configured — see
+[Calories burned](calories.md#weight), [Heart rate](heart-rate.md#setting)
+and [Voice feedback](voice-feedback.md) for their full contracts. None of
+these make sense from Home or Detail: they only ever affect a live
+recording.
 
 - A title and a back control returning to Tracking (system back does the
   same).
+- A **weight** field (see [Calories burned](calories.md#weight)) —
+  labelled with its unit (kg, or lb under imperial), reflects and
+  immediately persists what is typed — no separate Save action — and
+  takes effect on the session being recorded right away. A value that is
+  not a positive number is not stored; clearing the field removes the
+  weight and turns calories off for this session.
+- A **Heart rate monitor** switch, off by default (see
+  [Heart rate](heart-rate.md#setting)); disabled when no monitor is
+  available.
 - A **Voice feedback** master switch.
 - Five switches choosing what each announcement includes: **Kilometers
   completed**, **Average speed per kilometer**, **Steps per kilometer**,
   **Elapsed time per kilometer**, **Total elapsed time**.
-- Every switch reflects and immediately persists its current setting —
-  no separate Save action.
+- Every field/switch on this screen reflects and immediately persists
+  its current setting — no separate Save action.
 
 ## 3. Detail (a past or just-finished session)
 
@@ -268,7 +278,7 @@ Home ──(tap Start)──▶ Tracking ──(tap Stop)──▶ Detail ──
   │                       │  ▲                    ▲
   │                       │  │                     │
   │        (tap settings) ▼  │ (back)               │
-  │             Voice feedback settings              │
+  │                    Settings                     │
   │                                                 ▲
   └──────────────────(tap a history row)────────────┘
 ```
