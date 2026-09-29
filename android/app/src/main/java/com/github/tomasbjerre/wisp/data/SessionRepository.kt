@@ -63,8 +63,16 @@ class SessionRepository(
     }
 
     /**
-     * Recomputes and persists aggregate stats, then marks the session finished. [steps]
-     * defaults to 0 — recovery (below) has no live sensor to read it from, see
+     * Recomputes and persists aggregate stats, then marks the session finished. Returns
+     * `false` and deletes the session instead when it has no real data to show — every
+     * point it has is noise (see specs/tracking.md#noise), same as
+     * [recoverUnfinishedSessions] already discards below. This is the case Force start
+     * (specs/tracking.md#force-start) can produce: it skips the "waiting for movement"
+     * flag that a live Stop otherwise checks (see `TrackingService.stop`), so a session
+     * stopped again before any point was actually recorded would otherwise still be
+     * saved as an empty, broken-looking history row.
+     *
+     * [steps] defaults to 0 — recovery (below) has no live sensor to read it from, see
      * specs/tracking.md#step-count. [maxHeartRateBpm] defaults to the highest heart rate
      * among the session's own points for the same reason — see specs/heart-rate.md#recording.
      */
@@ -73,11 +81,15 @@ class SessionRepository(
         endedAt: Long,
         steps: Long = 0,
         maxHeartRateBpm: Int? = null,
-    ) {
-        val session = sessionDao.getById(sessionId) ?: return
+    ): Boolean {
+        val session = sessionDao.getById(sessionId) ?: return false
         // See specs/tracking.md#noise: noise points are stored but never count toward
         // the session's own stats.
         val points = trackPointDao.getForSession(sessionId).filterNot { it.isNoise }
+        if (points.isEmpty()) {
+            sessionDao.delete(session)
+            return false
+        }
         val summary = GeoUtils.summarize(points)
         sessionDao.update(
             session.copy(
@@ -90,6 +102,7 @@ class SessionRepository(
                 maxHeartRateBpm = maxHeartRateBpm ?: points.mapNotNull { it.heartRateBpm }.maxOrNull(),
             ),
         )
+        return true
     }
 
     /**

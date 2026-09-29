@@ -150,8 +150,10 @@ class SessionRepositoryTest {
     fun `sessions are listed most recent first`() =
         runTest {
             val older = repository.startSession(startedAt = 1_000)
+            repository.appendPoint(older, 0, 1_000, 59.0, 18.0, 5f, null, segmentStart = true)
             repository.finishSession(older, endedAt = 1_500)
             val newer = repository.startSession(startedAt = 2_000)
+            repository.appendPoint(newer, 0, 2_000, 59.0, 18.0, 5f, null, segmentStart = true)
             repository.finishSession(newer, endedAt = 2_500)
 
             val sessions = repository.observeSessions().first()
@@ -165,6 +167,7 @@ class SessionRepositoryTest {
             // See specs/data-model.md#required-queries: only finished sessions belong in
             // history — an in-progress or not-yet-recovered session must stay invisible.
             val finished = repository.startSession(startedAt = 1_000)
+            repository.appendPoint(finished, 0, 1_000, 59.0, 18.0, 5f, null, segmentStart = true)
             repository.finishSession(finished, endedAt = 1_500)
             repository.startSession(startedAt = 2_000)
 
@@ -238,6 +241,7 @@ class SessionRepositoryTest {
         runTest {
             // See specs/tracking.md#step-count.
             val sessionId = repository.startSession(startedAt = 0)
+            repository.appendPoint(sessionId, 0, 0, 59.0, 18.0, 5f, null, segmentStart = true)
 
             repository.finishSession(sessionId, endedAt = 1_000, steps = 812)
 
@@ -250,6 +254,7 @@ class SessionRepositoryTest {
             // No live sensor to recover a step count from — see
             // specs/tracking.md#step-count and #what-must-survive-interruption.
             val sessionId = repository.startSession(startedAt = 0)
+            repository.appendPoint(sessionId, 0, 0, 59.0, 18.0, 5f, null, segmentStart = true)
 
             repository.finishSession(sessionId, endedAt = 1_000)
 
@@ -257,9 +262,37 @@ class SessionRepositoryTest {
         }
 
     @Test
+    fun `finishing a session with no points deletes it instead of saving an empty entry`() =
+        runTest {
+            // See specs/tracking.md#start-gating — Force start can reach finishSession with
+            // no point ever recorded when Stop is tapped again immediately.
+            val sessionId = repository.startSession(startedAt = 0)
+
+            val saved = repository.finishSession(sessionId, endedAt = 1_000)
+
+            assertThat(saved).isFalse()
+            assertThat(repository.observeSession(sessionId).first()).isNull()
+        }
+
+    @Test
+    fun `finishing a session with only noise points deletes it instead of saving an empty entry`() =
+        runTest {
+            // See specs/tracking.md#noise — a session whose only point is noise has nothing
+            // meaningful recorded, same as one with no points at all.
+            val sessionId = repository.startSession(startedAt = 0)
+            repository.appendPoint(sessionId, 0, 0, 59.0, 18.0, 5f, null, segmentStart = true, isNoise = true)
+
+            val saved = repository.finishSession(sessionId, endedAt = 1_000)
+
+            assertThat(saved).isFalse()
+            assertThat(repository.observeSession(sessionId).first()).isNull()
+        }
+
+    @Test
     fun `the nearest city can be recorded for a finished session`() =
         runTest {
             val sessionId = repository.startSession(startedAt = 0)
+            repository.appendPoint(sessionId, 0, 0, 59.0, 18.0, 5f, null, segmentStart = true)
             repository.finishSession(sessionId, endedAt = 1_000)
 
             repository.updateNearestCity(sessionId, "Stockholm")

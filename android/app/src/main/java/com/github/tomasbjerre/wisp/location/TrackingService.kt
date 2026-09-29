@@ -341,40 +341,46 @@ class TrackingService : LifecycleService() {
         val id = sessionId
         // Never saw movement (see specs/tracking.md#start-gating) => no points were ever
         // recorded, so there's nothing to show — discard rather than saving a session
-        // whose Detail screen would just be a permanent blank map.
+        // whose Detail screen would just be a permanent blank map. finishSession below
+        // makes the same call from what was actually recorded, which also catches Force
+        // start (specs/tracking.md#force-start) skipping this flag without any point
+        // ever being recorded before Stop is tapped again.
         val neverMoved = _state.value.isWaitingForMovement
         val steps = stepRecorder.steps
         val maxHeartRateBpm = heartRateRecorder.maxBpm
         lifecycleScope.launch {
-            if (id != null) {
-                if (neverMoved) {
-                    repository.deleteSessionById(id)
-                } else {
-                    repository.finishSession(
-                        id,
-                        System.currentTimeMillis(),
-                        steps = steps,
-                        maxHeartRateBpm = maxHeartRateBpm,
-                    )
+            val discarded =
+                when {
+                    id == null -> false
+                    neverMoved -> {
+                        repository.deleteSessionById(id)
+                        true
+                    }
+                    else ->
+                        !repository.finishSession(
+                            id,
+                            System.currentTimeMillis(),
+                            steps = steps,
+                            maxHeartRateBpm = maxHeartRateBpm,
+                        )
                 }
-            }
             _state.update {
                 it.copy(
                     isRecording = false,
                     isPaused = false,
                     isWaitingForMovement = false,
-                    wasDiscarded = neverMoved,
+                    wasDiscarded = discarded,
                     // Cleared only when discarded: a deleted session must never be
                     // navigated to. Otherwise kept around so observers can navigate to
                     // the finished session — it's only cleared implicitly when the next
                     // start() replaces the whole state.
-                    sessionId = if (neverMoved) null else it.sessionId,
+                    sessionId = if (discarded) null else it.sessionId,
                 )
             }
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
+            if (id != null && !discarded) lookUpNearestCity(id)
         }
-        if (id != null && !neverMoved) lookUpNearestCity(id)
     }
 
     /**
