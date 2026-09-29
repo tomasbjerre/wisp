@@ -1,3 +1,18 @@
+## 0.13.0 (2026-09-29)
+
+### Features
+
+-  consolidate Detail's Export CSV/Image buttons into one export icon (#182) ([80ea6](https://github.com/tomasbjerre/wisp/commit/80ea67dfbb4119d) Tomas Bjerre)  
+-  collapse the waiting-for-movement text into an info dialog (#181) ([c6035](https://github.com/tomasbjerre/wisp/commit/c6035b8579eb3f4) Tomas Bjerre)  
+-  move weight and heart rate monitor setting into a general Settings screen (#180) ([4fc1a](https://github.com/tomasbjerre/wisp/commit/4fc1a64156e9d3f) Tomas Bjerre)  
+-  configure weight only on Tracking, live per-session like activity type (#179) ([52a59](https://github.com/tomasbjerre/wisp/commit/52a59ba6d7078e7) Tomas Bjerre)  
+
+### Bug Fixes
+
+-  no stop-recording dialog on back before recording has started (#178) ([8fe3d](https://github.com/tomasbjerre/wisp/commit/8fe3dfd5401fdf8) Tomas Bjerre)  
+-  discard a session that ends with no real data instead of saving it (#177) ([d2a97](https://github.com/tomasbjerre/wisp/commit/d2a9787e7d7be81) Tomas Bjerre)  
+-  reopening the app while recording goes to tracking, not home (#176) ([bd70e](https://github.com/tomasbjerre/wisp/commit/bd70e5b20fef592) Tomas Bjerre)  
+
 ## 0.12.0 (2026-09-28)
 
 ### Features
