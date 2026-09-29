@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -167,12 +168,7 @@ private fun TrackingStatsPanel(
         Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp)) {
             PermissionAdvisories(permissions, notifications)
             if (state.isWaitingForMovement) {
-                Text(
-                    "Start moving to begin recording — it starts automatically once " +
-                        "you're moving at a walking pace or faster. You can also force " +
-                        "start below if you'd rather begin recording immediately.",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                WaitingForMovementNotice()
             }
             TrackingStatLines(state, unit)
             ActivityTypeSection(state)
@@ -217,6 +213,41 @@ private fun PermissionAdvisories(
                 Text("Fix")
             }
         }
+    }
+}
+
+/**
+ * See specs/ui-flows.md#2-tracking-active-recording: what start gating means and how to skip
+ * it, collapsed to an info icon instead of a permanent paragraph, so the stats panel stays
+ * about the numbers, not instructions — tapping the icon shows the same explanation in a
+ * dialog.
+ */
+@Composable
+private fun WaitingForMovementNotice() {
+    var showInfo by remember { mutableStateOf(false) }
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            "Waiting for movement",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f),
+        )
+        IconButton(onClick = { showInfo = true }) {
+            Icon(Icons.Filled.Info, contentDescription = "About waiting for movement")
+        }
+    }
+    if (showInfo) {
+        AlertDialog(
+            onDismissRequest = { showInfo = false },
+            title = { Text("Waiting for movement") },
+            text = {
+                Text(
+                    "Start moving to begin recording — it starts automatically once " +
+                        "you're moving at a walking pace or faster. You can also force " +
+                        "start below if you'd rather begin recording immediately.",
+                )
+            },
+            confirmButton = { TextButton(onClick = { showInfo = false }) { Text("Close") } },
+        )
     }
 }
 

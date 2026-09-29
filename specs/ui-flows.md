@@ -133,10 +133,12 @@ screen while recording.
   Same controls either way; Continue works at any time.
 - While waiting for movement, **Pause** is replaced by **Force start**
   (see [Tracking](tracking.md#force-start)) — **Stop** stays in its
-  place, so it's always exactly two controls regardless of state. A line
-  of text above the controls explains that recording starts
-  automatically once moving, and that Force start begins it immediately
-  instead.
+  place, so it's always exactly two controls regardless of state. A
+  **"Waiting for movement"** line above the controls, with an
+  information icon next to it, opens a dialog explaining that recording
+  starts automatically once moving, and that Force start begins it
+  immediately instead — kept out of a permanently-visible paragraph so
+  the stats panel stays about the numbers, not instructions.
 - Tapping Stop finalizes the session immediately and navigates to that
   session's Detail screen — unless movement was never confirmed (see
   [Tracking](tracking.md#start-gating)), in which case the session is
