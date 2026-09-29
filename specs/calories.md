@@ -38,12 +38,15 @@ change how a session is recorded.
 
 ## Weight
 
-- Entered on [Tracking](ui-flows.md#2-tracking-active-recording), where
-  the session is recorded — same as [activity type](#activity-type), and
-  for the same reason: it's the one place that already has the session
-  whose calories it affects, rather than a separate settings screen with
-  no session to apply it to. Shown and entered in kilograms under metric
-  and pounds under imperial (see [Units](units.md)); stored in kilograms.
+- Entered on [Settings](ui-flows.md#2a-settings), reached from
+  [Tracking](ui-flows.md#2-tracking-active-recording) — only reachable
+  while a session is being recorded, so, like
+  [activity type](#activity-type), it's never disconnected from the
+  session whose calories it affects, the way a weight entered from a
+  general settings screen reachable at any time (with no session
+  necessarily running) would be. Shown and entered in kilograms under
+  metric and pounds under imperial (see [Units](units.md)); stored in
+  kilograms.
 - Empty means not configured. Clearing the field removes the weight.
 - Stored on the session (see [Data Model](data-model.md#session)) as soon
   as the session exists, and again whenever it is changed — same as

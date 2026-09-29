@@ -21,12 +21,12 @@ import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.ui.detail.DetailScreen
 import com.github.tomasbjerre.wisp.ui.home.HomeScreen
 import com.github.tomasbjerre.wisp.ui.splits.KmSplitsScreen
+import com.github.tomasbjerre.wisp.ui.tracking.SettingsScreen
 import com.github.tomasbjerre.wisp.ui.tracking.TrackingScreen
-import com.github.tomasbjerre.wisp.ui.tracking.VoiceFeedbackSettingsScreen
 
 private const val ROUTE_HOME = "home"
 private const val ROUTE_TRACKING = "tracking"
-private const val ROUTE_VOICE_FEEDBACK_SETTINGS = "tracking/voice-feedback"
+private const val ROUTE_SETTINGS = "tracking/settings"
 private const val ROUTE_DETAIL = "detail/{sessionId}"
 private const val ROUTE_KM_SPLITS = "detail/{sessionId}/splits"
 private const val ARG_SESSION_ID = "sessionId"
@@ -116,13 +116,14 @@ fun WispApp(
                     }
                 },
                 onCancelled = { navController.popBackStack() },
-                onOpenVoiceFeedbackSettings = { navController.navigate(ROUTE_VOICE_FEEDBACK_SETTINGS) },
+                onOpenSettings = { navController.navigate(ROUTE_SETTINGS) },
             )
         }
-        composable(ROUTE_VOICE_FEEDBACK_SETTINGS) {
+        composable(ROUTE_SETTINGS) {
             val unit by unitPreferences.unit.collectAsStateWithLifecycle()
-            VoiceFeedbackSettingsScreen(
-                preferences = voiceFeedbackPreferences,
+            SettingsScreen(
+                voiceFeedbackPreferences = voiceFeedbackPreferences,
+                heartRatePreferences = heartRatePreferences,
                 unit = unit,
                 onBack = { navController.popBackStack() },
             )

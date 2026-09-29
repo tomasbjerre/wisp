@@ -19,12 +19,13 @@ default**.
 ## Setting
 
 A single on/off switch, **Heart rate monitor**, on
-[Tracking](ui-flows.md#2-tracking-active-recording) — where the user
-starts a session, so that's where they decide whether this one uses a
-monitor. It is not on Home. It's persisted across launches like the other
-settings (see [Data Model](data-model.md#heart-rate-setting)), so it
-stays as the user left it for the next session. Turning it on asks for
-the Bluetooth access it needs (see
+[Settings](ui-flows.md#2a-settings), reached from
+[Tracking](ui-flows.md#2-tracking-active-recording) — the screen where
+the user starts a session, so that's where they decide whether this one
+uses a monitor. It is not on Home. It's persisted across launches like
+the other settings (see [Data Model](data-model.md#heart-rate-setting)),
+so it stays as the user left it for the next session. Turning it on asks
+for the Bluetooth access it needs (see
 [Permissions & Privacy](permissions-and-privacy.md#required-access));
 if that's declined the switch stays off.
 

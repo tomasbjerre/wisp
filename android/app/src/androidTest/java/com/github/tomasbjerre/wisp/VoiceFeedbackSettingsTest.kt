@@ -17,10 +17,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Verifies specs/ui-flows.md#2a-voice-feedback-settings and
- * specs/voice-feedback.md#settings: reachable from Tracking, every switch persists
- * across leaving and reopening the view, and back returns to Tracking. Against the
- * real SharedPreferences-backed VoiceFeedbackPreferences, not a mock — see AGENTS.md.
+ * Verifies specs/ui-flows.md#2a-settings and specs/voice-feedback.md#settings: the voice
+ * feedback switches are reachable from Tracking via the Settings screen, every switch
+ * persists across leaving and reopening it, and back returns to Tracking. Against the real
+ * SharedPreferences-backed VoiceFeedbackPreferences, not a mock — see AGENTS.md.
  */
 @RunWith(AndroidJUnit4::class)
 class VoiceFeedbackSettingsTest {
@@ -41,7 +41,7 @@ class VoiceFeedbackSettingsTest {
             composeRule.onAllNodesWithText("Stop").fetchSemanticsNodes().isNotEmpty()
         }
 
-        openVoiceFeedbackSettings()
+        openSettings()
 
         // Off by default (specs/voice-feedback.md#settings).
         composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ENABLED_SWITCH).assertIsOff()
@@ -62,7 +62,7 @@ class VoiceFeedbackSettingsTest {
             composeRule.onAllNodesWithText("Stop").fetchSemanticsNodes().isNotEmpty()
         }
 
-        openVoiceFeedbackSettings()
+        openSettings()
         composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ENABLED_SWITCH).assertIsOn()
         composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_STEPS_SWITCH).assertIsOff()
         composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_ELAPSED_TIME_SWITCH).assertIsOn()
@@ -75,16 +75,13 @@ class VoiceFeedbackSettingsTest {
         composeRule.onNodeWithText("Stop").performClick()
     }
 
-    private fun openVoiceFeedbackSettings() {
+    private fun openSettings() {
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
-            composeRule
-                .onAllNodesWithContentDescription("Voice feedback settings")
-                .fetchSemanticsNodes()
-                .isNotEmpty()
+            composeRule.onAllNodesWithContentDescription("Settings").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithContentDescription("Voice feedback settings").performClick()
+        composeRule.onNodeWithContentDescription("Settings").performClick()
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
-            composeRule.onAllNodesWithText("Voice feedback settings").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Settings").fetchSemanticsNodes().isNotEmpty()
         }
     }
 

@@ -62,13 +62,13 @@ history list is replaced with a short empty-state message instead:
 ## Weight and calories
 
 Wisp can estimate the calories an activity burned, but only once it knows
-your weight. You enter it on [Tracking](#tracking) — the same screen that
-shows the activity type choice — in kilograms, or pounds if you've chosen
-Imperial. It's saved as you type, takes effect on the activity you're
-recording right away, and clearing the field turns calories off again for
-that activity.
+your weight. You enter it on **Settings**, opened from the gear icon on
+[Tracking](#tracking) — see [Settings](#settings) below — in kilograms,
+or pounds if you've chosen Imperial. It's saved as you type, takes effect
+on the activity you're recording right away, and clearing the field turns
+calories off again for that activity.
 
-- **Which weight is used:** whatever weight is showing on Tracking is what
+- **Which weight is used:** whatever weight is showing on Settings is what
   that activity's calories are worked out from, at every point while it's
   being recorded — change it partway through and the whole activity
   re-estimates from the new value, the same way changing the activity type
@@ -144,28 +144,13 @@ A few more things on this screen:
   decides how calories are estimated — see
   [Weight and calories](#weight-and-calories) — and doesn't change how
   anything is recorded. Once you stop, it can't be changed.
-- **Weight** — right below the activity type choice, the only place you
-  enter your weight (see [Weight and calories](#weight-and-calories)). It
-  starts on whatever you last entered, and you can change it at any point
-  while recording, paused or waiting to move included — it takes effect
-  on this activity's calories right away. Once you stop, it can't be
-  changed.
 - **Calories** — `Calories: 312 kcal` so far, once a weight is set (see
   [Weight and calories](#weight-and-calories)).
-- **Heart rate monitor** — a switch above the Pause / Stop buttons, off
-  by default, that stays as you left it the next time you record. Turn it
-  on to record your heart rate from a Bluetooth heart rate monitor (a
-  chest strap, arm band, or watch that broadcasts heart rate using the
-  standard Bluetooth Heart Rate profile). Android will ask for permission
-  to use nearby devices the first time; if you decline, the switch stays
-  off. You can flip it at any point in the recording. Wisp looks for a
-  monitor once you're moving, and keeps looking if the connection drops.
-  If Bluetooth is off the switch is greyed out and turned off. With no
-  monitor in range, recording works as usual — that activity just has no
-  heart rate.
-- **Heart rate** — with the Heart rate monitor switch on, shows your current heart rate and your maximum so far,
-  e.g. `Heart rate: 142 bpm · Max 168 bpm`. It shows a dash while Wisp is
-  still looking for a monitor or hasn't heard from it for a few seconds.
+- **Heart rate** — with the Heart rate monitor switch on Settings turned
+  on (see [Settings](#settings) below), shows your current heart rate and
+  your maximum so far, e.g. `Heart rate: 142 bpm · Max 168 bpm`. It shows
+  a dash while Wisp is still looking for a monitor or hasn't heard from
+  it for a few seconds. With the switch off, this line doesn't appear.
 - **Pause / Continue** — pauses recording without ending the activity;
   tap Continue to resume. Wisp also pauses automatically if you stop
   moving for a while (about 15 seconds) — same button, same behavior,
@@ -195,21 +180,37 @@ A few more things on this screen:
 
   <img src="screenshots/tracking-stop-confirm.jpg" alt="Dialog asking Stop recording? with Stop and Keep recording" width="300">
 
-- **Voice feedback settings** — the gear icon opens a settings screen for
-  optional spoken announcements (handy with earbuds, so you get progress
-  updates without looking at your phone):
+- **Settings** — the gear icon opens a settings screen for everything
+  that only makes sense while recording — your weight, the heart rate
+  monitor switch, and optional spoken voice feedback (handy with
+  earbuds, so you get progress updates without looking at your phone):
 
-  <img src="screenshots/tracking-voice-feedback-settings.jpg" alt="Voice feedback settings screen" width="300">
+  <img src="screenshots/tracking-settings.jpg" alt="Settings screen: weight, heart rate monitor, and voice feedback" width="300">
 
-  A master **Voice feedback** switch, off by default, plus five switches
-  for what each announcement includes: **Kilometers completed**,
-  **Average speed per kilometer**, **Steps per kilometer** (hidden when
-  your session has no step count at all), **Elapsed time per kilometer**
-  (how long the last kilometer took, off by default) and **Total elapsed
-  time** (since the session started). Announcements happen
-  once per completed kilometer, only while actively recording (not
-  paused). Every switch persists across app restarts and takes effect
-  immediately, even mid-session.
+  From top to bottom:
+  - **Weight** — see [Weight and calories](#weight-and-calories) above.
+  - **Heart rate monitor** — off by default, stays as you left it the
+    next time you record. Turn it on to record your heart rate from a
+    Bluetooth heart rate monitor (a chest strap, arm band, or watch that
+    broadcasts heart rate using the standard Bluetooth Heart Rate
+    profile). Android will ask for permission to use nearby devices the
+    first time; if you decline, the switch stays off. You can flip it at
+    any point in the recording. Wisp looks for a monitor once you're
+    moving, and keeps looking if the connection drops. If Bluetooth is
+    off the switch is greyed out and turned off. With no monitor in
+    range, recording works as usual — that activity just has no heart
+    rate.
+  - A master **Voice feedback** switch, off by default, plus five
+    switches for what each announcement includes: **Kilometers
+    completed**, **Average speed per kilometer**, **Steps per
+    kilometer** (hidden when your session has no step count at all),
+    **Elapsed time per kilometer** (how long the last kilometer took,
+    off by default) and **Total elapsed time** (since the session
+    started). Announcements happen once per completed kilometer, only
+    while actively recording (not paused).
+
+  Every field/switch on this screen persists across app restarts and
+  takes effect immediately, even mid-session.
 
 Here's the satellite view from the toggle mentioned above:
 

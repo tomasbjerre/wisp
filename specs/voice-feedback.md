@@ -38,9 +38,10 @@ why this is configurable at all, unlike almost everything else in Wisp.
   [Overview](overview.md#design-principle)). Like session history, this
   never syncs anywhere.
 - Reached via a settings control on [Tracking](ui-flows.md#2-tracking-active-recording)'s
-  screen, opening a **Voice feedback settings** view over it. Not offered
-  from Home or Detail — voice feedback only ever applies to a live
-  recording, so there's nothing for it to configure from either of those.
+  screen, opening the [Settings](ui-flows.md#2a-settings) view over it,
+  alongside weight and the heart rate monitor setting. Not offered from
+  Home or Detail — voice feedback only ever applies to a live recording,
+  so there's nothing for it to configure from either of those.
 - Changing a switch takes effect immediately for the current session (if
   one is running), not just the next one — there's no reason to make
   someone stop and restart to pick up a change.
