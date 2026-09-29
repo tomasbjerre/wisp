@@ -1,7 +1,7 @@
 wisp 0.13.0
+- chore(android): update screenshots and play listing
 - feat: consolidate Detail's Export CSV/Image buttons into one export icon (#182)
 - feat: collapse the waiting-for-movement text into an info dialog (#181)
 - feat: move weight and heart rate monitor setting into a general Settings screen (#180)
 - feat: configure weight only on Tracking, live per-session like activity type (#179)
-- fix: no stop-recording dialog on back before recording has started (#178)
-- fix: discard a session that ends with no 
+- fix: no stop-recording dialog on back before recording has star
