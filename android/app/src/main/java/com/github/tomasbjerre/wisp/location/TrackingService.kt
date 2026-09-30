@@ -46,6 +46,8 @@ class TrackingService : LifecycleService() {
     private val heartRatePreferences by lazy { (application as WispApplication).heartRatePreferences }
     private val activeRecordingStore by lazy { (application as WispApplication).activeRecordingStore }
     private val weightPreferences by lazy { (application as WispApplication).weightPreferences }
+    private val pausedReminderPreferences by lazy { (application as WispApplication).pausedReminderPreferences }
+    private val isUiVisible by lazy { (application as WispApplication).isUiVisible }
     private val heartRateMonitor by lazy { HeartRateMonitor(this) }
     private var heartRateRecorder = HeartRateRecorder()
     private var heartRateSettingJob: Job? = null
@@ -85,6 +87,14 @@ class TrackingService : LifecycleService() {
     private var pausedAccumulatedMillis = 0L
     private var pauseStartedElapsedRealtime = 0L
 
+    // See specs/tracking.md#paused-session-reminder: the once-a-minute pulse saying a
+    // session is still sitting paused. Owns one paused stretch, like [pauseWatcher], and
+    // runs on its own loop because the elapsed-time [tickerJob] is deliberately stopped
+    // for the duration of a pause.
+    private var pausedReminderGate: PausedReminderGate? = null
+    private var pausedReminderVibrator: PausedReminderVibrator? = null
+    private var pausedReminderJob: Job? = null
+
     override fun onStartCommand(
         intent: Intent?,
         flags: Int,
@@ -122,6 +132,7 @@ class TrackingService : LifecycleService() {
         sequence = 0
         pendingPauseCause = null
         pauseWatcher = null
+        stopPausedReminder()
         pausedAccumulatedMillis = 0L
         // The weight is read once, now: a later change of it must not change this session's
         // calories. The activity type starts as that of the last activity and can change while
@@ -262,6 +273,7 @@ class TrackingService : LifecycleService() {
         heartRateMonitor.stop()
         pauseStartedElapsedRealtime = SystemClock.elapsedRealtime()
         stopTicker()
+        startPausedReminder(pauseStartedElapsedRealtime)
         _state.update { it.copy(isPaused = true) }
         updateNotification()
     }
@@ -270,6 +282,7 @@ class TrackingService : LifecycleService() {
         pausedAccumulatedMillis += SystemClock.elapsedRealtime() - pauseStartedElapsedRealtime
         _state.update { it.copy(isPaused = false) }
         pauseWatcher = null
+        stopPausedReminder()
         stepRecorder.resume()
         heartRateRecorder.resume()
         startHeartRateMonitor()
@@ -278,6 +291,43 @@ class TrackingService : LifecycleService() {
         stationaryGate = StationaryGate()
         startTicker()
         updateNotification()
+    }
+
+    /**
+     * Starts the once-a-minute reminder pulse for a session that has just become paused — see
+     * specs/tracking.md#paused-session-reminder. Its own loop, because the elapsed-time
+     * [tickerJob] is deliberately stopped for the whole duration of a pause (the on-screen
+     * time must not run), so there is nothing else ticking to hang the reminder on.
+     */
+    private fun startPausedReminder(pauseStartedElapsedRealtime: Long) {
+        stopPausedReminder()
+        pausedReminderGate = PausedReminderGate(pauseStartedElapsedRealtime)
+        pausedReminderVibrator = PausedReminderVibrator(this)
+        pausedReminderJob =
+            lifecycleScope.launch {
+                while (isActive) {
+                    // Both ways the reminder stands down: the setting is off, or Wisp's own
+                    // screen is up. Read fresh every tick, so turning it off on Settings stops
+                    // the next pulse without restarting anything — see
+                    // specs/tracking.md#paused-session-reminder.
+                    val suppressed = !pausedReminderPreferences.enabled.value || isUiVisible.value
+                    val gate = pausedReminderGate ?: return@launch
+                    if (gate.onTick(SystemClock.elapsedRealtime(), suppressed)) {
+                        pausedReminderVibrator?.pulse()
+                    }
+                    // This pause can't produce another pulse: stop ticking for the rest of a
+                    // session that may go on for hours after being forgotten.
+                    if (gate.isExhausted) return@launch
+                    delay(PAUSED_REMINDER_TICK_MILLIS)
+                }
+            }
+    }
+
+    private fun stopPausedReminder() {
+        pausedReminderJob?.cancel()
+        pausedReminderJob = null
+        pausedReminderGate = null
+        pausedReminderVibrator = null
     }
 
     private fun startTicker() {
@@ -354,6 +404,7 @@ class TrackingService : LifecycleService() {
         stepCounterTracker.stop()
         heartRateMonitor.stop()
         stopTicker()
+        stopPausedReminder()
         voiceFeedbackSpeaker?.shutdown()
         voiceFeedbackSpeaker = null
         val id = sessionId
@@ -668,6 +719,10 @@ class TrackingService : LifecycleService() {
         // A string, not a double extra: Intent has no nullable-double extra, and a null here
         // means "clear the weight" — same reasoning as WeightPreferences' own storage.
         private const val EXTRA_WEIGHT_KG = "com.github.tomasbjerre.wisp.extra.WEIGHT_KG"
+
+        // Check the paused reminder this often, the same cadence the elapsed-time ticker
+        // uses: [PausedReminderGate] decides when a pulse is actually due.
+        private const val PAUSED_REMINDER_TICK_MILLIS = 1_000L
 
         // Stored on TrackPoint.pauseCause — see specs/data-model.md#trackpoint.
         private const val PAUSE_CAUSE_MANUAL = "manual"

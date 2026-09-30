@@ -28,6 +28,7 @@ class MainActivity : ComponentActivity() {
                     voiceFeedbackPreferences = app.voiceFeedbackPreferences,
                     unitPreferences = app.unitPreferences,
                     heartRatePreferences = app.heartRatePreferences,
+                    pausedReminderPreferences = app.pausedReminderPreferences,
                     openTrackingRequests = openTrackingRequests,
                 )
             }

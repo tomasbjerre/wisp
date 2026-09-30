@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.tomasbjerre.wisp.data.HeartRatePreferences
+import com.github.tomasbjerre.wisp.data.PausedReminderPreferences
 import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackSettings
@@ -64,6 +65,7 @@ import com.github.tomasbjerre.wisp.ui.TestTags
 fun SettingsScreen(
     voiceFeedbackPreferences: VoiceFeedbackPreferences,
     heartRatePreferences: HeartRatePreferences,
+    pausedReminderPreferences: PausedReminderPreferences,
     unit: UnitSystem,
     onBack: () -> Unit,
 ) {
@@ -85,6 +87,8 @@ fun SettingsScreen(
             WeightSection(unit)
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             HeartRateSettingSection(heartRatePreferences)
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            PausedReminderSettingSection(pausedReminderPreferences)
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             SettingSwitchRow(
                 label = "Voice feedback",
@@ -182,6 +186,25 @@ private fun HeartRateSettingSection(heartRatePreferences: HeartRatePreferences) 
             },
         )
     }
+}
+
+/**
+ * See specs/tracking.md#paused-session-reminder and specs/ui-flows.md#2a-settings: the
+ * once-a-minute pulse saying a paused session is still open. On by default — the one setting
+ * in Wisp that is (see specs/overview.md#design-principle) — and the switch exists only to
+ * let someone refuse it. Takes effect on the session being recorded right away, like every
+ * other control on this screen.
+ */
+@Composable
+private fun PausedReminderSettingSection(preferences: PausedReminderPreferences) {
+    val enabled by preferences.enabled.collectAsStateWithLifecycle()
+
+    SettingSwitchRow(
+        label = "Vibrate while paused",
+        checked = enabled,
+        onCheckedChange = preferences::setEnabled,
+        testTag = TestTags.PAUSED_REMINDER_SWITCH,
+    )
 }
 
 /** Whether Bluetooth can currently reach a monitor, kept current as it's turned on/off. */

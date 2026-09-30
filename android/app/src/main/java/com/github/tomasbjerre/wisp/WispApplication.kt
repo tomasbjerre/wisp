@@ -1,9 +1,12 @@
 package com.github.tomasbjerre.wisp
 
+import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.os.Bundle
 import com.github.tomasbjerre.wisp.data.ActiveRecordingStore
 import com.github.tomasbjerre.wisp.data.HeartRatePreferences
+import com.github.tomasbjerre.wisp.data.PausedReminderPreferences
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.UnitPreferences
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
@@ -13,6 +16,9 @@ import com.github.tomasbjerre.wisp.location.TrackingService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
 
@@ -32,9 +38,18 @@ class WispApplication : Application() {
         private set
     lateinit var weightPreferences: WeightPreferences
         private set
+    lateinit var pausedReminderPreferences: PausedReminderPreferences
+        private set
+
+    // Whether one of Wisp's own screens is on screen — see
+    // specs/tracking.md#paused-session-reminder, which suppresses the paused reminder while
+    // the person can already see for themselves that the session is paused.
+    private val _isUiVisible = MutableStateFlow(false)
+    val isUiVisible: StateFlow<Boolean> = _isUiVisible.asStateFlow()
 
     override fun onCreate() {
         super.onCreate()
+        registerActivityLifecycleCallbacks(UiVisibilityCallbacks())
         val database = WispDatabase.build(this)
         repository = SessionRepository(database.sessionDao(), database.trackPointDao())
         voiceFeedbackPreferences = VoiceFeedbackPreferences(this)
@@ -42,6 +57,7 @@ class WispApplication : Application() {
         heartRatePreferences = HeartRatePreferences(this)
         activeRecordingStore = ActiveRecordingStore(this)
         weightPreferences = WeightPreferences(this)
+        pausedReminderPreferences = PausedReminderPreferences(this)
 
         val osmdroidPrefs = getSharedPreferences("osmdroid", Context.MODE_PRIVATE)
         Configuration.getInstance().load(this, osmdroidPrefs)
@@ -65,6 +81,54 @@ class WispApplication : Application() {
                 activeRecordingStore.sessionId = null
                 repository.recoverUnfinishedSessions()
             }
+        }
+    }
+
+    /**
+     * Keeps [isUiVisible] current. Counts started activities rather than flagging on
+     * started/stopped, because Android stops the outgoing activity only after the incoming one
+     * has started (a rotation, or Settings opening over Tracking) — a plain boolean would
+     * briefly read as "not on screen" at exactly the moments it must not. Started rather than
+     * resumed: a screen partly behind a permission dialog is still the screen the person is
+     * looking at.
+     */
+    private inner class UiVisibilityCallbacks : Application.ActivityLifecycleCallbacks {
+        private var started = 0
+
+        override fun onActivityStarted(activity: Activity) {
+            started++
+            _isUiVisible.value = started > 0
+        }
+
+        override fun onActivityStopped(activity: Activity) {
+            started--
+            _isUiVisible.value = started > 0
+        }
+
+        override fun onActivityCreated(
+            activity: Activity,
+            savedInstanceState: Bundle?,
+        ) {
+            // Nothing to track.
+        }
+
+        override fun onActivityResumed(activity: Activity) {
+            // Nothing to track.
+        }
+
+        override fun onActivityPaused(activity: Activity) {
+            // Nothing to track.
+        }
+
+        override fun onActivitySaveInstanceState(
+            activity: Activity,
+            outState: Bundle,
+        ) {
+            // Nothing to track.
+        }
+
+        override fun onActivityDestroyed(activity: Activity) {
+            // Nothing to track.
         }
     }
 
