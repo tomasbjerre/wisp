@@ -58,11 +58,26 @@ why this is configurable at all, unlike almost everything else in Wisp.
   announcements is queued up for kilometers completed while voice
   feedback happened to be off; turning it on mid-session only affects
   kilometers completed from then on.
-- If a device has no usable text-to-speech engine (none installed, or it
-  fails to initialize), voice feedback is silently unavailable — this
-  never blocks, delays, or errors the recording itself. Nothing on
+- If a device has no usable text-to-speech engine (none installed, it
+  fails to initialize, or it has no English voice — see
+  [Language](#language) below), voice feedback is silently unavailable —
+  this never blocks, delays, or errors the recording itself. Nothing on
   screen needs to say so; the settings still show as configured, they
   just have nothing to speak through.
+
+## Language
+
+Every announcement is spoken in English, regardless of the device's own
+language or locale — [What's said](#whats-said) below is fixed English
+text, not translated, so the engine's voice is always set to English to
+match it (see [issue #185](https://github.com/tomasbjerre/wisp/issues/185)).
+Leaving the voice on the device's own language while the words stayed
+English meant a non-English device read those words through a voice
+built for a different language's pronunciation and number-reading rules
+— part of each announcement would come out sounding like the device's
+language, part like English, inconsistently. Multi-language announcement
+text is not offered; English is considered acceptable for everyone, per
+the issue that raised this.
 
 ## What's said
 

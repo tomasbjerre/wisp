@@ -20,9 +20,27 @@ class VoiceFeedbackSpeaker(
     init {
         tts =
             TextToSpeech(context.applicationContext) { status ->
-                ready = status == TextToSpeech.SUCCESS
-                if (ready) tts?.language = Locale.getDefault()
+                ready = status == TextToSpeech.SUCCESS && setEnglishVoice()
             }
+    }
+
+    /**
+     * See specs/voice-feedback.md#language: the phrases [VoiceFeedbackAnnouncement] builds are
+     * always English text (issue #185), so the engine's voice has to be pinned to English too,
+     * regardless of the device's own language — leaving this as the device default (as it used
+     * to be) meant a non-English device spoke English words through a voice built for a
+     * different language's pronunciation and number-reading rules, which is exactly the "some
+     * parts sound like my language, some don't" inconsistency reported there.
+     *
+     * False when no English voice is installed at all — the same "nothing usable to speak
+     * through" case as no engine being installed. Any non-negative result from `setLanguage`
+     * counts (`LANG_AVAILABLE`/`LANG_COUNTRY_AVAILABLE`/`LANG_COUNTRY_VAR_AVAILABLE`): the
+     * engine only has to be able to say English words intelligibly, not match [Locale.US] down
+     * to the variant.
+     */
+    private fun setEnglishVoice(): Boolean {
+        val result = tts?.setLanguage(Locale.US) ?: return false
+        return result >= TextToSpeech.LANG_AVAILABLE
     }
 
     /**
