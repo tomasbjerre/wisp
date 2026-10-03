@@ -2,7 +2,6 @@ package com.github.tomasbjerre.wisp
 
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -10,7 +9,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.tomasbjerre.wisp.ui.TestTags
@@ -19,18 +17,19 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Verifies specs/ui-flows.md#2a-settings and specs/voice-feedback.md#settings: the voice
- * feedback switches are reachable from Tracking via the Settings screen, every switch
- * persists across leaving and reopening it, and back returns to Tracking. Against the real
- * SharedPreferences-backed VoiceFeedbackPreferences, not a mock — see AGENTS.md.
+ * Verifies specs/tracking.md#paused-session-reminder and specs/ui-flows.md#2a-settings: the
+ * "Vibrate while paused" switch is reachable from Tracking via Settings, is on by default,
+ * and persists across leaving and reopening that screen. Against the real
+ * SharedPreferences-backed [com.github.tomasbjerre.wisp.data.PausedReminderPreferences], not
+ * a mock — see AGENTS.md.
  */
 @RunWith(AndroidJUnit4::class)
-class VoiceFeedbackSettingsTest {
+class PausedReminderSettingsTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun switchesPersistAcrossLeavingAndReopeningTheView() {
+    fun isOnByDefaultAndPersistsAcrossLeavingAndReopeningTheView() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.ACCESS_FINE_LOCATION")
         // Granted up front too, so its system dialog (see TrackingScreen) never covers the app.
@@ -45,19 +44,12 @@ class VoiceFeedbackSettingsTest {
 
         openSettings()
 
-        // Off by default (specs/voice-feedback.md#settings).
-        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ENABLED_SWITCH).assertIsOff()
-        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_STEPS_SWITCH).assertIsOn()
-        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_ELAPSED_TIME_SWITCH).assertIsOff()
-        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_ELAPSED_TIME_SWITCH).assertIsOn()
-        composeRule.onNodeWithText("Elapsed time per kilometer").assertExists()
-        composeRule.onNodeWithText("Total elapsed time").assertExists()
+        // On by default — the one setting in Wisp that is, per specs/overview.md#design-principle.
+        composeRule.onNodeWithTag(TestTags.PAUSED_REMINDER_SWITCH).assertIsOn()
+        composeRule.onNodeWithText("Vibrate while paused").assertExists()
 
-        // Flip it on, and flip one of the four sub-switches off, to verify both
-        // directions persist.
-        clickSwitch(TestTags.VOICE_FEEDBACK_ENABLED_SWITCH)
-        clickSwitch(TestTags.VOICE_FEEDBACK_ANNOUNCE_STEPS_SWITCH)
-        clickSwitch(TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_ELAPSED_TIME_SWITCH)
+        composeRule.onNodeWithTag(TestTags.PAUSED_REMINDER_SWITCH).performClick()
+        composeRule.onNodeWithTag(TestTags.PAUSED_REMINDER_SWITCH).assertIsOff()
 
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
@@ -65,27 +57,15 @@ class VoiceFeedbackSettingsTest {
         }
 
         openSettings()
-        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ENABLED_SWITCH).assertIsOn()
-        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_STEPS_SWITCH).assertIsOff()
-        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_ELAPSED_TIME_SWITCH).assertIsOn()
-        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_SWITCH).assertIsOn()
+
+        // Still off: it persists, it isn't a per-screen choice.
+        composeRule.onNodeWithTag(TestTags.PAUSED_REMINDER_SWITCH).assertIsOff()
 
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
             composeRule.onAllNodesWithText("Stop").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Stop").performClick()
-    }
-
-    /**
-     * The Settings list scrolls (specs/ui-flows.md#2a-settings), and on a small screen — CI's
-     * emulator is 320x640 — the lower switches start out below the window, where a click would
-     * be injected past the edge of the display and never reach them. Scroll each into view
-     * first; a no-op for the ones already visible.
-     */
-    private fun clickSwitch(testTag: String) {
-        composeRule.onNodeWithTag(TestTags.SETTINGS_LIST).performScrollToNode(hasTestTag(testTag))
-        composeRule.onNodeWithTag(testTag).performClick()
     }
 
     private fun openSettings() {

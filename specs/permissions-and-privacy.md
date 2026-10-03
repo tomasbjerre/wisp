@@ -47,6 +47,11 @@
   [Heart rate](heart-rate.md#setting)) — never at first launch. If
   declined, the setting stays off and nothing else is affected.
 
+- **Vibration**, to pulse the [paused session reminder](tracking.md#paused-session-reminder).
+  No runtime request and nothing sensitive: it reads nothing from the device, transmits
+  nothing, and is switched off entirely by the user's own setting on
+  [Settings](ui-flows.md#2a-settings).
+
 ## Denied or restricted permission
 
 - If location permission is denied, the Tracking screen must say so

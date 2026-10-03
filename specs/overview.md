@@ -41,8 +41,9 @@ Simplicity beats configurability. When a decision could be a user-facing
 setting or a fixed sane default, prefer the fixed default.
 
 [Voice feedback](voice-feedback.md), [Units](units.md),
-[Heart rate](heart-rate.md) and [Calories burned](calories.md) are deliberate,
-narrow exceptions: which spoken cues (if any) someone wants read aloud
+[Heart rate](heart-rate.md), [Calories burned](calories.md) and the
+[paused session reminder](tracking.md#paused-session-reminder) are
+deliberate, narrow exceptions: which spoken cues (if any) someone wants read aloud
 while recording, and whether they think in kilometers or miles, both have
 no single sane default that's correct for everyone — voice feedback
 starts from its fixed default (silence) and units from the more common
@@ -51,3 +52,10 @@ naturally, is inherently a personal/regional choice Wisp can't guess
 correctly across every user. This is not a precedent for settings in
 general; new configurability elsewhere should still default to "no", per
 this principle.
+
+The paused session reminder is the one exception that defaults *on*
+rather than off, and the only one that is off-switching rather than
+choosing: a reminder nobody ever receives would be worse than no
+feature at all, while one that can't be refused is a device buzzing in
+a pocket its owner has already decided to ignore. So it ships switched
+on, it runs, and the switch exists only to let someone stop it.

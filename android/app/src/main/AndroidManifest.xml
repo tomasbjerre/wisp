@@ -7,6 +7,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- See specs/tracking.md#paused-session-reminder: the pulse that says a paused session
+         is still open. Install-time, never asked for, and nothing about it leaves the device
+         — see specs/permissions-and-privacy.md#required-access. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- See specs/permissions-and-privacy.md#required-access: finds and reads an optional BLE
          heart rate monitor, only if the user turns that setting on. Android 12+ has its own
          nearby-devices permissions; earlier versions use the legacy pair. neverForLocation

@@ -5,7 +5,11 @@ object TestTags {
     const val HISTORY_ROW = "history_row"
     const val ROUTE_MAP = "route_map"
     const val HEART_RATE_SWITCH = "heart_rate_switch"
+    const val PAUSED_REMINDER_SWITCH = "paused_reminder_switch"
     const val WEIGHT_FIELD = "weight_field"
+
+    /** The scrollable Settings list — tests scroll it to reach switches below small screens. */
+    const val SETTINGS_LIST = "settings_list"
 
     fun activityTypeOption(id: String) = "activity_type_$id"
 

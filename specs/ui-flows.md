@@ -178,12 +178,18 @@ recording.
 - A **Heart rate monitor** switch, off by default (see
   [Heart rate](heart-rate.md#setting)); disabled when no monitor is
   available.
+- A **Vibrate while paused** switch, on by default (see
+  [Tracking](tracking.md#paused-session-reminder)) — the reminder pulses
+  that tell someone a paused session is still open.
 - A **Voice feedback** master switch.
 - Five switches choosing what each announcement includes: **Kilometers
   completed**, **Average speed per kilometer**, **Steps per kilometer**,
   **Elapsed time per kilometer**, **Total elapsed time**.
 - Every field/switch on this screen reflects and immediately persists
   its current setting — no separate Save action.
+- The screen scrolls when the controls don't all fit: every field and
+  switch must stay reachable on any screen size — a row added later must
+  never push the ones below it off a small screen.
 
 ## 3. Detail (a past or just-finished session)
 

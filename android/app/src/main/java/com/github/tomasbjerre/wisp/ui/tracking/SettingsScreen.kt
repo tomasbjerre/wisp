@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.tomasbjerre.wisp.data.HeartRatePreferences
+import com.github.tomasbjerre.wisp.data.PausedReminderPreferences
 import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackSettings
@@ -64,6 +67,7 @@ import com.github.tomasbjerre.wisp.ui.TestTags
 fun SettingsScreen(
     voiceFeedbackPreferences: VoiceFeedbackPreferences,
     heartRatePreferences: HeartRatePreferences,
+    pausedReminderPreferences: PausedReminderPreferences,
     unit: UnitSystem,
     onBack: () -> Unit,
 ) {
@@ -81,10 +85,25 @@ fun SettingsScreen(
             )
         },
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)) {
+        // Scrollable, per specs/ui-flows.md#2a-settings: a plain Column measures whatever no
+        // longer fits the screen with zero height — adding the "Vibrate while paused" row made
+        // this list outgrow small screens (CI's emulator is 320x640), leaving the bottom voice
+        // feedback switches unreachable. Every control on this screen must stay reachable on
+        // any screen, now and as rows are added.
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .testTag(TestTags.SETTINGS_LIST)
+                    .padding(horizontal = 16.dp),
+        ) {
             WeightSection(unit)
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             HeartRateSettingSection(heartRatePreferences)
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            PausedReminderSettingSection(pausedReminderPreferences)
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             SettingSwitchRow(
                 label = "Voice feedback",
@@ -182,6 +201,25 @@ private fun HeartRateSettingSection(heartRatePreferences: HeartRatePreferences) 
             },
         )
     }
+}
+
+/**
+ * See specs/tracking.md#paused-session-reminder and specs/ui-flows.md#2a-settings: the
+ * once-a-minute pulse saying a paused session is still open. On by default — the one setting
+ * in Wisp that is (see specs/overview.md#design-principle) — and the switch exists only to
+ * let someone refuse it. Takes effect on the session being recorded right away, like every
+ * other control on this screen.
+ */
+@Composable
+private fun PausedReminderSettingSection(preferences: PausedReminderPreferences) {
+    val enabled by preferences.enabled.collectAsStateWithLifecycle()
+
+    SettingSwitchRow(
+        label = "Vibrate while paused",
+        checked = enabled,
+        onCheckedChange = preferences::setEnabled,
+        testTag = TestTags.PAUSED_REMINDER_SWITCH,
+    )
 }
 
 /** Whether Bluetooth can currently reach a monitor, kept current as it's turned on/off. */

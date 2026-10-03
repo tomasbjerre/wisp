@@ -14,6 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.github.tomasbjerre.wisp.data.HeartRatePreferences
+import com.github.tomasbjerre.wisp.data.PausedReminderPreferences
 import com.github.tomasbjerre.wisp.data.SessionRepository
 import com.github.tomasbjerre.wisp.data.UnitPreferences
 import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
@@ -78,6 +79,7 @@ fun WispApp(
     voiceFeedbackPreferences: VoiceFeedbackPreferences,
     unitPreferences: UnitPreferences,
     heartRatePreferences: HeartRatePreferences,
+    pausedReminderPreferences: PausedReminderPreferences,
     openTrackingRequests: Int = 0,
 ) {
     val navController = rememberNavController()
@@ -124,6 +126,7 @@ fun WispApp(
             SettingsScreen(
                 voiceFeedbackPreferences = voiceFeedbackPreferences,
                 heartRatePreferences = heartRatePreferences,
+                pausedReminderPreferences = pausedReminderPreferences,
                 unit = unit,
                 onBack = { navController.popBackStack() },
             )

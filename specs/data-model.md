@@ -97,6 +97,17 @@ migrations to worry about beyond "missing means the fixed default below".
 | `announceKmElapsedTime` | boolean | `false` |
 | `announceElapsedTime` | boolean | `true` (the total elapsed time switch) |
 
+## Paused reminder setting
+
+See [Tracking](tracking.md#paused-session-reminder). Stored like the
+other settings here: a single flag, no identifier, no relations.
+Unlike them, its default is on — see
+[Overview](overview.md#design-principle).
+
+| Field | Type | Default |
+|---|---|---|
+| `enabled` | boolean | `true` |
+
 ## Heart rate setting
 
 See [Heart rate](heart-rate.md#setting). Stored like the voice feedback
