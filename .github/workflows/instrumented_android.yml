@@ -91,7 +91,14 @@ jobs:
             # a leftover "3-detail.png" from before ScreenshotTest was renumbered rode
             # along for months, pushing the Play listing to 9 screenshots and failing
             # `publishReleaseListing` with "You can only upload 8 phoneScreenshots."
-            adb shell rm -rf /sdcard/wisp-screenshots
+            #
+            # Retried, not a single call: right after boot, /sdcard's FUSE layer isn't
+            # reliably up yet (the same lag documented below for screenrecord), and
+            # `adb shell rm -rf` on it fails every file with "Bad address" instead of
+            # just not finding them — confirmed killing this step outright across
+            # several recent runs within 1-2s of boot_completed, before any test ran.
+            # One line, not a multi-line for loop — see the comment below on why.
+            for i in $(seq 1 15); do adb shell rm -rf /sdcard/wisp-screenshots && break; sleep 1; done
             # Fix a location up front so Tracking has a real position to show instead of
             # hanging on "Finding your location…" — see InstructionVideoTest.
             ./scripts/replay-real-track.sh --first-fix-only
