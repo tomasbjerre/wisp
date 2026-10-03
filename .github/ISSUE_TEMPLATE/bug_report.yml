@@ -9,6 +9,7 @@ body:
         Thanks for reporting a bug. Wisp has four screens:
 
         - **Home** — the list of past activities and the Start button.
+        - **Home settings** — Metric/Imperial, opened from Home's gear icon.
         - **Tracking** — the live map and stats shown while recording.
         - **Detail** — the map and stats for one past or just-finished activity.
         - **Km splits** — the per-kilometer breakdown, reached from Detail.
@@ -24,6 +25,7 @@ body:
       label: Which screen were you on?
       options:
         - Home (activity list / Start button)
+        - Home settings (Metric/Imperial, from Home)
         - Tracking (live recording)
         - Detail (a past or just-finished activity)
         - Km splits (per-kilometer breakdown, from Detail)

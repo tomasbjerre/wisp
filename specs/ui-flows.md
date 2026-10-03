@@ -1,12 +1,12 @@
 # UI Flows
 
 Wisp has three main screens — Home, Tracking, Detail — plus a Km splits
-view reached from Detail, and a Settings view reached from Tracking,
-housing the three deliberate, narrow configuration exceptions
-[Overview](overview.md#design-principle) describes: voice feedback (see
-[Voice feedback](voice-feedback.md)), the heart rate monitor setting,
-and weight. No onboarding wizard, no account/login — simplicity is a
-feature, and this is not a precedent for adding more settings elsewhere.
+view reached from Detail, a Settings view reached from Home (just the
+unit system choice — see [Units](units.md)), and a Settings view reached
+from Tracking (voice feedback, the heart rate monitor setting, weight,
+and the paused session reminder). No onboarding wizard, no
+account/login — simplicity is a feature, and this is not a precedent for
+adding more settings elsewhere.
 
 Whenever a screen/view listed here is added, renamed, or removed, update
 the "which screen" explainer and dropdown in
@@ -37,6 +37,23 @@ The app's entry point.
 - If there's an interrupted session recovered on launch (see
   [Tracking](tracking.md)), it simply appears in the list like any other
   finished session — no special dialog or interruption.
+- A settings control in the top bar opens [Home settings](#1a-home-settings).
+
+## 1a. Home settings
+
+Opened from the settings control on [Home](#1-home)'s top bar, over that
+screen. The one place the Metric/Imperial choice is configured — see
+[Units](units.md). Unlike weight, the heart rate monitor setting, and
+voice feedback (all on [Settings](#2a-settings)), this is an app-wide
+preference with no connection to a live recording, so it doesn't belong
+behind Tracking's settings control, and is rarely changed enough that it
+doesn't belong inline on Home either — see [issue #186](https://github.com/tomasbjerre/wisp/issues/186).
+
+- A title and a back control returning to Home (system back does the
+  same).
+- A **Metric**/**Imperial** choice (see [Units](units.md)), reflecting
+  and immediately persisting its current setting — no separate Save
+  action.
 
 ## 2. Tracking (active recording)
 
@@ -284,10 +301,10 @@ own.
 
 ```
 Home ──(tap Start)──▶ Tracking ──(tap Stop)──▶ Detail ──(tap Km splits)──▶ Km splits
-  │                       │  ▲                    ▲
-  │                       │  │                     │
-  │        (tap settings) ▼  │ (back)               │
-  │                    Settings                     │
-  │                                                 ▲
-  └──────────────────(tap a history row)────────────┘
+  │  │                    │  ▲                    ▲
+  │  │ (tap settings)     │  │                     │
+  │  ▼                    ▼  │ (back)               │
+  │ Home settings      Settings                     │
+  │ (back returns to Home)                          ▲
+  └──────────────────(tap a history row)─────────────┘
 ```

@@ -2,8 +2,8 @@
 
 Every distance, speed, and pace Wisp shows a user is displayed in one of
 two unit systems — **Metric** (kilometers, km/h) or **Imperial** (miles,
-mph) — chosen with a setting on [Home](ui-flows.md#1-home). Metric is the
-default.
+mph) — chosen with a setting on [Home settings](ui-flows.md#1a-home-settings).
+Metric is the default.
 
 ## Design principle exception
 
