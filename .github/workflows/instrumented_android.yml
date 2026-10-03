@@ -170,6 +170,18 @@ jobs:
             # supported"). Re-encoding (not just remuxing) normalizes that and the pixel
             # format/profile into something every common player handles.
             if [ -s instruction-video-raw.mp4 ]; then ffmpeg -y -fflags +genpts -i instruction-video-raw.mp4 -c:v libx264 -pix_fmt yuv420p -movflags +faststart instruction-video.mp4 || cp instruction-video-raw.mp4 instruction-video.mp4; fi
+            # The rm -rf above clears /sdcard/wisp-screenshots before the walk even starts,
+            # yet a run still pulled a 0-byte "3-detail.png" alongside the 15 real
+            # captures (run 37106687105) - a name no current screenshot() call writes, so
+            # it isn't a fresh write gone wrong. Only explanation left: the emulated
+            # sdcard's FUSE layer (already flaky enough right after boot to need the
+            # retried rm -rf above) dropped a since-renamed file's content but kept a
+            # ghost, empty directory entry for it, which rm -rf on the whole directory
+            # doesn't guarantee clears. That empty file then crashed the release
+            # workflow's `convert` step on a corrupt PNG header. Delete anything 0 bytes
+            # on-device right before the pull, so a ghost entry like that can never reach
+            # the release workflow regardless of how it got there.
+            adb shell "find /sdcard/wisp-screenshots -size 0 -delete" 2>/dev/null || true
             adb pull /sdcard/wisp-screenshots screenshots-raw
 
       - name: Upload instrumented test report
