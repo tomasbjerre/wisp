@@ -91,3 +91,33 @@ happens to be off (master on, nothing to announce with it), nothing is
 said. Exact phrasing is an implementation detail; the values themselves
 (which kilometer just completed, that kilometer's own average speed,
 steps and elapsed time, the session's total elapsed time) are the contract.
+
+## Ducking other audio
+
+So an announcement is still audible over music or a podcast playing
+through the same output — see
+[issue #175](https://github.com/tomasbjerre/wisp/issues/175).
+
+- Just before each announcement is spoken, Wisp asks for the audio
+  output transiently, the same request a navigation app makes for a
+  turn-by-turn instruction, and lets go of it again the moment that
+  announcement finishes — however it finishes: spoken in full, cut off
+  by an error, or stopped outright (e.g. the session ending mid-speech).
+  Never held longer than the announcement itself.
+- What actually happens to the other audio is up to whatever's playing
+  it, not Wisp: most apps lower their own volume for the moment, but
+  some (for example, several music apps) pause instead and resume
+  afterward. Both are acceptable outcomes; Wisp doesn't try to force a
+  particular one, there's no new permission needed either way, and Wisp
+  never adjusts the device's or another app's volume directly.
+- Rides on the existing **Voice feedback** master switch — no separate
+  setting for it. The one thing it depends on is whether an announcement
+  was going to be spoken at all; it never requests the output on its own
+  schedule.
+- A clean no-op when nothing else is playing: asking for the output when
+  there's nothing to duck or pause doesn't change anything's volume or
+  introduce an audible effect of its own.
+- Same best-effort posture as voice feedback itself: if the device has
+  nothing to speak through at all (see
+  [When an announcement happens](#when-an-announcement-happens) above),
+  there's no announcement to duck around either, so nothing happens.

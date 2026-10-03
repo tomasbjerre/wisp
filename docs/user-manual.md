@@ -235,7 +235,10 @@ A few more things on this screen:
     **Elapsed time per kilometer** (how long the last kilometer took,
     off by default) and **Total elapsed time** (since the session
     started). Announcements happen once per completed kilometer, only
-    while actively recording (not paused).
+    while actively recording (not paused). If you're listening to music
+    or a podcast at the same time, it briefly makes room for each
+    announcement — most apps duck their own volume for a moment, a few
+    pause and resume instead, either way nothing you need to configure.
 
   Every field/switch on this screen persists across app restarts and
   takes effect immediately, even mid-session.
