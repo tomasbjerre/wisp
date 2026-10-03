@@ -8,6 +8,9 @@ object TestTags {
     const val PAUSED_REMINDER_SWITCH = "paused_reminder_switch"
     const val WEIGHT_FIELD = "weight_field"
 
+    /** The scrollable Settings list — tests scroll it to reach switches below small screens. */
+    const val SETTINGS_LIST = "settings_list"
+
     fun activityTypeOption(id: String) = "activity_type_$id"
 
     const val VOICE_FEEDBACK_ENABLED_SWITCH = "voice_feedback_enabled_switch"

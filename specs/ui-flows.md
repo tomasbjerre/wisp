@@ -187,6 +187,9 @@ recording.
   **Elapsed time per kilometer**, **Total elapsed time**.
 - Every field/switch on this screen reflects and immediately persists
   its current setting — no separate Save action.
+- The screen scrolls when the controls don't all fit: every field and
+  switch must stay reachable on any screen size — a row added later must
+  never push the ones below it off a small screen.
 
 ## 3. Detail (a past or just-finished session)
 

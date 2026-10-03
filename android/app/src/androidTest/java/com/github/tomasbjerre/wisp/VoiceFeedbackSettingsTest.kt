@@ -2,6 +2,7 @@ package com.github.tomasbjerre.wisp
 
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -9,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.tomasbjerre.wisp.ui.TestTags
@@ -53,9 +55,9 @@ class VoiceFeedbackSettingsTest {
 
         // Flip it on, and flip one of the four sub-switches off, to verify both
         // directions persist.
-        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ENABLED_SWITCH).performClick()
-        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_STEPS_SWITCH).performClick()
-        composeRule.onNodeWithTag(TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_ELAPSED_TIME_SWITCH).performClick()
+        clickSwitch(TestTags.VOICE_FEEDBACK_ENABLED_SWITCH)
+        clickSwitch(TestTags.VOICE_FEEDBACK_ANNOUNCE_STEPS_SWITCH)
+        clickSwitch(TestTags.VOICE_FEEDBACK_ANNOUNCE_KM_ELAPSED_TIME_SWITCH)
 
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
@@ -73,6 +75,17 @@ class VoiceFeedbackSettingsTest {
             composeRule.onAllNodesWithText("Stop").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Stop").performClick()
+    }
+
+    /**
+     * The Settings list scrolls (specs/ui-flows.md#2a-settings), and on a small screen — CI's
+     * emulator is 320x640 — the lower switches start out below the window, where a click would
+     * be injected past the edge of the display and never reach them. Scroll each into view
+     * first; a no-op for the ones already visible.
+     */
+    private fun clickSwitch(testTag: String) {
+        composeRule.onNodeWithTag(TestTags.SETTINGS_LIST).performScrollToNode(hasTestTag(testTag))
+        composeRule.onNodeWithTag(testTag).performClick()
     }
 
     private fun openSettings() {
