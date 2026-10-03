@@ -7,7 +7,9 @@ reflect whatever screen or control it touched — see
 [`../AGENTS.md`](../AGENTS.md).
 
 Wisp has three main screens: **Home**, **Tracking**, and **Detail** —
-plus a [Km splits](#km-splits) view you can open from Detail. For the
+plus a [Km splits](#km-splits) view you can open from Detail, a
+[Home settings](#home-settings) view you can open from Home, and a
+settings view you can open from [Tracking](#tracking). For the
 precise, implementation-independent contract behind everything described
 here, see [`../specs/`](../specs/README.md) — this manual is the
 user-facing companion to that, not a replacement for it.
@@ -21,13 +23,6 @@ This is what you see when you open Wisp. It has:
 - **Start** — the button at the top. Tap it to begin recording a new
   activity (run, ride, walk, anything). See [Tracking](#tracking) below
   for what happens next.
-- **Metric / Imperial** — switches every distance, speed, and pace Wisp
-  shows between kilometers/km per hour and miles/mph, everywhere it's
-  shown (Home, Tracking, Detail, Km splits — which becomes Mile splits
-  under imperial, with whole-mile splits rather than kilometers
-  re-expressed in miles). Metric by default. CSV exports always stay in
-  metric regardless of this setting — see the user manual's Detail
-  section below.
 - **Your history** — every past activity, most recent first, each row
   showing its date, place name (when known — a neighborhood if one is
   found, otherwise the city), what kind of activity it was (Walking,
@@ -53,11 +48,27 @@ This is what you see when you open Wisp. It has:
   your browser), and a link to this manual:
 
   <img src="screenshots/information-dialog.jpg" alt="Information dialog with app version and links" width="300">
+- **Settings** — the gear icon opens [Home settings](#home-settings)
+  below.
 
 The first time you open Wisp, before you've recorded anything, the
 history list is replaced with a short empty-state message instead:
 
 <img src="screenshots/1-home-empty.jpg" alt="Home screen with no activities yet" width="300">
+
+## Home settings
+
+<img src="screenshots/home-settings.jpg" alt="Settings screen with the Metric/Imperial choice" width="300">
+
+Opened from the gear icon on [Home](#home). The one setting here:
+
+- **Metric / Imperial** — switches every distance, speed, and pace Wisp
+  shows between kilometers/km per hour and miles/mph, everywhere it's
+  shown (Home, Tracking, Detail, Km splits — which becomes Mile splits
+  under imperial, with whole-mile splits rather than kilometers
+  re-expressed in miles). Metric by default. CSV exports always stay in
+  metric regardless of this setting — see the user manual's Detail
+  section below.
 
 ## Weight and calories
 

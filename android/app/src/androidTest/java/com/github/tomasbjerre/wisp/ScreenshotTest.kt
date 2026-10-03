@@ -57,6 +57,8 @@ class ScreenshotTest {
         composeRule.waitForIdle()
         screenshot("1-home-empty")
 
+        captureHomeSettings()
+
         val app = instrumentation.targetContext.applicationContext as WispApplication
         runBlocking {
             // A real recorded activity (issue #121) - varying pace, so Detail's km splits
@@ -102,6 +104,18 @@ class ScreenshotTest {
         composeRule.waitForIdle()
 
         captureTrackingStates()
+    }
+
+    /**
+     * See specs/ui-flows.md#1a-home-settings. Unnumbered, same reasoning as captureKmSplits:
+     * the Play listing slots are already spent by "1-home-empty"/"2-home-history".
+     */
+    private fun captureHomeSettings() {
+        composeRule.onNodeWithContentDescription("Settings").performClick()
+        composeRule.waitForIdle()
+        screenshot("home-settings")
+        composeRule.onNodeWithContentDescription("Back").performClick()
+        composeRule.waitForIdle()
     }
 
     /**

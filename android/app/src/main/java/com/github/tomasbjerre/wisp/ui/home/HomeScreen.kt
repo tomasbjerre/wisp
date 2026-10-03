@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -26,9 +27,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -79,6 +77,7 @@ fun HomeScreen(
     unitPreferences: UnitPreferences,
     onStart: () -> Unit,
     onOpenSession: (Long) -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val viewModel: HomeViewModel =
         viewModel(factory = viewModelFactory { initializer { HomeViewModel(repository) } })
@@ -93,6 +92,7 @@ fun HomeScreen(
                 sessions = sessions,
                 loadPointsBySession = viewModel::loadPointsBySession,
                 onInfoClick = { showInfo = true },
+                onSettingsClick = onOpenSettings,
             )
         },
     ) { padding ->
@@ -100,13 +100,6 @@ fun HomeScreen(
             Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) {
                 Text("Start")
             }
-
-            // See specs/units.md and specs/ui-flows.md#1-home.
-            UnitSystemToggle(
-                unit = unit,
-                onUnitChange = unitPreferences::setUnit,
-                modifier = Modifier.padding(top = 16.dp),
-            )
 
             HistorySection(sessions, unit, onOpenSession, onDeleteClick = { pendingDelete = it })
         }
@@ -135,6 +128,7 @@ private fun HomeTopBar(
     sessions: List<Session>,
     loadPointsBySession: suspend () -> List<Pair<Session, List<TrackPoint>>>,
     onInfoClick: () -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -182,6 +176,10 @@ private fun HomeTopBar(
             IconButton(onClick = onInfoClick) {
                 Icon(Icons.Filled.Info, contentDescription = "App version, feedback, and the user manual")
             }
+            // See specs/ui-flows.md#1a-home-settings.
+            IconButton(onClick = onSettingsClick) {
+                Icon(Icons.Filled.Settings, contentDescription = "Settings")
+            }
         },
     )
 }
@@ -220,26 +218,6 @@ private fun appVersionName(context: Context): String =
     context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown"
 
 private fun deviceInfo(): String = "${Build.MODEL}, Android ${Build.VERSION.RELEASE}"
-
-/** See specs/units.md: a Metric/Imperial choice, the one setting Wisp has on Home. */
-@Composable
-private fun UnitSystemToggle(
-    unit: UnitSystem,
-    onUnitChange: (UnitSystem) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    SingleChoiceSegmentedButtonRow(modifier = modifier.fillMaxWidth()) {
-        UnitSystem.entries.forEachIndexed { index, option ->
-            SegmentedButton(
-                selected = unit == option,
-                onClick = { onUnitChange(option) },
-                shape = SegmentedButtonDefaults.itemShape(index = index, count = UnitSystem.entries.size),
-            ) {
-                Text(if (option == UnitSystem.METRIC) "Metric" else "Imperial")
-            }
-        }
-    }
-}
 
 @Composable
 private fun HistorySection(

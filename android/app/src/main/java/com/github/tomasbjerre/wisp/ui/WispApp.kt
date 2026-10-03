@@ -21,11 +21,13 @@ import com.github.tomasbjerre.wisp.data.VoiceFeedbackPreferences
 import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.ui.detail.DetailScreen
 import com.github.tomasbjerre.wisp.ui.home.HomeScreen
+import com.github.tomasbjerre.wisp.ui.home.HomeSettingsScreen
 import com.github.tomasbjerre.wisp.ui.splits.KmSplitsScreen
 import com.github.tomasbjerre.wisp.ui.tracking.SettingsScreen
 import com.github.tomasbjerre.wisp.ui.tracking.TrackingScreen
 
 private const val ROUTE_HOME = "home"
+private const val ROUTE_HOME_SETTINGS = "home/settings"
 private const val ROUTE_TRACKING = "tracking"
 private const val ROUTE_SETTINGS = "tracking/settings"
 private const val ROUTE_DETAIL = "detail/{sessionId}"
@@ -106,6 +108,13 @@ fun WispApp(
                 unitPreferences = unitPreferences,
                 onStart = { navController.navigate(ROUTE_TRACKING) },
                 onOpenSession = { id -> navController.navigate("detail/$id") },
+                onOpenSettings = { navController.navigate(ROUTE_HOME_SETTINGS) },
+            )
+        }
+        composable(ROUTE_HOME_SETTINGS) {
+            HomeSettingsScreen(
+                unitPreferences = unitPreferences,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(ROUTE_TRACKING) {
