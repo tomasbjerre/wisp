@@ -1,3 +1,9 @@
+## 0.14.2 (2026-10-03)
+
+### Bug Fixes
+
+-  **ci**  drop zero-byte screenshots before pulling from the emulator ([4d973](https://github.com/tomasbjerre/wisp/commit/4d9738f3da7ed0e) Tomas Bjerre)  
+
 ## 0.13.0 (2026-09-29)
 
 ### Features
