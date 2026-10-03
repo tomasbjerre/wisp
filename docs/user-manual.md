@@ -24,11 +24,13 @@ This is what you see when you open Wisp. It has:
   activity (run, ride, walk, anything). See [Tracking](#tracking) below
   for what happens next.
 - **Your history** — every past activity, most recent first, each row
-  showing its date, place name (when known — a neighborhood if one is
-  found, otherwise the city), what kind of activity it was (Walking,
-  Running or Cycling — when known), distance, duration, average speed, and
-  calories burned (when the activity has them). Tap a row to open that activity's [Detail](#detail)
-  screen.
+  showing its date and how long ago that was ("3 hours ago", "Yesterday",
+  "4 days ago", "2 weeks ago" — dropped once an activity is over four
+  weeks old, where the date alone already says enough), place name (when
+  known — a neighborhood if one is found, otherwise the city), what kind
+  of activity it was (Walking, Running or Cycling — when known), distance,
+  duration, average speed, and calories burned (when the activity has
+  them). Tap a row to open that activity's [Detail](#detail) screen.
 - **Delete** — the trash icon on each row deletes that activity directly
   from Home, without having to open it first. You'll be asked to confirm.
 - **Export CSV** — the share icon in the top-right exports your whole

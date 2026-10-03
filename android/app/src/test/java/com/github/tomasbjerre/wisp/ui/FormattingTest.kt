@@ -3,6 +3,9 @@ package com.github.tomasbjerre.wisp.ui
 import com.github.tomasbjerre.wisp.data.UnitSystem
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 /** Verifies the summary stats required by specs/ui-flows.md render sensibly. */
 class FormattingTest {
@@ -73,5 +76,65 @@ class FormattingTest {
                 .within(0.05),
         )
         assertThat(UnitSystem.METRIC.displayToKilograms(70.0)).isEqualTo(70.0)
+    }
+
+    @Test
+    fun `relative time under a minute reads as just now`() {
+        val now = at(2026, 10, 3, 12, 0, 0)
+        assertThat(Formatting.relativeTime(now - 30_000, now, ZONE)).isEqualTo("Just now")
+    }
+
+    @Test
+    fun `relative time under an hour is in minutes`() {
+        val now = at(2026, 10, 3, 12, 0, 0)
+        assertThat(Formatting.relativeTime(now - minutes(1), now, ZONE)).isEqualTo("1 minute ago")
+        assertThat(Formatting.relativeTime(now - minutes(5), now, ZONE)).isEqualTo("5 minutes ago")
+    }
+
+    @Test
+    fun `relative time on the same calendar day is in hours`() {
+        // 12:00 to 00:05 the same day — just over 11 hours, not yet a new calendar day.
+        val now = at(2026, 10, 3, 23, 5, 0)
+        assertThat(Formatting.relativeTime(at(2026, 10, 3, 12, 0, 0), now, ZONE)).isEqualTo("11 hours ago")
+    }
+
+    @Test
+    fun `relative time on the previous calendar day reads as yesterday regardless of elapsed hours`() {
+        // Only ~1 hour apart, but crosses midnight.
+        val now = at(2026, 10, 3, 0, 30, 0)
+        assertThat(Formatting.relativeTime(at(2026, 10, 2, 23, 0, 0), now, ZONE)).isEqualTo("Yesterday")
+    }
+
+    @Test
+    fun `relative time two to six calendar days back is in days`() {
+        val now = at(2026, 10, 10, 8, 0, 0)
+        assertThat(Formatting.relativeTime(at(2026, 10, 6, 8, 0, 0), now, ZONE)).isEqualTo("4 days ago")
+    }
+
+    @Test
+    fun `relative time one to three weeks back is in weeks`() {
+        val now = at(2026, 10, 24, 8, 0, 0)
+        assertThat(Formatting.relativeTime(at(2026, 10, 10, 8, 0, 0), now, ZONE)).isEqualTo("2 weeks ago")
+    }
+
+    @Test
+    fun `relative time beyond four weeks is omitted`() {
+        val now = at(2026, 11, 3, 8, 0, 0)
+        assertThat(Formatting.relativeTime(at(2026, 10, 3, 8, 0, 0), now, ZONE)).isNull()
+    }
+
+    private fun at(
+        year: Int,
+        month: Int,
+        day: Int,
+        hour: Int,
+        minute: Int,
+        second: Int,
+    ): Long = ZonedDateTime.of(year, month, day, hour, minute, second, 0, ZONE).toInstant().toEpochMilli()
+
+    private fun minutes(count: Long): Long = count * 60_000
+
+    private companion object {
+        val ZONE: ZoneId = ZoneOffset.UTC
     }
 }

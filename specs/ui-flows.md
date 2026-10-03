@@ -20,12 +20,22 @@ The app's entry point.
 
 - A prominent **Start** button/action, always available when idle.
 - A list of past sessions (most recent first), each row showing:
-  date/time, place name if known (see
+  date/time, relative time ("3 hours ago", "Yesterday", "4 days ago",
+  "2 weeks ago" — see [issue #189](https://github.com/tomasbjerre/wisp/issues/189)),
+  place name if known (see
   [Data Model](data-model.md#place-name)), the activity type if the session
   has one (see [Calories burned](calories.md#activity-type)), distance,
   duration, average speed, and calories when the session has them (see
   [Calories burned](calories.md#where-it-is-shown)). The type is only
   displayed here — it is chosen on Tracking.
+  - Relative time is complementary to the absolute date/time, never a
+    replacement for it. Day-based buckets (Yesterday, N days/weeks ago)
+    follow calendar-day boundaries, not a rolling 24-hour window — a
+    session from 11pm yesterday reads as "Yesterday" the moment it's
+    past midnight, not "23 hours ago" drifting into "Yesterday" an hour
+    later. Omitted entirely once a session is more than four weeks old:
+    past that point the absolute date already says enough, and a vague
+    "2 months ago" stops being more useful than it.
 - Tapping a row opens that session's **Detail** screen.
 - Each row also has a **Delete** action of its own (e.g. a trash icon),
   with the same confirmation step as Detail's Delete, so a session can be

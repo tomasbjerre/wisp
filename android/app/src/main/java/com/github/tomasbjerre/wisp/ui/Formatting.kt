@@ -2,6 +2,9 @@ package com.github.tomasbjerre.wisp.ui
 
 import com.github.tomasbjerre.wisp.data.UnitSystem
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 object Formatting {
@@ -74,4 +77,48 @@ object Formatting {
     private val dateTimeFormat = SimpleDateFormat("MMM d, yyyy · HH:mm", Locale.getDefault())
 
     fun dateTime(epochMillis: Long): String = dateTimeFormat.format(epochMillis)
+
+    /**
+     * See specs/ui-flows.md#1-home (issue #189): complementary to [dateTime], not a
+     * replacement for it — "3 hours ago", "Yesterday", "4 days ago". Null beyond four
+     * weeks, where [dateTime]'s own absolute date already says enough and a vague
+     * "2 months ago" stops being more useful than it.
+     *
+     * Day-based buckets (Yesterday, N days/weeks ago) count calendar-day boundaries in
+     * [zone], not a rolling 24-hour window — a session from 11pm yesterday reads as
+     * "Yesterday" the moment it's past midnight, the same way a person would describe it,
+     * not "23 hours ago" drifting to "Yesterday" an hour later.
+     */
+    fun relativeTime(
+        epochMillis: Long,
+        nowMillis: Long = System.currentTimeMillis(),
+        zone: ZoneId = ZoneId.systemDefault(),
+    ): String? {
+        val then = Instant.ofEpochMilli(epochMillis).atZone(zone)
+        val now = Instant.ofEpochMilli(nowMillis).atZone(zone)
+        val dayDiff = ChronoUnit.DAYS.between(then.toLocalDate(), now.toLocalDate())
+        return when {
+            dayDiff <= 0 -> sameDayPhrase(nowMillis - epochMillis)
+            dayDiff == 1L -> "Yesterday"
+            dayDiff < 7 -> plural(dayDiff, "day")
+            dayDiff < 28 -> plural(dayDiff / 7, "week")
+            else -> null
+        }
+    }
+
+    private fun sameDayPhrase(elapsedMillis: Long): String {
+        val elapsedSeconds = (elapsedMillis / 1000).coerceAtLeast(0)
+        val minutes = elapsedSeconds / 60
+        val hours = minutes / 60
+        return when {
+            minutes < 1 -> "Just now"
+            hours < 1 -> plural(minutes, "minute")
+            else -> plural(hours, "hour")
+        }
+    }
+
+    private fun plural(
+        count: Long,
+        unit: String,
+    ) = "$count $unit" + (if (count == 1L) "" else "s") + " ago"
 }
