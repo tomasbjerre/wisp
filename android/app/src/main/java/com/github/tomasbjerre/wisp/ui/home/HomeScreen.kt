@@ -289,8 +289,13 @@ private fun SessionRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f).padding(vertical = 16.dp)) {
+                // See specs/ui-flows.md#1-home: relative time is complementary to the
+                // absolute date/time, not a replacement for it, and omitted (not "N months
+                // ago") once it's no longer the more useful of the two.
+                val relativeTime = Formatting.relativeTime(session.startedAt)?.let { " · $it" } ?: ""
                 Text(
-                    Formatting.dateTime(session.startedAt) + (session.nearestCity?.let { " · $it" } ?: ""),
+                    Formatting.dateTime(session.startedAt) + relativeTime +
+                        (session.nearestCity?.let { " · $it" } ?: ""),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 // See specs/calories.md#where-it-is-shown: omitted when the session has none.
