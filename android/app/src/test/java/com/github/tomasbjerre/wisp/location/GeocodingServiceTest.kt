@@ -15,10 +15,22 @@ import java.util.Locale
 @RunWith(RobolectricTestRunner::class)
 class GeocodingServiceTest {
     @Test
-    fun `a sub-locality is never used, even when it's the only field filled in`() {
+    fun `a sub-locality is used when there is no locality`() {
         val address = Address(Locale.getDefault()).apply { subLocality = "Dalgången" }
 
-        assertThat(pickCityName(listOf(address))).isNull()
+        assertThat(pickCityName(listOf(address))).isEqualTo("Dalgången")
+    }
+
+    @Test
+    fun `a sub-locality beats subAdminArea and adminArea when there is no locality`() {
+        val address =
+            Address(Locale.getDefault()).apply {
+                subLocality = "Trossö"
+                subAdminArea = "Karlskrona kommun"
+                adminArea = "Blekinge"
+            }
+
+        assertThat(pickCityName(listOf(address))).isEqualTo("Trossö")
     }
 
     @Test

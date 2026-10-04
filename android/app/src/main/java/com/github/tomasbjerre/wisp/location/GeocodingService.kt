@@ -52,13 +52,18 @@ class GeocodingService(
 
 /**
  * Picks the best available place name across every geocoded candidate, preferring the
- * most specific field (locality, then subAdminArea) available on ANY candidate over a
- * broader one (adminArea) on the top match — see [GeocodingService.lookup] and
- * specs/data-model.md#place-name. subLocality (a neighborhood or district) is
- * deliberately never used, even when it's the only field filled in — it's too
- * fine-grained to be a useful place name.
+ * most specific field (locality, then subLocality, then subAdminArea) available on ANY
+ * candidate over a broader one (adminArea) on the top match — see
+ * [GeocodingService.lookup] and specs/data-model.md#place-name. locality outranks
+ * subLocality (a neighborhood or district) so a city name is shown whenever the
+ * geocoder has one, but subLocality still beats falling all the way back to
+ * subAdminArea/adminArea when the geocoder has no locality at all for a point: the
+ * platform's Geocoder doesn't reliably fill in locality for every address, but it
+ * fills in subLocality more consistently, so dropping it entirely regresses
+ * well-known places to their county/region name instead of a neighborhood name.
  */
 fun pickCityName(addresses: List<Address>): String? =
     addresses.firstNotNullOfOrNull { it.locality?.takeIf { name -> name.isNotBlank() } }
+        ?: addresses.firstNotNullOfOrNull { it.subLocality?.takeIf { name -> name.isNotBlank() } }
         ?: addresses.firstNotNullOfOrNull { it.subAdminArea?.takeIf { name -> name.isNotBlank() } }
         ?: addresses.firstNotNullOfOrNull { it.adminArea?.takeIf { name -> name.isNotBlank() } }
