@@ -15,38 +15,34 @@ import java.util.Locale
 @RunWith(RobolectricTestRunner::class)
 class GeocodingServiceTest {
     @Test
-    fun `a sub-locality is preferred over the locality`() {
+    fun `a sub-locality is never used, even when it's the only field filled in`() {
+        val address = Address(Locale.getDefault()).apply { subLocality = "Dalgången" }
+
+        assertThat(pickCityName(listOf(address))).isNull()
+    }
+
+    @Test
+    fun `a locality is used even when a sub-locality is also present`() {
         val address =
             Address(Locale.getDefault()).apply {
-                subLocality = "Trossö"
-                locality = "Karlskrona"
+                subLocality = "Dalgången"
+                locality = "Karlshamn"
                 adminArea = "Blekinge"
             }
 
-        assertThat(pickCityName(listOf(address))).isEqualTo("Trossö")
+        assertThat(pickCityName(listOf(address))).isEqualTo("Karlshamn")
     }
 
     @Test
-    fun `a sub-locality on a later candidate beats a locality on the closest match`() {
-        val closest = Address(Locale.getDefault()).apply { locality = "Karlskrona" }
+    fun `a locality on a later candidate beats a sub-locality on the closest match`() {
+        val closest = Address(Locale.getDefault()).apply { subLocality = "Dalgången" }
         val nearby =
             Address(Locale.getDefault()).apply {
-                subLocality = "Trossö"
-                locality = "Karlskrona"
+                subLocality = "Dalgången"
+                locality = "Karlshamn"
             }
 
-        assertThat(pickCityName(listOf(closest, nearby))).isEqualTo("Trossö")
-    }
-
-    @Test
-    fun `a blank sub-locality falls back to the locality`() {
-        val address =
-            Address(Locale.getDefault()).apply {
-                subLocality = " "
-                locality = "Karlskrona"
-            }
-
-        assertThat(pickCityName(listOf(address))).isEqualTo("Karlskrona")
+        assertThat(pickCityName(listOf(closest, nearby))).isEqualTo("Karlshamn")
     }
 
     @Test

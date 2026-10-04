@@ -17,7 +17,7 @@ One recorded activity.
 | `durationSeconds` | number | total recording time, excluding paused time |
 | `averageSpeedMps` | number | `distanceMeters / durationSeconds` |
 | `maxSpeedMps` | number | highest recorded current-speed sample |
-| `nearestCity` | text, nullable | name of the place nearest the session's start point, as specific as the geocoding service can give: a neighborhood or district if it names one, otherwise the city, otherwise a broader area such as a county or region (see [Place name](#place-name)); null until resolved, or if it couldn't be resolved (see [Permissions & Privacy](permissions-and-privacy.md#data-handling)) |
+| `nearestCity` | text, nullable | name of the place nearest the session's start point: the city or town if the geocoding service names one, otherwise a broader area such as a county or region (see [Place name](#place-name)); null until resolved, or if it couldn't be resolved (see [Permissions & Privacy](permissions-and-privacy.md#data-handling)) |
 | `steps` | integer | total steps counted during the session, excluding paused time (see [Tracking](tracking.md#step-count)); 0 if no step sensor/permission was available, or the session was recovered after an interruption |
 | `activityType` | text, nullable | `walking`, `running` or `cycling` — see [Calories burned](calories.md#activity-type); null on a session recorded before this existed |
 | `weightKg` | number, nullable | the body weight in kilograms in effect when the session started — see [Calories burned](calories.md#weight); null if none was configured then, and on a session recorded before this existed |
@@ -38,13 +38,17 @@ see [Tracking](tracking.md#km-splits); `Session.steps` stays the total.)
 ### Place name
 
 `nearestCity` is the most specific place name the geocoding service
-returns for the session's start point. Candidates are ranked from most to
-least specific, and the highest-ranked name found on any candidate wins:
+returns for the session's start point, down to city/town level — a
+neighborhood or district name is deliberately never used, even when it's
+the only field a candidate has filled in, since it's too fine-grained to
+be a useful place name (e.g. a point in central Karlshamn should read
+"Karlshamn", not a residential sub-area like "Dalgången"). Candidates are
+ranked from most to least specific, and the highest-ranked name found on
+any candidate wins:
 
-1. sub-locality (a neighborhood or district, e.g. Trossö)
-2. locality (a city or town, e.g. Karlskrona)
-3. sub-administrative area (e.g. a county)
-4. administrative area (e.g. a region, e.g. Blekinge)
+1. locality (a city or town, e.g. Karlshamn)
+2. sub-administrative area (e.g. a municipality or county)
+3. administrative area (e.g. a region, e.g. Blekinge)
 
 A blank field is skipped as if absent. If none of them is available the
 session has no place name. No service other than the platform's geocoder
