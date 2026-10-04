@@ -296,6 +296,43 @@ class ScreenshotTest {
         screenshot("detail-imperial-partial-split")
     }
 
+    /**
+     * See specs/ui-flows.md#2-tracking-active-recording: background location missing
+     * (foreground granted) shows an advisory with a Fix button. Unnumbered,
+     * docs/screenshots only, like captureKmSplits — the main captureScreenshots() run
+     * grants every permission up front precisely to avoid this state, so it needs its
+     * own permission setup here.
+     */
+    @Test
+    fun captureBackgroundLocationMissing() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.ACCESS_FINE_LOCATION")
+        instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.POST_NOTIFICATIONS")
+        // So only the background-location advisory shows, not the battery one too.
+        device.executeShellCommand("dumpsys deviceidle whitelist +$APP_PACKAGE")
+
+        dismissSystemAnrIfPresent()
+        composeRule.waitUntil(timeoutMillis = LOCATE_TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Start").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Start").performClick()
+        // Wait on the rendered text itself, not TrackingService.state directly — its
+        // StateFlow collection isn't tracked by Compose's idling resources, so a plain
+        // waitUntil on the backing state can resolve a beat before the screen actually
+        // repaints past "Finding your location…".
+        composeRule.waitUntil(timeoutMillis = LOCATE_TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Finding your location…").fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.waitForIdle()
+        screenshot("tracking-background-location-off")
+
+        // Still waiting for movement at this point, so back/Stop would discard rather
+        // than confirm (specs/tracking.md#start-gating) — stop directly instead, same
+        // as RecordingNotificationTest.
+        TrackingService.stop(InstrumentationRegistry.getInstrumentation().targetContext)
+        composeRule.waitForIdle()
+    }
+
     // Via the shell, not app-code File I/O: scoped storage silently blocks the app
     // process itself from writing raw /sdcard paths, but the shell (uiautomator's
     // executeShellCommand) isn't subject to that.

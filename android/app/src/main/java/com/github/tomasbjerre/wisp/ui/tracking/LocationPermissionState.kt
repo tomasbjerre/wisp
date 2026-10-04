@@ -1,13 +1,15 @@
 package com.github.tomasbjerre.wisp.ui.tracking
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -23,9 +25,7 @@ class LocationPermissionState internal constructor(
     private val foreground: MutableState<Boolean>,
     private val background: MutableState<Boolean>,
     private val batteryExemption: MutableState<Boolean>,
-    private val requestForeground: () -> Unit,
-    private val requestBackground: () -> Unit,
-    private val requestBatteryExemptionAction: () -> Unit,
+    private val actions: LocationPermissionActions,
 ) {
     val hasForeground: Boolean get() = foreground.value
     val hasBackground: Boolean get() = background.value
@@ -41,24 +41,37 @@ class LocationPermissionState internal constructor(
     /** Requests whichever of foreground/background access is still missing. */
     fun request() {
         if (!hasForeground) {
-            requestForeground()
+            actions.requestForeground()
         } else if (!hasBackground) {
-            requestBackground()
+            actions.requestBackground()
         }
     }
 
-    fun requestBatteryExemption() = requestBatteryExemptionAction()
+    fun requestBatteryExemption() = actions.requestBatteryExemption()
+
+    /**
+     * For when the system won't ask (again): background location's runtime dialog
+     * typically only appears once, so a user who already said no to it, or whose OEM
+     * never shows it a second time, needs the app's own permission settings instead —
+     * same reasoning as [NotificationState.openSettings].
+     */
+    fun openAppSettings() = actions.openAppSettings()
 }
+
+/** The callbacks [LocationPermissionState] exposes, grouped to keep its constructor short. */
+internal class LocationPermissionActions(
+    val requestForeground: () -> Unit,
+    val requestBackground: () -> Unit,
+    val requestBatteryExemption: () -> Unit,
+    val openAppSettings: () -> Unit,
+)
 
 @Composable
 fun rememberLocationPermissionState(): LocationPermissionState {
     val context = LocalContext.current
     val powerManager = remember { context.getSystemService(PowerManager::class.java) }
 
-    fun isGranted(permission: String): Boolean {
-        val result = ContextCompat.checkSelfPermission(context, permission)
-        return result == PackageManager.PERMISSION_GRANTED
-    }
+    fun isGranted(permission: String) = ContextCompat.checkSelfPermission(context, permission) == PERMISSION_GRANTED
 
     fun isIgnoringBatteryOptimizations(): Boolean = powerManager.isIgnoringBatteryOptimizations(context.packageName)
 
@@ -81,17 +94,16 @@ fun rememberLocationPermissionState(): LocationPermissionState {
                 backgroundLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             }
         }
-    // There's no result callback for this system screen, so just re-check on return.
-    val batteryLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            hasBatteryExemption.value = isIgnoringBatteryOptimizations()
+    // These two system screens have no result callback of their own, so just re-check
+    // the relevant state on return.
+    val batteryLauncher = rememberSettingsLauncher { hasBatteryExemption.value = isIgnoringBatteryOptimizations() }
+    val appSettingsLauncher =
+        rememberSettingsLauncher {
+            hasBackground.value = backgroundNotRequired || isGranted(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         }
 
-    return remember {
-        LocationPermissionState(
-            foreground = hasForeground,
-            background = hasBackground,
-            batteryExemption = hasBatteryExemption,
+    val actions =
+        LocationPermissionActions(
             requestForeground = {
                 // Activity recognition (see specs/permissions-and-privacy.md#required-access)
                 // is bundled into this same system dialog — it's opportunistic, not
@@ -106,14 +118,22 @@ fun rememberLocationPermissionState(): LocationPermissionState {
                 )
             },
             requestBackground = { backgroundLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION) },
-            requestBatteryExemptionAction = {
-                batteryLauncher.launch(
-                    Intent(
-                        Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                        Uri.parse("package:${context.packageName}"),
-                    ),
-                )
+            requestBatteryExemption = {
+                batteryLauncher.launch(settingsIntent(context, Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS))
+            },
+            openAppSettings = {
+                appSettingsLauncher.launch(settingsIntent(context, Settings.ACTION_APPLICATION_DETAILS_SETTINGS))
             },
         )
-    }
+
+    return remember { LocationPermissionState(hasForeground, hasBackground, hasBatteryExemption, actions) }
 }
+
+@Composable
+private fun rememberSettingsLauncher(onReturn: () -> Unit): ActivityResultLauncher<Intent> =
+    rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { onReturn() }
+
+private fun settingsIntent(
+    context: Context,
+    action: String,
+) = Intent(action, Uri.parse("package:${context.packageName}"))
