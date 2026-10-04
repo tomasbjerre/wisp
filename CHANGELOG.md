@@ -1,3 +1,15 @@
+## 0.14.3 (2026-10-04)
+
+### Bug Fixes
+
+-  prefer locality over sub-locality for a session's place name (#199) ([025bc](https://github.com/tomasbjerre/wisp/commit/025bc3e9a2feb6a) Tomas Bjerre)  
+-  **renovate**  update extends path after org config rename ([b1527](https://github.com/tomasbjerre/wisp/commit/b1527343adc7540) Tomas Bjerre)  
+
+### Dependency updates
+
+- point renovate config at tomasbjerre/.github ([7f309](https://github.com/tomasbjerre/wisp/commit/7f309019856d308) Tomas Bjerre)  
+- update plugin se.bjurr.violations.violations-gradle-plugin to v4.5.1 (#198) ([0f3d0](https://github.com/tomasbjerre/wisp/commit/0f3d0d6a5fbc1c0) renovate[bot])  
+- update plugin se.bjurr.gradle.update-versions to v3.0.3 (#197) ([ed6c6](https://github.com/tomasbjerre/wisp/commit/ed6c6e0a8eea830) renovate[bot])  
 ## 0.14.2 (2026-10-03)
 
 ### Bug Fixes
