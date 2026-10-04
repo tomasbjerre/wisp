@@ -1,3 +1,10 @@
+## 0.14.4 (2026-10-04)
+
+### Bug Fixes
+
+-  **tracking**  offer a Fix button for the background-location advisory (#202) ([98546](https://github.com/tomasbjerre/wisp/commit/9854636cbc3ba99) Tomas Bjerre)  
+-  fall back to sub-locality before region for a session's place name (#201) ([77ab2](https://github.com/tomasbjerre/wisp/commit/77ab21e47688f67) Tomas Bjerre)  
+
 ## 0.14.3 (2026-10-04)
 
 ### Bug Fixes
