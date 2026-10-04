@@ -174,6 +174,12 @@ screen while recording.
 - If location permission is missing or denied, this screen must explain
   what's needed and offer a way to grant it, rather than silently
   recording nothing (see [Permissions & Privacy](permissions-and-privacy.md)).
+- If background location specifically isn't granted (foreground location
+  is, so recording is already underway), this screen says recording may
+  stop if the user leaves the app and offers a way to fix it (see
+  [Permissions & Privacy](permissions-and-privacy.md#denied-or-restricted-permission))
+  — advisory, not blocking: recording still works while the app stays in
+  the foreground.
 - If notifications are turned off for Wisp, this screen says so and offers
   a way to turn them on (see
   [Permissions & Privacy](permissions-and-privacy.md#required-access)) —

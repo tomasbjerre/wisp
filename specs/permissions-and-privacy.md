@@ -61,7 +61,9 @@
 - If background location specifically is unavailable (only "while using
   the app" was granted), recording should still work while the app is in
   the foreground, but the user should be told recording may stop if they
-  leave the app.
+  leave the app, and offered a direct way to fix it — a deep link to the
+  app's own settings, since the platform's runtime permission dialog
+  generally won't ask for background location a second time once denied.
 
 ## Data handling
 

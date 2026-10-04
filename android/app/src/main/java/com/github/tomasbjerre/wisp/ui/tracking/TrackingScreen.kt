@@ -185,10 +185,16 @@ private fun PermissionAdvisories(
     notifications: NotificationState,
 ) {
     if (!permissions.hasBackground) {
-        Text(
-            "Recording may stop if you leave the app — background location isn't granted.",
-            style = MaterialTheme.typography.bodySmall,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Recording may stop if you leave the app — background location isn't granted.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = permissions::openAppSettings) {
+                Text("Fix")
+            }
+        }
     }
     if (!permissions.hasBatteryExemption) {
         Row(verticalAlignment = Alignment.CenterVertically) {

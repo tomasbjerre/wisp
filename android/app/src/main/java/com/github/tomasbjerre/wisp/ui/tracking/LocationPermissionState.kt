@@ -26,9 +26,18 @@ class LocationPermissionState internal constructor(
     private val requestForeground: () -> Unit,
     private val requestBackground: () -> Unit,
     private val requestBatteryExemptionAction: () -> Unit,
+    private val openAppSettingsAction: () -> Unit,
 ) {
     val hasForeground: Boolean get() = foreground.value
     val hasBackground: Boolean get() = background.value
+
+    /**
+     * For when the system won't ask (again): background location's runtime dialog
+     * typically only appears once, so a user who already said no to it, or whose OEM
+     * never shows it a second time, needs the app's own permission settings instead —
+     * same reasoning as [com.github.tomasbjerre.wisp.ui.tracking.NotificationState.openSettings].
+     */
+    fun openAppSettings() = openAppSettingsAction()
 
     /**
      * Whether Wisp is exempt from battery optimization, so recording is less likely to be
@@ -86,6 +95,12 @@ fun rememberLocationPermissionState(): LocationPermissionState {
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             hasBatteryExemption.value = isIgnoringBatteryOptimizations()
         }
+    // Same reasoning as batteryLauncher above — the app's own settings screen has no
+    // result callback either.
+    val appSettingsLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            hasBackground.value = backgroundNotRequired || isGranted(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        }
 
     return remember {
         LocationPermissionState(
@@ -110,6 +125,14 @@ fun rememberLocationPermissionState(): LocationPermissionState {
                 batteryLauncher.launch(
                     Intent(
                         Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                        Uri.parse("package:${context.packageName}"),
+                    ),
+                )
+            },
+            openAppSettingsAction = {
+                appSettingsLauncher.launch(
+                    Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                         Uri.parse("package:${context.packageName}"),
                     ),
                 )
