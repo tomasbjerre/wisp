@@ -52,12 +52,13 @@ class GeocodingService(
 
 /**
  * Picks the best available place name across every geocoded candidate, preferring the
- * most specific field (subLocality, then locality) available on ANY candidate over a
- * broader one (subAdminArea, then adminArea) on the top match — see
- * [GeocodingService.lookup] and specs/data-model.md#place-name.
+ * most specific field (locality, then subAdminArea) available on ANY candidate over a
+ * broader one (adminArea) on the top match — see [GeocodingService.lookup] and
+ * specs/data-model.md#place-name. subLocality (a neighborhood or district) is
+ * deliberately never used, even when it's the only field filled in — it's too
+ * fine-grained to be a useful place name.
  */
 fun pickCityName(addresses: List<Address>): String? =
-    addresses.firstNotNullOfOrNull { it.subLocality?.takeIf { name -> name.isNotBlank() } }
-        ?: addresses.firstNotNullOfOrNull { it.locality?.takeIf { name -> name.isNotBlank() } }
+    addresses.firstNotNullOfOrNull { it.locality?.takeIf { name -> name.isNotBlank() } }
         ?: addresses.firstNotNullOfOrNull { it.subAdminArea?.takeIf { name -> name.isNotBlank() } }
         ?: addresses.firstNotNullOfOrNull { it.adminArea?.takeIf { name -> name.isNotBlank() } }
