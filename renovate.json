@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>tomasbjerre/renovate-config//org-inherited-config"],
+  "extends": ["github>tomasbjerre/.github//renovate"],
   "packageRules": [
     {
       // Wisp-specific pin. Grouping (Kotlin, Compose compiler, KSP) comes from the org
