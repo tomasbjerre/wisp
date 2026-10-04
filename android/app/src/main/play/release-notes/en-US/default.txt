@@ -1,8 +1,8 @@
-wisp 0.14.2
-- fix(ci): drop zero-byte screenshots before pulling from the emulator
-- fix(ci): retry sdcard screenshot cleanup past emulator FUSE flake (#194)
-- feat: duck other audio during voice feedback announcements (#193)
-- feat: show relative time on Home's history rows (#192)
-- fix: pin voice feedback's TTS voice to English (#191)
-- feat: move Metric/Imperial into a Home settings screen (#190)
-- feat: pulse once a minute while a session sits paused (#1
+wisp 0.14.3
+- fix: prefer locality over sub-locality for a session's place name (#199)
+- fix(renovate): update extends path after org config rename
+- chore(deps): point renovate config at tomasbjerre/.github
+- chore(deps): update plugin se.bjurr.violations.violations-gradle-plugin to v4.5.1 (#198)
+- chore(deps): update plugin se.bjurr.gradle.update-versions to v3.0.3 (#197)
+- chore(changelog): updating changelog
+- chore(android): update screenshots and play 
