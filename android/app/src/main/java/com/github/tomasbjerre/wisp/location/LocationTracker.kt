@@ -24,11 +24,14 @@ class LocationTracker(
     @SuppressLint("MissingPermission") // caller is required to have checked permission first
     fun start(onLocation: (Location) -> Unit) {
         stop()
+        // Deliberately no setMinUpdateDistanceMeters: a distance filter suppresses fixes
+        // while the device is stationary, which is exactly when auto-pause and the
+        // paused-session reminder need fixes to keep arriving to measure idle time — see
+        // specs/tracking.md#location-sampling.
         val request =
             LocationRequest
                 .Builder(Priority.PRIORITY_HIGH_ACCURACY, UPDATE_INTERVAL_MILLIS)
                 .setMinUpdateIntervalMillis(MIN_UPDATE_INTERVAL_MILLIS)
-                .setMinUpdateDistanceMeters(MIN_UPDATE_DISTANCE_METERS)
                 .build()
         val newCallback =
             object : LocationCallback() {
@@ -48,6 +51,5 @@ class LocationTracker(
     companion object {
         private const val UPDATE_INTERVAL_MILLIS = 3_000L
         private const val MIN_UPDATE_INTERVAL_MILLIS = 2_000L
-        private const val MIN_UPDATE_DISTANCE_METERS = 5f
     }
 }

@@ -214,9 +214,13 @@ the waiting-for-movement case by
 
 - Request the highest-accuracy location updates the platform offers for
   foreground navigation/fitness use (not passive/low-power mode).
-- Target update interval: **every 2–5 seconds**, or on ~10 meter movement,
-  whichever the platform's location API prefers — the goal is a smooth
-  route line without excessive battery drain or storage bloat.
+- Target update interval: **every 2–5 seconds**, with no distance-based
+  filter that could suppress a fix while the device is stationary —
+  [Auto-pause](#auto-pause) and the
+  [paused session reminder](#paused-session-reminder) both measure idle
+  time from fix to fix, so a fix must keep arriving on the time interval
+  alone even when nothing is moving, or a session left stationary (not
+  paused, just standing still) never notices it's idle at all.
 - Fixes with poor accuracy (accuracy radius worse than ~30 meters) are
   noise (see [Noise](#noise)) rather than being let through to distort
   the route or spike the speed reading.
