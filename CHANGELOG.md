@@ -1,3 +1,12 @@
+## 0.15.1 (2026-10-05)
+
+### Bug Fixes
+
+-  **tracking**  keep location fixes arriving while stationary (#207) ([ff822](https://github.com/tomasbjerre/wisp/commit/ff8220cdf52e02c) Tomas Bjerre)  
+
+### Other changes
+
+
 ## 0.15.0 (2026-10-05)
 
 ### Features
