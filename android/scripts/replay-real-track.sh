@@ -23,8 +23,16 @@ fi
 
 max="${1:-200}"
 stop="${2:-/tmp/wisp-walk-stop}"
+total=$(fixes | head -n "$max" | wc -l)
+# `adb emu geo fix`'s own output is a bare "OK" per call, with nothing to tell one
+# of ~200 identical lines apart from the next — printed a CI run's own progress
+# (point count, coordinates) instead, so a slow or stuck run is visible from the
+# log alone rather than looking like a long silent hang.
+i=0
 fixes | head -n "$max" | while read -r lon lat; do
   [ -f "$stop" ] && exit 0
+  i=$((i + 1))
+  echo "[replay-real-track] point $i/$total: lon=$lon lat=$lat"
   adb emu geo fix "$lon" "$lat"
   sleep 2
 done
