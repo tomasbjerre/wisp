@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.tomasbjerre.wisp.data.HeartRatePreferences
@@ -58,6 +59,7 @@ fun TrackingScreen(
     val context = LocalContext.current
     val permissions = rememberLocationPermissionState()
     val notifications = rememberNotificationState(askOnEntry = permissions.hasForeground)
+    val locationServices = rememberLocationServicesState()
     val state by TrackingService.state.collectAsStateWithLifecycle()
     val unit by unitPreferences.unit.collectAsStateWithLifecycle()
 
@@ -106,7 +108,7 @@ fun TrackingScreen(
     // See specs/tracking.md#start-gating: no map at all until a real position is known,
     // rather than showing a map with nothing to center on (see RouteMap's fallback).
     if (state.isLocating) {
-        LocatingState()
+        LocatingState(locationServices)
         return
     }
 
@@ -416,12 +418,24 @@ private fun TrackingControls(
     }
 }
 
+/** See specs/tracking.md#location-services-off for the [locationServices]-off branch. */
 @Composable
-private fun LocatingState() {
+private fun LocatingState(locationServices: LocationServicesState) {
     Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CircularProgressIndicator(modifier = Modifier.padding(bottom = 16.dp))
-            Text("Finding your location…", style = MaterialTheme.typography.bodyLarge)
+            if (locationServices.isEnabled) {
+                CircularProgressIndicator(modifier = Modifier.padding(bottom = 16.dp))
+                Text("Finding your location…", style = MaterialTheme.typography.bodyLarge)
+            } else {
+                Text(
+                    "Location is turned off, so Wisp can't find you.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                )
+                Button(onClick = locationServices::openSettings, modifier = Modifier.padding(top = 16.dp)) {
+                    Text("Turn on location")
+                }
+            }
         }
     }
 }

@@ -64,6 +64,10 @@
   leave the app, and offered a direct way to fix it — a deep link to the
   app's own settings, since the platform's runtime permission dialog
   generally won't ask for background location a second time once denied.
+- Location permission being granted doesn't mean the device can actually
+  produce a fix: the system-level location/GPS toggle is separate, and a
+  user can have granted permission with it off. See
+  [Tracking](tracking.md#location-services-off) for that case.
 
 ## Data handling
 

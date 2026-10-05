@@ -111,7 +111,14 @@ short steps first:
 
 1. **Finding your location** — a brief loading state while your phone
    acquires a GPS fix. There's nothing to show yet, so no map appears
-   until this resolves.
+   until this resolves. If location is turned off on your device, Wisp
+   tells you that instead of spinning forever, with a button straight to
+   your location settings:
+
+   <img src="screenshots/tracking-location-off.jpg" alt="Tracking screen saying location is off, with a button to turn it on" width="300">
+
+   Turn it on there and Wisp picks up a fix on its own — no need to come
+   back here first.
 2. **Waiting for movement** — once your position is known, the map
    appears, but the timer and distance stay at zero:
 
