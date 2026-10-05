@@ -84,8 +84,7 @@ class PausedReminderGateTest {
         assertThat(pulses(secondPause, from = HOUR, to = HOUR + 20 * MINUTE)).isEqualTo(MAX_PULSES)
     }
 
-    private fun gatePausedAt(pauseStartedElapsedRealtime: Long) =
-        PausedReminderGate(pauseStartedElapsedRealtime = pauseStartedElapsedRealtime)
+    private fun gatePausedAt(pauseStartedElapsedRealtime: Long) = PausedReminderGate(pauseStartedElapsedRealtime)
 
     /**
      * Drives [gate] once a second, as TrackingService's reminder loop does, and counts the

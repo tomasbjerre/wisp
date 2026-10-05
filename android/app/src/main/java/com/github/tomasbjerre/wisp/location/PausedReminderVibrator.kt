@@ -36,10 +36,10 @@ class PausedReminderVibrator(
 
     companion object {
         /**
-         * "Briefly" — see specs/tracking.md#paused-session-reminder, where the exact
-         * duration is left to the implementation. Long enough to feel through a pocket,
-         * short enough not to be a buzz of its own.
+         * "About two seconds" — see specs/tracking.md#paused-session-reminder, where the
+         * exact duration is left to the implementation. Long enough to be felt through a
+         * pocket even by someone not actively paying attention to their phone.
          */
-        private const val PULSE_DURATION_MILLIS = 200L
+        private const val PULSE_DURATION_MILLIS = 2_000L
     }
 }

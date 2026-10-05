@@ -88,9 +88,10 @@ class TrackingService : LifecycleService() {
     private var pauseStartedElapsedRealtime = 0L
 
     // See specs/tracking.md#paused-session-reminder: the once-a-minute pulse saying a
-    // session is still sitting paused. Owns one paused stretch, like [pauseWatcher], and
-    // runs on its own loop because the elapsed-time [tickerJob] is deliberately stopped
-    // for the duration of a pause.
+    // session is still sitting paused, or still waiting for its first movement. Owns one
+    // paused-or-waiting stretch, like [pauseWatcher], and runs on its own loop because the
+    // elapsed-time [tickerJob] is deliberately stopped for the duration of a pause (and
+    // never started until movement is confirmed in the first place).
     private var pausedReminderGate: PausedReminderGate? = null
     private var pausedReminderVibrator: PausedReminderVibrator? = null
     private var pausedReminderJob: Job? = null
@@ -156,6 +157,10 @@ class TrackingService : LifecycleService() {
                     activityType = activityType,
                     weightKg = weightKg,
                 )
+            // See specs/tracking.md#paused-session-reminder: a session can sit forgotten
+            // while waiting for movement just as easily as while paused, so the same
+            // reminder runs from the moment waiting begins until movement is confirmed.
+            startPausedReminder(SystemClock.elapsedRealtime())
             locationTracker.start(::onLocation)
             // Ticker starts once movement is confirmed, not here — see onLocation and
             // specs/tracking.md#start-gating.
@@ -294,14 +299,15 @@ class TrackingService : LifecycleService() {
     }
 
     /**
-     * Starts the once-a-minute reminder pulse for a session that has just become paused — see
+     * Starts the once-a-minute reminder pulse for a session that has just become paused, or
+     * has just started waiting for its first movement — see
      * specs/tracking.md#paused-session-reminder. Its own loop, because the elapsed-time
-     * [tickerJob] is deliberately stopped for the whole duration of a pause (the on-screen
-     * time must not run), so there is nothing else ticking to hang the reminder on.
+     * [tickerJob] is deliberately stopped for the whole duration of a pause or a wait (the
+     * on-screen time must not run), so there is nothing else ticking to hang the reminder on.
      */
-    private fun startPausedReminder(pauseStartedElapsedRealtime: Long) {
+    private fun startPausedReminder(anchorElapsedRealtime: Long) {
         stopPausedReminder()
-        pausedReminderGate = PausedReminderGate(pauseStartedElapsedRealtime)
+        pausedReminderGate = PausedReminderGate(anchorElapsedRealtime)
         pausedReminderVibrator = PausedReminderVibrator(this)
         pausedReminderJob =
             lifecycleScope.launch {
@@ -639,6 +645,8 @@ class TrackingService : LifecycleService() {
     private fun confirmMovementStarted() {
         recordingStartElapsedRealtime = SystemClock.elapsedRealtime()
         _state.update { it.copy(isWaitingForMovement = false) }
+        // The waiting-for-movement stretch is over — see specs/tracking.md#paused-session-reminder.
+        stopPausedReminder()
         startTicker()
         // See specs/tracking.md#step-count: gated the same as the timer/track, so steps
         // taken before movement is confirmed don't count.
