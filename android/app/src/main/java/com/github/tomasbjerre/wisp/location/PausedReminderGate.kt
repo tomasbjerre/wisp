@@ -2,10 +2,12 @@ package com.github.tomasbjerre.wisp.location
 
 /**
  * Pure decision logic for specs/tracking.md#paused-session-reminder: the once-a-minute
- * pulse that says a session is still sitting paused. No Android framework types, no I/O,
- * so it can be unit tested directly, like [StationaryGate]/[PauseWatcher] — which it also
- * matches in lifetime: one instance covers exactly one paused stretch, constructed fresh
- * when the session pauses, so a resume-and-pause-again starts a fresh set of pulses.
+ * pulse that says a session is still sitting paused, or still waiting for its first
+ * movement. No Android framework types, no I/O, so it can be unit tested directly, like
+ * [StationaryGate]/[PauseWatcher] — which it also matches in lifetime: one instance covers
+ * exactly one paused-or-waiting stretch, constructed fresh when the session pauses or
+ * starts waiting, so resuming/confirming movement and then pausing/waiting again starts a
+ * fresh set of pulses.
  *
  * [suppressed] covers both ways the reminder shouldn't run: the person has the app on
  * screen (so there's nothing to remind them of — see the spec's "suppressed while the app
@@ -15,9 +17,9 @@ package com.github.tomasbjerre.wisp.location
  * must not mean being pulsed on the very next second after putting it away.
  */
 class PausedReminderGate(
-    pauseStartedElapsedRealtime: Long,
+    anchorElapsedRealtime: Long,
 ) {
-    private var nextPulseAtElapsedRealtime = pauseStartedElapsedRealtime + PULSE_INTERVAL_MILLIS
+    private var nextPulseAtElapsedRealtime = anchorElapsedRealtime + PULSE_INTERVAL_MILLIS
     private var pulsesGiven = 0
 
     /**

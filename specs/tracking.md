@@ -144,49 +144,51 @@ once recording has actually started.
 
 ## Paused session reminder
 
-A session left paused is easy to forget: the phone goes back in a
-pocket, the screen goes off, and the session quietly stays open for
-hours. A periodic physical reminder solves that — see
-[issue #174](https://github.com/tomasbjerre/wisp/issues/174).
+A session left paused — or one that's been started but never gets
+moving — is easy to forget: the phone goes back in a pocket, the screen
+goes off, and the session quietly stays open for hours. A periodic
+physical reminder solves that — see
+[issue #174](https://github.com/tomasbjerre/wisp/issues/174), extended to
+the waiting-for-movement case by
+[issue #204](https://github.com/tomasbjerre/wisp/issues/204).
 
 - While a session is **paused** — however it came to be paused, manual
-  or automatic (see [Auto-pause](#auto-pause)) — the device gives a
+  or automatic (see [Auto-pause](#auto-pause)) — or **waiting for its
+  first movement** ([Start gating](#start-gating)) — the device gives a
   brief haptic pulse once a minute.
-- Up to 20 pulses per pause, then it stops. A person who hasn't acted
+- Up to 20 pulses per stretch, then it stops. A person who hasn't acted
   on twenty minutes of reminders isn't going to, and the pulse shouldn't
   go on indefinitely.
-- The count belongs to one paused stretch: resuming (by either means)
-  and pausing again starts a fresh set of 20. It is not a budget shared
-  across a session.
+- The count belongs to one paused or waiting stretch: resuming (by
+  either means) or confirming movement ends it, and the next pause or
+  wait starts a fresh set of 20. It is not a budget shared across a
+  session.
 - **Suppressed while the app is on screen.** Someone looking at
   [Tracking](ui-flows.md#2-tracking-active-recording) already knows the
-  session is paused; nothing needs reminding. While suppressed the
-  schedule also waits rather than running down: the pulse comes one
-  full minute after the app is last put away, never immediately on
-  leaving it, and no pulses are silently spent while the screen showed
-  the answer.
-- Not offered for a session that hasn't started recording yet. A session
-  still waiting for its first movement
-  ([Start gating](#start-gating)) — including one paused while waiting —
-  is deliberately standing still, not forgotten, so it never pulses.
+  session is paused or still waiting; nothing needs reminding. While
+  suppressed the schedule also waits rather than running down: the pulse
+  comes one full minute after the app is last put away, never
+  immediately on leaving it, and no pulses are silently spent while the
+  screen showed the answer.
 - One switch turns it off, on by default (see
   [Settings](ui-flows.md#2a-settings)); with it off, Wisp never pulses.
   Changing it takes effect immediately for the session being recorded,
   like every other setting on that screen.
-- A single pulse of a couple of tenths of a second at the device's
-  normal strength; the exact duration is an implementation detail.
+- A single pulse of about two seconds at the device's normal strength;
+  the exact duration is an implementation detail.
 - Best effort, and never a problem: a device with no vibration hardware
   simply produces nothing, and the session is unaffected — same posture
   as [Voice feedback](voice-feedback.md) taking silence when there's no
   speech engine to speak with.
 - Vibration is the whole reminder: the recording notification's text is
   not changed and no additional notification is posted.
-- It ends with the pause it belongs to — on Resume, on Stop, and when
-  the session itself ends. It does not survive the app being killed:
-  a recording continued after an interruption
+- It ends with the stretch it belongs to — on Resume or confirmed
+  movement, on Stop, and when the session itself ends. It does not
+  survive the app being killed: a recording continued after an
+  interruption
   ([What must survive interruption](#what-must-survive-interruption))
-  continues as a recording, not a pause, and so gets no pulses until it
-  next pauses.
+  continues as a recording, not a pause or a wait, and so gets no pulses
+  until it next pauses.
 
 ## Location sampling
 

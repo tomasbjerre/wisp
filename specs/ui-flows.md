@@ -213,7 +213,8 @@ recording.
   available.
 - A **Vibrate while paused** switch, on by default (see
   [Tracking](tracking.md#paused-session-reminder)) — the reminder pulses
-  that tell someone a paused session is still open.
+  that tell someone a session left paused, or never got moving, is
+  still open.
 - A **Voice feedback** master switch.
 - Five switches choosing what each announcement includes: **Kilometers
   completed**, **Average speed per kilometer**, **Steps per kilometer**,

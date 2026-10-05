@@ -209,9 +209,10 @@ A few more things on this screen:
 
 - **Settings** — the gear icon opens a settings screen for everything
   that only makes sense while recording — your weight, the heart rate
-  monitor switch, a reminder that pulses when a session sits paused for
-  too long, and optional spoken voice feedback (handy with
-  earbuds, so you get progress updates without looking at your phone):
+  monitor switch, a reminder that pulses when a session sits paused or
+  waiting to move for too long, and optional spoken voice feedback
+  (handy with earbuds, so you get progress updates without looking at
+  your phone):
 
   <img src="screenshots/tracking-settings.jpg" alt="Settings screen: weight, heart rate monitor, vibrate while paused, and voice feedback" width="300">
 
@@ -229,16 +230,17 @@ A few more things on this screen:
     range, recording works as usual — that activity just has no heart
     rate.
   - **Vibrate while paused** — on by default. While a session is paused,
-    Wisp pulses the phone once a minute, up to twenty times, to say
-    it's still open — for when you stop at the end of a run, pause, and
-    walk away forgetting it's recording. It stays quiet while you have
-    Wisp open (you can already see it's paused), and the minute starts
-    over from when you put the phone away, so no pulses are spent while
-    the screen already told you. It pulses for any pause, whether you
-    tapped **Pause** or it paused itself; a session that hasn't started
-    recording yet never does. Switch it off here to stop the pulses
-    entirely, right away, without stopping your session. A phone with no
-    vibration motor simply does nothing.
+    or while it's still waiting for its first movement, Wisp pulses the
+    phone once a minute, up to twenty times, to say it's still open —
+    for when you stop at the end of a run, pause, and walk away
+    forgetting it's recording, or start a session and never actually
+    get moving. It stays quiet while you have Wisp open (you can already
+    see its state), and the minute starts over from when you put the
+    phone away, so no pulses are spent while the screen already told
+    you. It pulses for any pause, whether you tapped **Pause** or it
+    paused itself. Switch it off here to stop the pulses entirely, right
+    away, without stopping your session. A phone with no vibration motor
+    simply does nothing.
   - A master **Voice feedback** switch, off by default, plus five
     switches for what each announcement includes: **Kilometers
     completed**, **Average speed per kilometer**, **Steps per
