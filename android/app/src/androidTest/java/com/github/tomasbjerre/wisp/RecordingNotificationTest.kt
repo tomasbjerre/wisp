@@ -87,8 +87,18 @@ class RecordingNotificationTest {
         }
 
         composeRule.waitUntil(TIMEOUT_MILLIS) {
-            composeRule.onAllNodesWithText("Finding your location…").fetchSemanticsNodes().isNotEmpty() ||
-                composeRule.onAllNodesWithText("Stop").fetchSemanticsNodes().isNotEmpty()
+            // Between finish() above and the new activity's own setContent() attaching,
+            // there's a real window with zero Compose hierarchies registered anywhere in
+            // the process — fetchSemanticsNodes() then throws IllegalStateException("No
+            // compose hierarchies found") instead of returning empty, which waitUntil
+            // doesn't retry past (it only re-polls on a false result, not an exception).
+            // That gap is exactly the state this test deliberately creates, not a failure.
+            try {
+                composeRule.onAllNodesWithText("Finding your location…").fetchSemanticsNodes().isNotEmpty() ||
+                    composeRule.onAllNodesWithText("Stop").fetchSemanticsNodes().isNotEmpty()
+            } catch (e: IllegalStateException) {
+                false
+            }
         }
         assert(TrackingService.state.value.isRecording)
 
