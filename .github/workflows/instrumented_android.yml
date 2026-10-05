@@ -15,12 +15,19 @@ defaults:
 jobs:
   screenshots:
     runs-on: ubuntu-latest
-    # A normal run (emulator boot + both retry attempts + teardown) takes well under 10
-    # minutes — this caps a stuck run (e.g. android-emulator-runner's own teardown
-    # spinning on a dead emulator, observed retrying "could not connect to TCP port
-    # 5554" indefinitely) at a fast, visible failure instead of GitHub's 360-minute
-    # default job timeout.
-    timeout-minutes: 20
+    # A normal run (emulator boot + both retry attempts + teardown) takes well under 15
+    # minutes (slowest observed success: ~13 min) — this caps a stuck run at a fast,
+    # visible failure instead of GitHub's 360-minute default job timeout.
+    #
+    # This isn't a rare edge case: android-emulator-runner's own teardown spins
+    # (observed retrying "could not connect to TCP port 5554" indefinitely) on *every*
+    # run where connectedDebugAndroidTest fails, including an ordinary flaky-test
+    # failure that itself only takes ~4-5 minutes — so without this cap, a ten-second
+    # assertion failure turns into GitHub's full default timeout before the run reports
+    # anything. 20 minutes measured the hang correctly but gave it 7+ minutes more than
+    # any real run needs; 15 is tight against the slowest success while still well
+    # clear of it.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
