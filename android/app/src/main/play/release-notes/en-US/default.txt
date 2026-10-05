@@ -1,8 +1,8 @@
-wisp 0.14.4
-- fix(tracking): offer a Fix button for the background-location advisory (#202)
-- fix: fall back to sub-locality before region for a session's place name (#201)
+wisp 0.15.0
+- feat(tracking): tell the user when GPS is off instead of spinning forever (#206)
+- feat(tracking): pulse the paused-session reminder while waiting for movement too (#205)
 - chore(changelog): updating changelog
 - chore(android): update screenshots and play listing
-- fix: prefer locality over sub-locality for a session's place name (#199)
-- fix(renovate): update extends path after org config rename
-- chore(deps): point renovate config at tomasbjerre/.github
+- fix(tracking): offer a Fix button for the background-location advisory (#202)
+- fix: fall back to sub-locality before region for a session's place name (#201)
+- chore(changelog): upd
