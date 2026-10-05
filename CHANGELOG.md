@@ -1,3 +1,10 @@
+## 0.15.0 (2026-10-05)
+
+### Features
+
+-  **tracking**  tell the user when GPS is off instead of spinning forever (#206) ([072a8](https://github.com/tomasbjerre/wisp/commit/072a8d12ae46145) Tomas Bjerre)  
+-  **tracking**  pulse the paused-session reminder while waiting for movement too (#205) ([70990](https://github.com/tomasbjerre/wisp/commit/709909534fc3708) Tomas Bjerre)  
+
 ## 0.14.4 (2026-10-04)
 
 ### Bug Fixes
