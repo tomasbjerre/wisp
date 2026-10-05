@@ -93,7 +93,15 @@ class TrackingBackButtonTest {
             composeRule.onAllNodesWithText("Force start").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Force start").performClick()
-        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) { !TrackingService.state.value.isWaitingForMovement }
+        // Compose-visible, not TrackingService.state.value directly: BackHandler below is
+        // gated on state collected into composition (state.isRecording), which lags the raw
+        // service StateFlow by a recomposition. Pressing back in that gap sees BackHandler
+        // still disabled from the stale "waiting for movement" composition, and the press
+        // falls through instead of raising the dialog this test waits for next — this is
+        // what "Pause" replacing "Force start" confirms has happened.
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Pause").fetchSemanticsNodes().isNotEmpty()
+        }
 
         val device = UiDevice.getInstance(instrumentation)
         device.pressBack()
