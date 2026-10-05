@@ -1,8 +1,8 @@
-wisp 0.15.0
-- feat(tracking): tell the user when GPS is off instead of spinning forever (#206)
-- feat(tracking): pulse the paused-session reminder while waiting for movement too (#205)
+wisp 0.15.1
+- fix(tracking): keep location fixes arriving while stationary (#207)
+- test(tracking): wait for Compose state before pressing back (#209)
+- ci(instrumented): cut the stuck-run cap from 20 to 15 minutes (#208)
 - chore(changelog): updating changelog
 - chore(android): update screenshots and play listing
-- fix(tracking): offer a Fix button for the background-location advisory (#202)
-- fix: fall back to sub-locality before region for a session's place name (#201)
-- chore(changelog): upd
+- feat(tracking): tell the user when GPS is off instead of spinning forever (#206)
+- feat(tracking): pulse the paused-session reminder while waitin
