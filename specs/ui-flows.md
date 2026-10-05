@@ -103,7 +103,9 @@ screen while recording.
 - Entering this screen doesn't show the map and controls right away — see
   [Tracking](tracking.md#start-gating) for the "locating" (a loading
   state, no map yet) and "waiting for movement" states shown first, each
-  telling the user what it's waiting for.
+  telling the user what it's waiting for. If location services are off
+  at the system level while locating, that replaces the loading state —
+  see [Tracking](tracking.md#location-services-off).
 - A map filling most of the screen, centered on the current location,
   drawing the route as it's recorded, with a marker for the current
   position (see [Accessibility](accessibility.md#map-markers-and-route)).

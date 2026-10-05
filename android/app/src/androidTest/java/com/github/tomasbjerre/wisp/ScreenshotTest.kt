@@ -333,6 +333,42 @@ class ScreenshotTest {
         composeRule.waitForIdle()
     }
 
+    /**
+     * See specs/tracking.md#location-services-off: the device-level location/GPS toggle
+     * (not the app's own permission) being off while locating shows this instead of the
+     * loading spinner. Unnumbered, docs/screenshots only, like captureBackgroundLocationMissing
+     * — the main captureScreenshots() run needs location actually on to get its live fixes, so
+     * this turns it off just for itself, then back on when done, success or failure, since a
+     * later test in the same run otherwise can't get a fix either.
+     */
+    @Test
+    fun captureLocationServicesOff() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.ACCESS_FINE_LOCATION")
+        instrumentation.uiAutomation.grantRuntimePermission(APP_PACKAGE, "android.permission.POST_NOTIFICATIONS")
+        device.executeShellCommand("cmd location set-location-enabled false")
+
+        try {
+            dismissSystemAnrIfPresent()
+            composeRule.waitUntil(timeoutMillis = LOCATE_TIMEOUT_MILLIS) {
+                composeRule.onAllNodesWithText("Start").fetchSemanticsNodes().isNotEmpty()
+            }
+            composeRule.onNodeWithText("Start").performClick()
+            composeRule.waitUntil(timeoutMillis = LOCATE_TIMEOUT_MILLIS) {
+                composeRule.onAllNodesWithText("Turn on location").fetchSemanticsNodes().isNotEmpty()
+            }
+            composeRule.waitForIdle()
+            screenshot("tracking-location-off")
+
+            // Never even located, let alone moved — Stop discards rather than finishes
+            // (specs/tracking.md#start-gating).
+            TrackingService.stop(instrumentation.targetContext)
+            composeRule.waitForIdle()
+        } finally {
+            device.executeShellCommand("cmd location set-location-enabled true")
+        }
+    }
+
     // Via the shell, not app-code File I/O: scoped storage silently blocks the app
     // process itself from writing raw /sdcard paths, but the shell (uiautomator's
     // executeShellCommand) isn't subject to that.

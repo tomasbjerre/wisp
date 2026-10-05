@@ -91,6 +91,26 @@ movement has already been confirmed (or before a session exists at all),
 and does not affect [auto-pause](#auto-pause), which only ever applies
 once recording has actually started.
 
+### Location services off
+
+A device with location services (the system-level GPS/location toggle,
+not the app's own permission — see
+[Permissions and privacy](permissions-and-privacy.md#required-access))
+turned off never produces a fix, so the **Locating** step above would
+otherwise spin forever with no way out — see
+[issue #203](https://github.com/tomasbjerre/wisp/issues/203).
+
+- While still **locating** (step 1 above), if location services are off,
+  show that instead of the loading spinner, with a button that opens the
+  system's location settings screen.
+- Checked live: location being turned on while this is showing — from
+  that button, from Quick Settings, or anywhere else — swaps back to the
+  ordinary loading spinner on its own, without the user needing to
+  return to this screen themselves.
+- Only shown during the **Locating** step. Once a fix has arrived,
+  location services being turned off afterward isn't specially called
+  out — same as any other loss of GPS signal.
+
 ## Auto-pause
 
 - A session that's actively recording (past start gating, not already
