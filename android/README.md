@@ -216,15 +216,15 @@ Android-specific automation that triggers:
      [`bundle-android-release.yaml`](https://github.com/tomasbjerre/.github/blob/master/.github/workflows/bundle-android-release.yaml)
      workflow, which installs those screenshots into the Play listing and
      `../docs/screenshots/`, commits them, builds a signed App Bundle and
-     APK, uploads the bundle to the Play Console's **closed testing** track
-     ([Gradle Play Publisher](https://github.com/Triple-T/gradle-play-publisher)),
+     APK, uploads the bundle straight to the Play Console's **production**
+     track ([Gradle Play Publisher](https://github.com/Triple-T/gradle-play-publisher)),
      attaches the build outputs and instruction video to the GitHub
      Release, and updates `../CHANGELOG.md`.
 
-Promoting a release from closed testing → production is a manual step in the
-[Play Console](https://play.google.com/console) — intentionally not
-automated, so a real person always looks at a release before it reaches
-real users.
+Publishing a GitHub Release ships straight to production — there is no
+closed/open testing stop and no manual promotion step in the
+[Play Console](https://play.google.com/console). Make sure a release is
+actually ready for real users before publishing the draft.
 
 ### Store listing's instruction video
 
