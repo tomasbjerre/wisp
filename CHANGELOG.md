@@ -1,3 +1,15 @@
+## 0.15.2 (2026-10-12)
+
+### Bug Fixes
+
+-  **tracking**  explain background location before the platform prompt (#213) ([92366](https://github.com/tomasbjerre/wisp/commit/92366e1a3886e72) Tomas Bjerre)  
+
+### Dependency updates
+
+- update dependency gradle to v9.8.1 (#211) ([6a68b](https://github.com/tomasbjerre/wisp/commit/6a68b05ec14f6e1) renovate[bot])  
+### Other changes
+
+
 ## 0.15.1 (2026-10-05)
 
 ### Bug Fixes
