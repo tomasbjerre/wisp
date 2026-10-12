@@ -144,11 +144,16 @@ A few more things on this screen:
 
 - **Background location** — recording keeps going even if you leave the
   app or lock the screen, as long as Wisp has "allow all the time"
-  location access. If you only granted "while using the app", a line
-  above the stats warns that recording may stop if you leave, with a
-  **Fix** button that opens Wisp's own settings so you can change it —
-  Android generally won't show its own permission prompt for this a
-  second time once declined:
+  location access. The first time you start a recording, right after you
+  grant Wisp basic location access, you'll see a short screen explaining
+  why before Android's own "allow all the time" prompt appears:
+
+  <img src="screenshots/tracking-background-location-rationale.jpg" alt="Screen explaining why Wisp needs background location, with a Continue button" width="300">
+
+  If you only granted "while using the app", a line above the stats warns
+  that recording may stop if you leave, with a **Fix** button that opens
+  Wisp's own settings so you can change it — Android generally won't show
+  its own permission prompt for this a second time once declined:
 
   <img src="screenshots/tracking-background-location-off.jpg" alt="Tracking screen with a line saying recording may stop if you leave the app" width="300">
 

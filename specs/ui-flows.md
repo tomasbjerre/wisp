@@ -176,6 +176,19 @@ screen while recording.
 - If location permission is missing or denied, this screen must explain
   what's needed and offer a way to grant it, rather than silently
   recording nothing (see [Permissions & Privacy](permissions-and-privacy.md)).
+- The moment foreground location is granted and background location is
+  still undecided, this screen shows a dedicated explanation of why
+  background ("allow all the time") is needed — recording must continue
+  with the screen off or another app in front — with a **Continue**
+  control that is what actually triggers the platform's background
+  permission prompt (see
+  [Permissions & Privacy](permissions-and-privacy.md#required-access)).
+  This is the one time that prompt appears for a fresh install, and the
+  explanation must be shown immediately before it, not folded into the
+  earlier foreground-location explanation. Shown once per ask, not on
+  every visit: once the user has answered that prompt (granted or
+  denied), later visits go straight to the advisory below instead of
+  this screen.
 - If background location specifically isn't granted (foreground location
   is, so recording is already underway), this screen says recording may
   stop if the user leaves the app and offers a way to fix it (see

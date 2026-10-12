@@ -1,5 +1,6 @@
 package com.github.tomasbjerre.wisp
 
+import androidx.activity.compose.setContent
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -16,6 +17,7 @@ import com.github.tomasbjerre.wisp.data.ActivityType
 import com.github.tomasbjerre.wisp.data.UnitSystem
 import com.github.tomasbjerre.wisp.location.TrackingService
 import com.github.tomasbjerre.wisp.ui.TestTags
+import com.github.tomasbjerre.wisp.ui.tracking.BackgroundLocationRationale
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
@@ -294,6 +296,24 @@ class ScreenshotTest {
         }
         Thread.sleep(MAP_TILE_SETTLE_MILLIS)
         screenshot("detail-imperial-partial-split")
+    }
+
+    /**
+     * See specs/ui-flows.md#2-tracking-active-recording: the one-time explanation shown
+     * right before the platform's background-location prompt. Unnumbered, docs/screenshots
+     * only, like captureBackgroundLocationMissing below — rendered directly rather than
+     * driven through the real OS permission dialogs that lead here, since this suite
+     * otherwise avoids automating those (see [BackgroundLocationRationale]).
+     */
+    @Test
+    fun captureBackgroundLocationRationale() {
+        // MainActivity already called setContent in onCreate, so replace it directly on the
+        // activity rather than through composeRule.setContent, which refuses a second call.
+        composeRule.activityRule.scenario.onActivity {
+            it.setContent { BackgroundLocationRationale(onContinue = {}) }
+        }
+        composeRule.waitForIdle()
+        screenshot("tracking-background-location-rationale")
     }
 
     /**

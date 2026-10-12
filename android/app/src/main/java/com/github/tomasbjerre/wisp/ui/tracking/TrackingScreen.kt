@@ -100,10 +100,7 @@ fun TrackingScreen(
         if (hasStartedRecording && state.wasDiscarded) onCancelled()
     }
 
-    if (!permissions.hasForeground) {
-        MissingPermission(onGrant = permissions::request)
-        return
-    }
+    if (ShowLocationPermissionGate(permissions)) return
 
     // See specs/tracking.md#start-gating: no map at all until a real position is known,
     // rather than showing a map with nothing to center on (see RouteMap's fallback).
@@ -141,6 +138,24 @@ fun TrackingScreen(
             heartRatePreferences = heartRatePreferences,
         )
     }
+}
+
+/**
+ * See specs/ui-flows.md#2-tracking-active-recording: the foreground-missing and
+ * background-rationale screens, in that order — both block the rest of Tracking. Returns
+ * whether one of them was shown, so the caller knows to stop rendering.
+ */
+@Composable
+private fun ShowLocationPermissionGate(permissions: LocationPermissionState): Boolean {
+    if (!permissions.hasForeground) {
+        MissingPermission(onGrant = permissions::request)
+        return true
+    }
+    if (permissions.needsBackgroundRationale) {
+        BackgroundLocationRationale(onContinue = permissions::request)
+        return true
+    }
+    return false
 }
 
 /** See specs/ui-flows.md#2a-settings. */
@@ -435,6 +450,32 @@ private fun LocatingState(locationServices: LocationServicesState) {
                 Button(onClick = locationServices::openSettings, modifier = Modifier.padding(top = 16.dp)) {
                     Text("Turn on location")
                 }
+            }
+        }
+    }
+}
+
+/**
+ * See specs/ui-flows.md#2-tracking-active-recording: shown exactly once, right before the
+ * platform's background-location prompt, so the user sees why "allow all the time" is being
+ * asked for instead of that prompt appearing with no in-app context.
+ *
+ * internal (not private) so [ScreenshotTest] can render it directly instead of driving the
+ * real OS permission dialogs that lead here, which the rest of that suite avoids automating.
+ */
+@Composable
+internal fun BackgroundLocationRationale(onContinue: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                "Wisp keeps recording your route when the screen is off or you switch to " +
+                    "another app. Allow location access \"All the time\" on the next screen " +
+                    "so your activity isn't cut short.",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+            )
+            Button(onClick = onContinue, modifier = Modifier.padding(top = 16.dp)) {
+                Text("Continue")
             }
         }
     }

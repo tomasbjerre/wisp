@@ -25,10 +25,21 @@ class LocationPermissionState internal constructor(
     private val foreground: MutableState<Boolean>,
     private val background: MutableState<Boolean>,
     private val batteryExemption: MutableState<Boolean>,
+    private val backgroundRationalePending: MutableState<Boolean>,
     private val actions: LocationPermissionActions,
 ) {
     val hasForeground: Boolean get() = foreground.value
     val hasBackground: Boolean get() = background.value
+
+    /**
+     * True for exactly one ask: foreground was just granted and background is still
+     * undecided. See specs/ui-flows.md#2-tracking-active-recording — Tracking must show its
+     * own explanation of why background location is needed before [request] is called again
+     * to trigger the platform's background permission prompt. False again once the user has
+     * continued past that explanation, whatever the platform prompt's outcome — a denial
+     * after that point falls back to the ongoing advisory, not this screen again.
+     */
+    val needsBackgroundRationale: Boolean get() = backgroundRationalePending.value
 
     /**
      * Whether Wisp is exempt from battery optimization, so recording is less likely to be
@@ -43,6 +54,7 @@ class LocationPermissionState internal constructor(
         if (!hasForeground) {
             actions.requestForeground()
         } else if (!hasBackground) {
+            backgroundRationalePending.value = false
             actions.requestBackground()
         }
     }
@@ -57,6 +69,18 @@ class LocationPermissionState internal constructor(
      */
     fun openAppSettings() = actions.openAppSettings()
 }
+
+/**
+ * Whether a just-resolved foreground permission result should surface the background-location
+ * rationale (specs/ui-flows.md#2-tracking-active-recording) rather than request() silently
+ * chaining straight into the platform's background prompt. Extracted as a pure function so this
+ * decision is testable without the Android permission-launcher machinery that calls it.
+ */
+internal fun needsBackgroundRationaleAfterForegroundGrant(
+    foregroundGranted: Boolean,
+    backgroundRequiredByPlatform: Boolean,
+    alreadyHasBackground: Boolean,
+): Boolean = foregroundGranted && backgroundRequiredByPlatform && !alreadyHasBackground
 
 /** The callbacks [LocationPermissionState] exposes, grouped to keep its constructor short. */
 internal class LocationPermissionActions(
@@ -82,6 +106,7 @@ fun rememberLocationPermissionState(): LocationPermissionState {
             mutableStateOf(backgroundNotRequired || isGranted(Manifest.permission.ACCESS_BACKGROUND_LOCATION))
         }
     val hasBatteryExemption = remember { mutableStateOf(isIgnoringBatteryOptimizations()) }
+    val backgroundRationalePending = remember { mutableStateOf(false) }
 
     val backgroundLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -90,8 +115,18 @@ fun rememberLocationPermissionState(): LocationPermissionState {
     val foregroundLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
             hasForeground.value = result[Manifest.permission.ACCESS_FINE_LOCATION] == true
-            if (hasForeground.value && !backgroundNotRequired) {
-                backgroundLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            // Don't jump straight to the platform's background-location prompt here — see
+            // specs/ui-flows.md#2-tracking-active-recording: Tracking must show its own
+            // rationale for *why* background is needed first. Tracking's `request()` call
+            // (from that rationale's Continue control) is what actually triggers the prompt.
+            val needsRationale =
+                needsBackgroundRationaleAfterForegroundGrant(
+                    foregroundGranted = hasForeground.value,
+                    backgroundRequiredByPlatform = !backgroundNotRequired,
+                    alreadyHasBackground = hasBackground.value,
+                )
+            if (needsRationale) {
+                backgroundRationalePending.value = true
             }
         }
     // These two system screens have no result callback of their own, so just re-check
@@ -126,7 +161,9 @@ fun rememberLocationPermissionState(): LocationPermissionState {
             },
         )
 
-    return remember { LocationPermissionState(hasForeground, hasBackground, hasBatteryExemption, actions) }
+    return remember {
+        LocationPermissionState(hasForeground, hasBackground, hasBatteryExemption, backgroundRationalePending, actions)
+    }
 }
 
 @Composable
