@@ -1,9 +1,10 @@
-wisp 0.15.2
-- chore: removing 0.15.2
+wisp 0.15.3
+- chore(deps): update dependency gradle to v9.8.2 (#217)
+- chore(deps): update plugin com.diffplug.spotless to v8.10.4 (#216)
+- chore(deps): update plugin org.jetbrains.kotlin.android to v2.4.21 (#214)
+- chore(deps): update plugin org.jetbrains.kotlin.plugin.compose to v2.4.21 (#215)
 - chore(changelog): updating changelog
 - chore(android): update screenshots and play listing
-- fix(tracking): explain background location before the platform prompt (#213)
-- build(android): publish Play releases straight to production (#212)
-- chore(renovate): point extends at renovate-config repo
-- chore(deps): update dependency gradle to v9.8.1 (#211)
-- ci(instrumented): log replay progress instead of bare adb OK (#210)
+- chore: removing 0.15.2
+- chore(changelog): updating changelog
+- chore(
