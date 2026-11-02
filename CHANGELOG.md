@@ -1,3 +1,11 @@
+## 0.15.3 (2026-10-20)
+
+### Dependency updates
+
+- update dependency gradle to v9.8.2 (#217) ([0481e](https://github.com/tomasbjerre/wisp/commit/0481ef2017b1b93) renovate[bot])  
+- update plugin com.diffplug.spotless to v8.10.4 (#216) ([822a1](https://github.com/tomasbjerre/wisp/commit/822a1f2f8639002) renovate[bot])  
+- update plugin org.jetbrains.kotlin.android to v2.4.21 (#214) ([9777f](https://github.com/tomasbjerre/wisp/commit/9777f51e6e39329) renovate[bot])  
+- update plugin org.jetbrains.kotlin.plugin.compose to v2.4.21 (#215) ([4cf89](https://github.com/tomasbjerre/wisp/commit/4cf89cd9ce7591a) renovate[bot])  
 ## 0.15.2 (2026-10-12)
 
 ### Bug Fixes
