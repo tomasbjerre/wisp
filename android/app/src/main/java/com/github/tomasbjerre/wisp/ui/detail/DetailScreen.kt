@@ -1,5 +1,6 @@
 package com.github.tomasbjerre.wisp.ui.detail
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -384,6 +385,7 @@ private fun rememberExportActions(
     )
 }
 
+@SuppressLint("ThreadConstraint") // Lint infers a worker thread from bitmap helpers; this runs on the main thread by design.
 private fun exportSessionAsImage(
     context: Context,
     mapView: MapView,
