@@ -385,7 +385,8 @@ private fun rememberExportActions(
     )
 }
 
-@SuppressLint("ThreadConstraint") // Lint infers a worker thread from bitmap helpers; this runs on the main thread by design.
+// Lint infers a worker thread from bitmap helpers; this runs on the main thread by design.
+@SuppressLint("ThreadConstraint")
 private fun exportSessionAsImage(
     context: Context,
     mapView: MapView,
