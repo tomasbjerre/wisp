@@ -138,7 +138,7 @@ dependencies {
     // into a folder the user picked via the Storage Access Framework (issue #141).
     implementation("androidx.documentfile:documentfile:1.1.0")
 
-    implementation(platform("androidx.compose:compose-bom:2026.09.00"))
+    implementation(platform("androidx.compose:compose-bom:2026.11.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -182,7 +182,7 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.7.0")
     androidTestUtil("androidx.test:orchestrator:1.6.1")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.4.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2026.09.00"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2026.11.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
